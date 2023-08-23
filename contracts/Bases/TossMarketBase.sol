@@ -123,11 +123,12 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         uint128 price = sellOffer.price;
         require(price == amount, "price is not the same");
         
+        delete erc721Markets[erc721Address][tokenId];
+        
         IERC20(erc20Address).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(erc20Address).safeTransfer(owner, priceMinusCut(marketCut, price));
         IERC721(erc721Address).safeTransferFrom(address(this), msg.sender, tokenId);
 
-        delete erc721Markets[erc721Address][tokenId];
 
         emit SellOfferSuccessful(owner, erc721Address, tokenId, startedAt, price, msg.sender);
     }
@@ -157,17 +158,17 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         return sellOffer.price;
     }
 
-    function cancelSellOffer(address erc721Address, uint256 tokenId,  bool validateOwner) internal {
+    function cancelSellOffer(address erc721Address, uint256 tokenId, bool validateOwner) internal {
         SellOffer memory sellOffer = erc721Markets[erc721Address][tokenId];
         uint128 startedAt = sellOffer.startedAt;
         require(onSell(startedAt), "not on sale");
         address owner = sellOffer.owner;
-        if(validateOwner){
+        if(validateOwner) {
             require(owner == msg.sender, "not the owner");
         }        
+        delete erc721Markets[erc721Address][tokenId];
         IERC721(erc721Address).safeTransferFrom(address(this), owner, tokenId);
         emit SellOfferCancelled(owner, erc721Address, tokenId, startedAt);
-        delete erc721Markets[erc721Address][tokenId];
     }
 
     function onSell(uint128 startedAt) internal pure returns (bool) {

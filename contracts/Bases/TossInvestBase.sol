@@ -15,7 +15,8 @@ import "../TossUpgradeableProxy.sol";
 abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
     
-    uint256 constant GAS_EXTRA = 500000;
+    uint256 constant GAS_EXTRA_RETURN = 100000;
+    uint256 constant GAS_EXTRA_MINT = 500000;
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -271,18 +272,16 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         address lastInvestor = investors[i];
         uint256 acumulated = 0;
         for (;i < length;) {
-            uint256 lastGas = gasleft() + GAS_EXTRA;
             if(lastInvestor == investors[i]){
                 ++acumulated;
-            }else {
+            } else {
                 erc20.safeTransfer(lastInvestor, acumulated * price);
                 lastInvestor = investors[i];
                 acumulated = 1;
             }
             unchecked { ++i; }
-            uint256 currentGas = gasleft();
-            if (currentGas < lastGas - currentGas) {
-                break;
+            if (gasleft() < GAS_EXTRA_RETURN) {
+                 break;
             }
         }
         erc20.safeTransfer(lastInvestor, acumulated * price);
@@ -320,11 +319,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
         uint32 i = lastIndex;
         for (;i < length;) {
-            uint256 lastGas = gasleft() + GAS_EXTRA;
             erc721.safeMint(investors[i], i);
             unchecked { ++i; }
-            uint256 currentGas = gasleft();
-            if (currentGas < lastGas - currentGas) {
+            if (gasleft() < GAS_EXTRA_MINT) {
                 break;
             }
         }
