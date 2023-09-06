@@ -33,12 +33,13 @@ abstract contract TossMarketBase is
 
     address private erc20BankAddress;
 
-    address public erc20Address;
+    IERC20 public erc20;
     uint16 private marketCut;
 
     event SellOfferCreated(
         address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price
     );
+
     event SellOfferSuccessful(
         address indexed owner,
         address indexed erc721Address,
@@ -47,6 +48,7 @@ abstract contract TossMarketBase is
         uint128 price,
         address winner
     );
+
     event SellOfferCancelled(
         address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt
     );
@@ -60,8 +62,7 @@ abstract contract TossMarketBase is
         return this.onERC721Received.selector;
     }
 
-    function __TossMarketBase_init(address erc20Address_, uint16 marketCut_) public initializer {
-        require(erc20Address_ != address(0));
+    function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) public initializer {
         require(marketCut_ <= 10000, "cut required between 0 and 10000");
 
         __Pausable_init();
@@ -74,7 +75,7 @@ abstract contract TossMarketBase is
         _grantRole(EXTRACT_ROLE, msg.sender);
 
         erc20BankAddress = msg.sender;
-        erc20Address = erc20Address_;
+        erc20 = erc20_;
         marketCut = marketCut_;
     }
 
@@ -94,13 +95,12 @@ abstract contract TossMarketBase is
 
     function setErc20BankAddress(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(newAddress != address(0));
-        //require(IERC20(erc20Address).balanceOf(address(this)) == 0, "withdraw balance before change erc20");
         erc20BankAddress = newAddress;
     }
 
     function withdrawBalance(uint256 amount) external onlyRole(EXTRACT_ROLE) {
-        require(amount <= IERC20(erc20Address).balanceOf(address(this)), "insufficient balance");
-        IERC20(erc20Address).safeTransfer(erc20BankAddress, amount);
+        require(amount <= IERC20(erc20).balanceOf(address(this)), "insufficient balance");
+        IERC20(erc20).safeTransfer(erc20BankAddress, amount);
     }
 
     function getMarketCut() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (uint16) {
@@ -148,8 +148,8 @@ abstract contract TossMarketBase is
 
         delete erc721Markets[erc721Address][tokenId];
 
-        IERC20(erc20Address).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(erc20Address).safeTransfer(owner, priceMinusCut(marketCut, price));
+        IERC20(erc20).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(erc20).safeTransfer(owner, priceMinusCut(marketCut, price));
         IERC721(erc721Address).safeTransferFrom(address(this), msg.sender, tokenId);
 
         emit SellOfferSuccessful(owner, erc721Address, tokenId, startedAt, price, msg.sender);

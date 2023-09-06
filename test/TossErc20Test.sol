@@ -2,11 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
-import "../src/TossUpgradeableProxy.sol";
-import "../src/TossErc20V1.sol";
+import "./DeployWithProxyUtil.sol";
 
 contract TossErc20Test is Test {
-    address erc20imp;
     address owner = makeAddr("owner");
     address alice = makeAddr("alice");
     address bob = makeAddr("bob");
@@ -14,17 +12,12 @@ contract TossErc20Test is Test {
     function setUp() public {
         vm.deal(owner, 1000 ether);
         vm.startPrank(owner);
-        erc20imp = address(new TossErc20V1());
-    }
-
-    function deploy(uint64 amount) private returns (TossErc20V1) {
-        TossUpgradeableProxy proxy = new TossUpgradeableProxy(erc20imp, abi.encodeCall(TossErc20V1.__TossErc20V1_init, ("Erc20 Test", "E20T",  amount)));
-        return TossErc20V1(address(proxy));
     }
 
     function testFuzz_initialization(uint64 amount) public {
-        TossErc20V1 erc20 = deploy(amount);
+        TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         assertEq(erc20.name(), "Erc20 Test");
+        assertEq(erc20.symbol(), "E20T");
         assertEq(erc20.totalSupply(), uint256(amount) * 1 ether);
     }
 

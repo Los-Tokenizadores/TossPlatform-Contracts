@@ -15,6 +15,7 @@ import "../src/TossWhitelistV1.sol";
 
 contract DeployContractsTest is Test {
     address owner = makeAddr("owner");
+
     function setUp() public {
         vm.deal(owner, 1000 ether);
         vm.startPrank(owner);

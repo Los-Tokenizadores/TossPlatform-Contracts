@@ -10,14 +10,12 @@ contract TossExchangeV1 is TossExchangeBase {
     }
 
     function __TossExchangeV1_init(
-        address externalErc20Address_,
+        IERC20 externalErc20_,
         uint256 externalMinAmount_,
-        address internalErc20Address_,
+        TossErc20Base internalErc20_,
         uint256 internalMinAmount_,
         uint64 rate_
     ) public initializer {
-        __TossExchangeBase_init(
-            externalErc20Address_, externalMinAmount_, internalErc20Address_, internalMinAmount_, rate_
-        );
+        __TossExchangeBase_init(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_, rate_);
     }
 }

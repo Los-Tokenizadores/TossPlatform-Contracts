@@ -21,8 +21,8 @@ abstract contract TossExchangeBase is
     uint256 public externalMinAmount;
     uint256 public internalMinAmount;
 
-    address public externalErc20Address;
-    address public internalErc20Address;
+    IERC20 public externalErc20;
+    TossErc20Base public internalErc20;
 
     uint64 public rate;
 
@@ -35,15 +35,13 @@ abstract contract TossExchangeBase is
     }
 
     function __TossExchangeBase_init(
-        address externalErc20Address_,
+        IERC20 externalErc20_,
         uint256 externalMinAmount_,
-        address internalErc20Address_,
+        TossErc20Base internalErc20_,
         uint256 internalMinAmount_,
         uint64 rate_
     ) public initializer {
-        require(externalErc20Address_ != address(0), "external erc20 address is empty");
-        require(internalErc20Address_ != address(0), "internal erc20 address is empty");
-        require(externalErc20Address_ != internalErc20Address_, "external and internal erc20 are the same");
+        require(address(externalErc20_) != address(internalErc20_), "external and internal erc20 are the same");
         require(rate_ > 0, "rate needs to be greater than 0");
         require(externalMinAmount_ > 0, "external min needs to be greater than 0");
         require(internalMinAmount_ > 0, "internal min needs to be greater than 0");
@@ -54,8 +52,8 @@ abstract contract TossExchangeBase is
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
-        externalErc20Address = externalErc20Address_;
-        internalErc20Address = internalErc20Address_;
+        externalErc20 = externalErc20_;
+        internalErc20 = internalErc20_;
 
         externalMinAmount = externalMinAmount_;
         internalMinAmount = internalMinAmount_;
@@ -97,10 +95,10 @@ abstract contract TossExchangeBase is
         isInWhitelist(msg.sender)
     {
         require(internalAmount >= internalMinAmount, "amount need greater than the minimum amount");
-        require(IERC20(externalErc20Address).balanceOf(msg.sender) >= externalAmount, "insufficient balance");
+        require(externalErc20.balanceOf(msg.sender) >= externalAmount, "insufficient balance");
 
-        IERC20(externalErc20Address).safeTransferFrom(msg.sender, address(this), externalAmount);
-        TossErc20Base(internalErc20Address).mint(msg.sender, internalAmount);
+        externalErc20.safeTransferFrom(msg.sender, address(this), externalAmount);
+        internalErc20.mint(msg.sender, internalAmount);
 
         emit ConvertedToInternal(msg.sender, externalAmount, internalAmount);
     }
@@ -111,10 +109,10 @@ abstract contract TossExchangeBase is
         isInWhitelist(msg.sender)
     {
         require(externalAmount >= externalMinAmount, "amount need greater than the minimum amount");
-        require(IERC20(internalErc20Address).balanceOf(msg.sender) >= internalAmount, "insufficient balance");
+        require(internalErc20.balanceOf(msg.sender) >= internalAmount, "insufficient balance");
 
-        TossErc20Base(internalErc20Address).burnFrom(msg.sender, internalAmount);
-        IERC20(externalErc20Address).safeTransfer(msg.sender, externalAmount);
+        internalErc20.burnFrom(msg.sender, internalAmount);
+        externalErc20.safeTransfer(msg.sender, externalAmount);
 
         emit ConvertedToExternal(msg.sender, externalAmount, internalAmount);
     }
