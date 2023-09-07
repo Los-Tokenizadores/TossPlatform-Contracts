@@ -12,18 +12,13 @@ import "./TossWhitelistClient.sol";
 import "../TossErc721MarketV1.sol";
 import "../TossUpgradeableProxy.sol";
 
-abstract contract TossInvestBase is
-    TossWhitelistClient,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     error AddressNotExist();
 
-    uint256 constant GAS_EXTRA_RETURN = 100000;
-    uint256 constant GAS_EXTRA_MINT = 500000;
+    uint256 constant GAS_EXTRA_RETURN = 100_000;
+    uint256 constant GAS_EXTRA_MINT = 500_000;
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -43,12 +38,12 @@ abstract contract TossInvestBase is
         string symbol;
     }
 
-    address public erc20Address;
+    IERC20 public erc20;
     ProjectInfo[] private projects;
     mapping(uint256 => address[]) public projectInvestors;
 
     string public erc721baseUri;
-    address private erc721ImplementationAddress;
+    TossErc721MarketV1 private erc721Implementation;
     address private tossProjectAddress;
 
     address private platformAddress;
@@ -66,14 +61,16 @@ abstract contract TossInvestBase is
     }
 
     function __TossInvestBase_init(
-        address erc20Address_,
-        address erc721ImplementationAddress_,
+        IERC20 erc20_,
+        TossErc721MarketV1 erc721Implementation_,
         address platformAddress_,
         uint16 platformCut_,
         string memory erc721baseUri_
     ) public initializer {
+        require(address(erc20_) != address(0));
+        require(address(erc721Implementation_) != address(0));
         require(platformAddress_ != address(0), "platform address invalid");
-        require(platformCut_ <= 10000, "platform cut required between 0 and 10000");
+        require(platformCut_ <= 10_000, "platform cut required between 0 and 10000");
 
         __Pausable_init();
         __AccessControl_init();
@@ -85,14 +82,14 @@ abstract contract TossInvestBase is
         _grantRole(PROJECT_ROLE, msg.sender);
 
         tossProjectAddress = msg.sender;
-        erc20Address = erc20Address_;
-        erc721ImplementationAddress = erc721ImplementationAddress_;
+        erc20 = erc20_;
+        erc721Implementation = erc721Implementation_;
         erc721baseUri = erc721baseUri_;
         platformAddress = platformAddress_;
         platformCut = platformCut_;
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function getWhitelist() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
         return whitelistAddress;
@@ -103,16 +100,12 @@ abstract contract TossInvestBase is
     }
 
     function getErc721Implementation() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
-        return erc721ImplementationAddress;
+        return address(erc721Implementation);
     }
 
-    function setErc721Implementation(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newAddress != address(0));
-        require(
-            IERC165Upgradeable(newAddress).supportsInterface(type(IERC721Upgradeable).interfaceId),
-            "Contract does not support IERC721Upgradeable"
-        );
-        erc721ImplementationAddress = newAddress;
+    function setErc721Implementation(TossErc721MarketV1 newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(IERC165Upgradeable(address(newImplementation)).supportsInterface(type(IERC721Upgradeable).interfaceId), "Contract does not support IERC721Upgradeable");
+        erc721Implementation = newImplementation;
     }
 
     function setErc721BaseUri(string memory erc721BaseUri_) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -123,30 +116,18 @@ abstract contract TossInvestBase is
         return projects.length;
     }
 
-    function getProjectInternal(uint256 projectId)
-        internal
-        view
-        returns (ProjectInfo memory info, uint256 invested, uint256 inversors)
-    {
+    function getProjectInternal(uint256 projectId) internal view returns (ProjectInfo memory info, uint256 invested, uint256 inversors) {
         require(projectId < projects.length, "project not exist");
         info = projects[projectId];
         invested = projectInvestors[projectId].length;
         inversors = countUniqueAddresses(projectInvestors[projectId]);
     }
 
-    function getProject(uint256 projectId)
-        external
-        view
-        returns (ProjectInfo memory info, uint256 invested, uint256 inversors)
-    {
+    function getProject(uint256 projectId) external view returns (ProjectInfo memory info, uint256 invested, uint256 inversors) {
         return getProjectInternal(projectId);
     }
 
-    function getProjectByErc721Address(address erc721Address)
-        external
-        view
-        returns (uint256 projectId, ProjectInfo memory info, uint256 invested, uint256 inversors)
-    {
+    function getProjectByErc721Address(address erc721Address) external view returns (uint256 projectId, ProjectInfo memory info, uint256 invested, uint256 inversors) {
         require(erc721Address != address(0), "address needs to be not 0x0");
         for (uint256 i; i < projects.length;) {
             if (projects[i].erc721Address == erc721Address) {
@@ -164,12 +145,16 @@ abstract contract TossInvestBase is
 
     function countUniqueAddresses(address[] memory addresses) private pure returns (uint256) {
         address[] memory uniqueAddresses = new address[](addresses.length);
-        uint256 uniqueCount = 0;
+        uint256 uniqueCount;
 
-        for (uint256 i = 0; i < addresses.length; i++) {
+        for (uint256 i; i < addresses.length;) {
             if (!isAddressInArray(addresses[i], uniqueAddresses, uniqueCount)) {
                 uniqueAddresses[uniqueCount] = addresses[i];
                 ++uniqueCount;
+            }
+
+            unchecked {
+                ++i;
             }
         }
 
@@ -279,7 +264,7 @@ abstract contract TossInvestBase is
         uint256 investorAmount = investors.length;
         require(investorAmount + amount <= projectInfo.maxAmount, "project already full of investors");
 
-        IERC20(erc20Address).safeTransferFrom(msg.sender, address(this), amount * projectInfo.price);
+        erc20.safeTransferFrom(msg.sender, address(this), amount * projectInfo.price);
 
         for (uint256 i = 0; i < amount;) {
             investors.push(msg.sender);
@@ -317,7 +302,6 @@ abstract contract TossInvestBase is
         uint256 length = investors.length;
         require(length > lastIndex, "project already return all investments");
         uint256 price = projectInfo.price;
-        IERC20 erc20 = IERC20(erc20Address);
 
         uint32 i = lastIndex;
         address lastInvestor = investors[i];
@@ -341,9 +325,7 @@ abstract contract TossInvestBase is
         projectInfo.lastIndex = i;
     }
 
-    function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] storage investors)
-        private
-    {
+    function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] storage investors) private {
         uint32 lastIndex = projectInfo.lastIndex;
         uint256 length = investors.length;
         require(length > lastIndex, "project already fully minted");
@@ -351,8 +333,8 @@ abstract contract TossInvestBase is
         TossErc721MarketV1 erc721;
         if (projectInfo.erc721Address == address(0)) {
             TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-                erc721ImplementationAddress, 
-                abi.encodeWithSelector(TossErc721MarketV1(address(0)).__TossErc721MarketV1_init.selector, projectInfo.name, projectInfo.symbol)
+                address(erc721Implementation), 
+                abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol))
             );
             projectInfo.erc721Address = address(proxy);
             erc721 = TossErc721MarketV1(address(proxy));
@@ -362,12 +344,11 @@ abstract contract TossInvestBase is
             erc721.grantRole(erc721.DEFAULT_ADMIN_ROLE(), tossProjectAddress);
             erc721.grantRole(erc721.UPGRADER_ROLE(), tossProjectAddress);
             uint256 total = projectInfo.price * length;
-            uint256 platformAmount = total * platformCut / 10000;
-            IERC20 erc20 = IERC20(erc20Address);
+            uint256 platformAmount = total * platformCut / 10_000;
             erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
             erc20.safeTransfer(platformAddress, platformAmount);
             projectInfo.mintedAt = uint64(block.timestamp);
-            emit ProjectErc721Created(projectId, projectInfo.erc721Address, erc721ImplementationAddress);
+            emit ProjectErc721Created(projectId, projectInfo.erc721Address, address(erc721Implementation));
         } else {
             erc721 = TossErc721MarketV1(projectInfo.erc721Address);
         }

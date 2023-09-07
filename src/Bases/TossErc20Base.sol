@@ -8,14 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "./TossUUPSUpgradeable.sol";
 import "./TossWhitelistClient.sol";
 
-abstract contract TossErc20Base is
-    TossWhitelistClient,
-    ERC20Upgradeable,
-    ERC20BurnableUpgradeable,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20BurnableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -40,7 +33,7 @@ abstract contract TossErc20Base is
         _mint(msg.sender, amount * 10 ** decimals());
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
@@ -62,12 +55,7 @@ abstract contract TossErc20Base is
         _mint(to, amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        override
-        whenNotPaused
-        isInWhitelist(to)
-    {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override whenNotPaused isInWhitelist(to) {
         super._beforeTokenTransfer(from, to, amount);
     }
 

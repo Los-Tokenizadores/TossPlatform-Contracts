@@ -8,12 +8,7 @@ import "./TossUUPSUpgradeable.sol";
 import "../Interfaces/ITossSellErc721.sol";
 import "./TossWhitelistClient.sol";
 
-abstract contract TossSellerBase is
-    TossWhitelistClient,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -48,6 +43,8 @@ abstract contract TossSellerBase is
     }
 
     function __TossSellerBase_init(IERC20 erc20_) public initializer {
+        require(address(erc20_) != address(0));
+
         __Pausable_init();
         __AccessControl_init();
         __TossUUPSUpgradeable_init();
@@ -69,7 +66,7 @@ abstract contract TossSellerBase is
         convertToErc20Cut = 500;
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function getWhitelist() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
         return whitelistAddress;
@@ -84,7 +81,7 @@ abstract contract TossSellerBase is
     }
 
     function setErc20BankAddress(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newAddress != address(0x0));
+        require(newAddress != address(0));
         erc20BankAddress = newAddress;
     }
 
@@ -110,14 +107,11 @@ abstract contract TossSellerBase is
         erc721.sellErc721(msg.sender, amount_);
     }
 
-    function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(address(erc721) != address(0), "invalid erc721 address");
         require(maxAmount > 0, "maxAmount needs to be greater than 0");
         require(maxAmount <= 40, "maxAmount needs to be less or equals than 40");
-        erc721Sells[erc721] = Erc721SellInfo({price: price, maxAmount: maxAmount});
+        erc721Sells[erc721] = Erc721SellInfo({ price: price, maxAmount: maxAmount });
     }
 
     function convertToOffchain(uint256 erc20Amount) external isInWhitelist(msg.sender) {
@@ -127,7 +121,7 @@ abstract contract TossSellerBase is
 
         erc20.safeTransferFrom(msg.sender, address(this), erc20Amount);
 
-        uint256 offchainAmountBig = erc20Amount * convertToOffchainRate * (10000 - convertToOffchainCut) / 10000;
+        uint256 offchainAmountBig = erc20Amount * convertToOffchainRate * (10_000 - convertToOffchainCut) / 10_000;
         uint32 offchainAmount = uint32(offchainAmountBig / (10 ** decimals));
 
         emit ConvertToOffchain(msg.sender, erc20Amount, offchainAmount);
@@ -137,8 +131,7 @@ abstract contract TossSellerBase is
         require(user != address(0));
         require(offchainAmount >= convertToErc20MinAmount, "less than the minimum conversion value");
 
-        uint256 erc20Amount =
-            offchainAmount * (10 ** decimals) / convertToErc20Rate * (10000 - convertToErc20Cut) / 10000;
+        uint256 erc20Amount = offchainAmount * (10 ** decimals) / convertToErc20Rate * (10_000 - convertToErc20Cut) / 10_000;
 
         uint256 balance = erc20.balanceOf(address(this));
         require(balance >= erc20Amount, "insufficient balance");
@@ -158,7 +151,7 @@ abstract contract TossSellerBase is
     }
 
     function setConvertToOffchainCut(uint16 newPercent) external onlyRole(CONVERT_ROLE) {
-        require(newPercent >= 0 && newPercent <= 10000);
+        require(newPercent >= 0 && newPercent <= 10_000);
         convertToOffchainCut = newPercent;
     }
 
@@ -173,7 +166,7 @@ abstract contract TossSellerBase is
     }
 
     function setConvertToErc20Cut(uint16 newPercent) external onlyRole(CONVERT_ROLE) {
-        require(newPercent >= 0 && newPercent <= 10000);
+        require(newPercent >= 0 && newPercent <= 10_000);
         convertToErc20Cut = newPercent;
     }
 

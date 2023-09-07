@@ -8,12 +8,7 @@ import "./TossErc20Base.sol";
 import "../Interfaces/ITossExchange.sol";
 import "./TossWhitelistClient.sol";
 
-abstract contract TossExchangeBase is
-    ITossExchange,
-    TossWhitelistClient,
-    AccessControlUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -41,6 +36,8 @@ abstract contract TossExchangeBase is
         uint256 internalMinAmount_,
         uint64 rate_
     ) public initializer {
+        require(address(externalErc20_) != address(0), "external erc20 address is empty");
+        require(address(internalErc20_) != address(0), "internal erc20 address is empty");
         require(address(externalErc20_) != address(internalErc20_), "external and internal erc20 are the same");
         require(rate_ > 0, "rate needs to be greater than 0");
         require(externalMinAmount_ > 0, "external min needs to be greater than 0");
@@ -61,7 +58,7 @@ abstract contract TossExchangeBase is
         rate = rate_;
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function getWhitelist() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
         return whitelistAddress;
@@ -82,18 +79,14 @@ abstract contract TossExchangeBase is
     }
 
     function convertToInternal(uint128 externalAmount) public virtual {
-        _convertToInternal(externalAmount, externalAmount * rate / 10000);
+        _convertToInternal(externalAmount, externalAmount * rate / 10_000);
     }
 
     function convertToExternal(uint128 internalAmount) public virtual {
-        _convertToExternal(internalAmount * 10000 / rate, internalAmount);
+        _convertToExternal(internalAmount * 10_000 / rate, internalAmount);
     }
 
-    function _convertToInternal(uint128 externalAmount, uint128 internalAmount)
-        internal
-        virtual
-        isInWhitelist(msg.sender)
-    {
+    function _convertToInternal(uint128 externalAmount, uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
         require(internalAmount >= internalMinAmount, "amount need greater than the minimum amount");
         require(externalErc20.balanceOf(msg.sender) >= externalAmount, "insufficient balance");
 
@@ -103,11 +96,7 @@ abstract contract TossExchangeBase is
         emit ConvertedToInternal(msg.sender, externalAmount, internalAmount);
     }
 
-    function _convertToExternal(uint128 externalAmount, uint128 internalAmount)
-        internal
-        virtual
-        isInWhitelist(msg.sender)
-    {
+    function _convertToExternal(uint128 externalAmount, uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
         require(externalAmount >= externalMinAmount, "amount need greater than the minimum amount");
         require(internalErc20.balanceOf(msg.sender) >= internalAmount, "insufficient balance");
 

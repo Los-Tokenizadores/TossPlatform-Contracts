@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 import "../src/TossErc20V1.sol";
 import "../src/TossErc721GeneV1.sol";
 import "../src/TossErc721GeneUniqueV1.sol";

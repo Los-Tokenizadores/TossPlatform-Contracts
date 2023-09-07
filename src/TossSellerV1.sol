@@ -9,7 +9,7 @@ contract TossSellerV1 is TossSellerBase {
         _disableInitializers();
     }
 
-    function __TossSellerV1_init(IERC20 erc20Address) public initializer {
-        __TossSellerBase_init(erc20Address);
+    function __TossSellerV1_init(IERC20 erc20) public initializer {
+        __TossSellerBase_init(erc20);
     }
 }

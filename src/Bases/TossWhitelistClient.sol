@@ -9,10 +9,7 @@ abstract contract TossWhitelistClient {
     address internal whitelistAddress;
 
     modifier isInWhitelist(address user) {
-        if (
-            user != address(0) && whitelistAddress != address(0)
-                && !ITossWhitelist(whitelistAddress).isInWhitelist(user)
-        ) {
+        if (user != address(0) && whitelistAddress != address(0) && !ITossWhitelist(whitelistAddress).isInWhitelist(user)) {
             revert NotInWhitelist();
         }
         _;

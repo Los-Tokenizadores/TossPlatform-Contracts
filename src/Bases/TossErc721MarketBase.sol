@@ -8,13 +8,7 @@ import "./TossUUPSUpgradeable.sol";
 import "../Interfaces/ITossMarket.sol";
 import "./TossWhitelistClient.sol";
 
-abstract contract TossErc721MarketBase is
-    TossWhitelistClient,
-    ERC721Upgradeable,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -39,7 +33,7 @@ abstract contract TossErc721MarketBase is
         _grantRole(MINTER_ROLE, msg.sender);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
@@ -57,12 +51,7 @@ abstract contract TossErc721MarketBase is
         whitelistAddress = newAddress;
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
-        internal
-        override(ERC721Upgradeable)
-        whenNotPaused
-        isInWhitelist(to)
-    {
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize) internal override(ERC721Upgradeable) whenNotPaused isInWhitelist(to) {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
@@ -84,12 +73,7 @@ abstract contract TossErc721MarketBase is
         baseUri = baseUri_;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721Upgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 

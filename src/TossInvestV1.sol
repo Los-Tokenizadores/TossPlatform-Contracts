@@ -10,12 +10,12 @@ contract TossInvestV1 is TossInvestBase {
     }
 
     function __TossInvestV1_init(
-        address erc20Address,
-        address erc721ImplementationAddress,
+        IERC20 erc20_,
+        TossErc721MarketV1 erc721Implementation_,
         address platformAddress,
         uint16 platformCut,
         string memory erc721baseUri
     ) public initializer {
-        __TossInvestBase_init(erc20Address, erc721ImplementationAddress, platformAddress, platformCut, erc721baseUri);
+        __TossInvestBase_init(erc20_, erc721Implementation_, platformAddress, platformCut, erc721baseUri);
     }
 }

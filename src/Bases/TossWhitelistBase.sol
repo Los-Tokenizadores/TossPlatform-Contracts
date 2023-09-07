@@ -23,7 +23,7 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function set(address address_, bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
         whitelist[address_] = enabled;

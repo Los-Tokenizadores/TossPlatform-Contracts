@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 import "./DeployWithProxyUtil.sol";
 
 contract TossExchangeTest is Test {
@@ -22,9 +22,7 @@ contract TossExchangeTest is Test {
         uint64 amount = 10;
         TossErc20V1 externalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossErc20V1 internalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
-        TossExchangeV1 exchange = DeployWithProxyUtil.tossExchangeV1(
-            IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount, rate
-        );
+        TossExchangeV1 exchange = DeployWithProxyUtil.tossExchangeV1(IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount, rate);
 
         assertEq(address(exchange.externalErc20()), address(externalErc20));
         assertEq(address(exchange.internalErc20()), address(internalErc20));
@@ -38,9 +36,7 @@ contract TossExchangeTest is Test {
         uint64 amount = 10;
         TossErc20V1 externalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossErc20V1 internalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
-        TossExchangeTierV1 exchange = DeployWithProxyUtil.tossExchangeTierV1(
-            IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount, rate, year
-        );
+        TossExchangeTierV1 exchange = DeployWithProxyUtil.tossExchangeTierV1(IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount, rate, year);
 
         assertEq(address(exchange.externalErc20()), address(externalErc20));
         assertEq(address(exchange.internalErc20()), address(internalErc20));

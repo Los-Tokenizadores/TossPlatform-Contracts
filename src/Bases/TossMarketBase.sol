@@ -9,13 +9,7 @@ import "./TossUUPSUpgradeable.sol";
 import "../Interfaces/ITossMarket.sol";
 import "./TossWhitelistClient.sol";
 
-abstract contract TossMarketBase is
-    ITossMarket,
-    TossWhitelistClient,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -36,22 +30,11 @@ abstract contract TossMarketBase is
     IERC20 public erc20;
     uint16 private marketCut;
 
-    event SellOfferCreated(
-        address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price
-    );
+    event SellOfferCreated(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price);
 
-    event SellOfferSuccessful(
-        address indexed owner,
-        address indexed erc721Address,
-        uint256 indexed tokenId,
-        uint128 startedAt,
-        uint128 price,
-        address winner
-    );
+    event SellOfferSuccessful(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price, address winner);
 
-    event SellOfferCancelled(
-        address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt
-    );
+    event SellOfferCancelled(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -63,7 +46,8 @@ abstract contract TossMarketBase is
     }
 
     function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) public initializer {
-        require(marketCut_ <= 10000, "cut required between 0 and 10000");
+        require(address(erc20_) != address(0));
+        require(marketCut_ <= 10_000, "cut required between 0 and 10000");
 
         __Pausable_init();
         __AccessControl_init();
@@ -79,7 +63,7 @@ abstract contract TossMarketBase is
         marketCut = marketCut_;
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function getWhitelist() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
         return whitelistAddress;
@@ -108,33 +92,22 @@ abstract contract TossMarketBase is
     }
 
     function changeMarketCut(uint16 cut) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(cut <= 10000, "cut required between 0 and 10000");
+        require(cut <= 10_000, "cut required between 0 and 10000");
         marketCut = cut;
     }
 
-    function create(uint256 tokenId, uint128 price, address owner)
-        public
-        virtual
-        override
-        whenNotPaused
-        onlyRole(ERC721_SELLER_ROLE)
-    {
+    function create(uint256 tokenId, uint128 price, address owner) public virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
         address erc721Address = msg.sender;
         require(IERC721(erc721Address).ownerOf(tokenId) == owner, "Not token owner");
 
         IERC721(erc721Address).safeTransferFrom(owner, address(this), tokenId);
         uint128 startedAt = uint128(block.timestamp);
-        erc721Markets[erc721Address][tokenId] = SellOffer({price: price, startedAt: startedAt, owner: owner});
+        erc721Markets[erc721Address][tokenId] = SellOffer({ price: price, startedAt: startedAt, owner: owner });
 
         emit SellOfferCreated(owner, erc721Address, tokenId, startedAt, price);
     }
 
-    function buy(address erc721Address, uint256 tokenId, uint128 amount)
-        external
-        virtual
-        whenNotPaused
-        isInWhitelist(msg.sender)
-    {
+    function buy(address erc721Address, uint256 tokenId, uint128 amount) external virtual whenNotPaused isInWhitelist(msg.sender) {
         SellOffer memory sellOffer = erc721Markets[erc721Address][tokenId];
 
         uint128 startedAt = sellOffer.startedAt;
@@ -159,19 +132,11 @@ abstract contract TossMarketBase is
         cancelSellOffer(erc721Address, tokenId, true);
     }
 
-    function cancelWhenPaused(address erc721Address, uint256 tokenId)
-        external
-        whenPaused
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function cancelWhenPaused(address erc721Address, uint256 tokenId) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) {
         cancelSellOffer(erc721Address, tokenId, false);
     }
 
-    function get(address erc721Address, uint256 tokenId)
-        external
-        view
-        returns (address owner, uint256 price, uint256 startedAt)
-    {
+    function get(address erc721Address, uint256 tokenId) external view returns (address owner, uint256 price, uint256 startedAt) {
         SellOffer memory sellOffer = erc721Markets[erc721Address][tokenId];
         uint128 startedAt_ = sellOffer.startedAt;
         require(onSell(startedAt_), "not on sale");
@@ -202,7 +167,7 @@ abstract contract TossMarketBase is
     }
 
     function priceMinusCut(uint16 marketCut_, uint256 price) internal pure returns (uint256) {
-        return price - (price * marketCut_ / 10000);
+        return price - (price * marketCut_ / 10_000);
     }
 
     /**

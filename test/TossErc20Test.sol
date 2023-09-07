@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 import "./DeployWithProxyUtil.sol";
 
 contract TossErc20Test is Test {
@@ -19,6 +19,18 @@ contract TossErc20Test is Test {
         assertEq(erc20.name(), "Erc20 Test");
         assertEq(erc20.symbol(), "E20T");
         assertEq(erc20.totalSupply(), uint256(amount) * 1 ether);
+    }
+
+    function test_transfer() public {
+        uint64 amount = 10;
+        TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
+
+        assertEq(erc20.balanceOf(owner), amount * 1 ether);
+        uint256 transferAmount = 1 ether;
+        erc20.transfer(alice, transferAmount);
+
+        assertEq(erc20.balanceOf(owner), amount * 1 ether - transferAmount);
+        assertEq(erc20.balanceOf(alice), transferAmount);
     }
 
     // function test_mintOne() public {
