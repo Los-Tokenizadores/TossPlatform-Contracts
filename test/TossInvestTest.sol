@@ -1,19 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import { Test } from "forge-std/Test.sol";
-import "./DeployWithProxyUtil.sol";
+import "./BaseTest.sol";
 
-contract TossInvestTest is Test {
-    address owner = makeAddr("owner");
-    address alice = makeAddr("alice");
-    address bob = makeAddr("bob");
-
-    function setUp() public {
-        vm.deal(owner, 1000 ether);
-        vm.startPrank(owner);
-    }
-
+contract TossInvestTest is BaseTest {
     function test_initialization() public {
         uint64 amount = 10;
         string memory uri = "uritest";

@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "../Interfaces/ITossSellErc721.sol";
-import "./TossErc721MarketBase.sol";
+import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
+import { TossErc721MarketBase } from "./TossErc721MarketBase.sol";
 
 abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-
-    CountersUpgradeable.Counter private _tokenIdCounter;
+    uint256 private _nextTokenId;
     uint256 public nonce;
     uint256[] internal rangeOfGene;
 
@@ -42,35 +39,29 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         }
     }
 
-    function getErc721Data(uint256 _id) public view returns (uint256) {
-        require(_exists(_id), "Token not exist");
-        return erc721Genes[_id];
+    function getErc721Data(uint256 tokenId) public view returns (uint256) {
+        require(_ownerOf(tokenId) != address(0), "Token not exist");
+        return erc721Genes[tokenId];
     }
 
-    function sellErc721(address _owner, uint8 _amount) external override onlyRole(MINTER_ROLE) {
+    function sellErc721(address _owner, uint8 _amount) external onlyRole(MINTER_ROLE) {
         require(rangeOfGene.length >= _amount, "Insufficient genes to mint");
         for (uint8 i; i < _amount;) {
             uint256 index = _randomGeneIndex();
             require(index < rangeOfGene.length, "index of gene out of range");
             uint256 gene = rangeOfGene[index];
 
-            uint256 id = _tokenIdCounter.current();
-            _tokenIdCounter.increment();
-            _safeMint(_owner, id);
+            uint256 tokenId = _nextTokenId++;
+            _safeMint(_owner, tokenId);
 
-            erc721Genes[id] = gene;
+            erc721Genes[tokenId] = gene;
             _remove(index);
 
-            emit Created(_owner, id, gene);
+            emit Created(_owner, tokenId, gene);
             unchecked {
                 ++i;
             }
         }
-    }
-
-    function _burn(uint256 tokenId) internal override {
-        super._burn(tokenId);
-        delete erc721Genes[tokenId];
     }
 
     function _randomGeneIndex() private returns (uint256) {
@@ -87,11 +78,4 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         rangeOfGene[_index] = rangeOfGene[rangeOfGene.length - 1];
         rangeOfGene.pop();
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }

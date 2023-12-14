@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "./Bases/TossErc721MarketBase.sol";
+import { TossErc721MarketBase } from "./Bases/TossErc721MarketBase.sol";
 
 contract TossErc721MarketV1 is TossErc721MarketBase {
     event Created(address indexed account, uint256 indexed tokenId);
@@ -18,5 +18,9 @@ contract TossErc721MarketV1 is TossErc721MarketBase {
     function safeMint(address to, uint256 id) public onlyRole(MINTER_ROLE) {
         _safeMint(to, id);
         emit Created(to, id);
+    }
+
+    function _update(address to, uint256 tokenId, address auth) internal virtual override whenNotPaused returns (address) {
+        return super._update(to, tokenId, auth);
     }
 }

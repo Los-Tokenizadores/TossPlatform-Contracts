@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "./Bases/TossErc20Base.sol";
+import { TossErc20Base } from "./Bases/TossErc20Base.sol";
 
 contract TossErc20V1 is TossErc20Base {
     /// @custom:oz-upgrades-unsafe-allow constructor

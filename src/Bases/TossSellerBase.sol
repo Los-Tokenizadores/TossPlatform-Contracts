@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
-import "./TossUUPSUpgradeable.sol";
-import "../Interfaces/ITossSellErc721.sol";
-import "./TossWhitelistClient.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
+import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
+import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 
 abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
@@ -169,11 +169,4 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         require(newPercent >= 0 && newPercent <= 10_000);
         convertToErc20Cut = newPercent;
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }

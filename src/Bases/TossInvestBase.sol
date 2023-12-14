@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "./TossUUPSUpgradeable.sol";
-import "./TossWhitelistClient.sol";
-import "../TossErc721MarketV1.sol";
-import "../TossUpgradeableProxy.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
+import { TossWhitelistClient } from "./TossWhitelistClient.sol";
+import { TossErc721MarketV1 } from "../TossErc721MarketV1.sol";
+import { TossUpgradeableProxy } from "../TossUpgradeableProxy.sol";
 
 abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
@@ -104,7 +104,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function setErc721Implementation(TossErc721MarketV1 newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(IERC165Upgradeable(address(newImplementation)).supportsInterface(type(IERC721Upgradeable).interfaceId), "Contract does not support IERC721Upgradeable");
+        require(IERC165(address(newImplementation)).supportsInterface(type(IERC721).interfaceId), "Contract does not support IERC721");
         erc721Implementation = newImplementation;
     }
 
@@ -365,11 +365,4 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
         projectInfo.lastIndex = i;
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }

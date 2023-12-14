@@ -1,19 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import { Test } from "forge-std/Test.sol";
-import "./DeployWithProxyUtil.sol";
+import "./BaseTest.sol";
 
-contract TossErc721Test is Test {
-    address owner = makeAddr("owner");
-    address alice = makeAddr("alice");
-    address bob = makeAddr("bob");
-
-    function setUp() public {
-        vm.deal(owner, 1000 ether);
-        vm.startPrank(owner);
-    }
-
+contract TossErc721Test is BaseTest {
     function test_initializationGene() public {
         string memory name = "Erc 721 Gene";
         string memory symbol = "Erc 721 Symbol";

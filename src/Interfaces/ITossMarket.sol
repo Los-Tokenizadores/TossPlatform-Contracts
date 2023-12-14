@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-interface ITossMarket is IERC721ReceiverUpgradeable {
-    function create(uint256 tokenId, uint128 price, address owner) external;
+interface ITossMarket is IERC721Receiver {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) external;
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "./Bases/TossErc721GeneBase.sol";
+import { TossErc721GeneBase } from "./Bases/TossErc721GeneBase.sol";
 
 contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
     mapping(uint256 => uint256) private uniqueGene;

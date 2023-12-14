@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "./TossUUPSUpgradeable.sol";
-import "./TossWhitelistClient.sol";
+import { ERC20BurnableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import { ERC20PausableUpgradeable, ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
+import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 
-abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20BurnableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
+abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -21,7 +20,7 @@ abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20B
     function __TossErc20Base_init(string memory name, string memory symbol, uint64 amount) public initializer {
         __ERC20_init(name, symbol);
         __ERC20Burnable_init();
-        __Pausable_init();
+        __ERC20Pausable_init();
         __AccessControl_init();
         __TossUUPSUpgradeable_init();
 
@@ -34,6 +33,10 @@ abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20B
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
+
+    function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+        super._update(from, to, value);
+    }
 
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
@@ -54,15 +57,4 @@ abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20B
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
-
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override whenNotPaused isInWhitelist(to) {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }

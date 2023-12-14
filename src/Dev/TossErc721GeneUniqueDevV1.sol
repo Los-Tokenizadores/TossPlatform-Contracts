@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "../TossErc721GeneUniqueV1.sol";
+import { TossErc721GeneUniqueV1 } from "../TossErc721GeneUniqueV1.sol";
 
 contract TossErc721GeneUniqueDevV1 is TossErc721GeneUniqueV1 {
     /// @custom:oz-upgrades-unsafe-allow constructor

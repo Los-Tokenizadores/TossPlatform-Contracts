@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "./TossUUPSUpgradeable.sol";
-import "../Interfaces/ITossMarket.sol";
-import "./TossWhitelistClient.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
+import { ITossMarket } from "../Interfaces/ITossMarket.sol";
+import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 
 abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;
@@ -32,7 +32,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     event SellOfferCreated(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price);
 
-    event SellOfferSuccessful(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price, address winner);
+    event SellOfferSold(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price, address buyer);
 
     event SellOfferCancelled(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt);
 
@@ -96,7 +96,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         marketCut = cut;
     }
 
-    function create(uint256 tokenId, uint128 price, address owner) public virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) public virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
         address erc721Address = msg.sender;
         require(IERC721(erc721Address).ownerOf(tokenId) == owner, "Not token owner");
 
@@ -125,7 +125,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         IERC20(erc20).safeTransfer(owner, priceMinusCut(marketCut, price));
         IERC721(erc721Address).safeTransferFrom(address(this), msg.sender, tokenId);
 
-        emit SellOfferSuccessful(owner, erc721Address, tokenId, startedAt, price, msg.sender);
+        emit SellOfferSold(owner, erc721Address, tokenId, startedAt, price, msg.sender);
     }
 
     function cancel(address erc721Address, uint256 tokenId) external {
@@ -136,17 +136,18 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         cancelSellOffer(erc721Address, tokenId, false);
     }
 
-    function get(address erc721Address, uint256 tokenId) external view returns (address owner, uint256 price, uint256 startedAt) {
+    function get(address erc721Address, uint256 tokenId) external view returns (address owner, uint256 price, uint128 startedAt) {
         SellOffer memory sellOffer = erc721Markets[erc721Address][tokenId];
-        uint128 startedAt_ = sellOffer.startedAt;
-        require(onSell(startedAt_), "not on sale");
-        return (sellOffer.owner, sellOffer.price, startedAt_);
+        startedAt = sellOffer.startedAt;
+        require(onSell(startedAt), "not on sale");
+        owner = sellOffer.owner;
+        price = sellOffer.price;
     }
 
-    function getPrice(address erc721Address, uint256 tokenId) external view returns (uint256) {
+    function getPrice(address erc721Address, uint256 tokenId) external view returns (uint256 price) {
         SellOffer memory sellOffer = erc721Markets[erc721Address][tokenId];
         require(onSell(sellOffer.startedAt), "not on sale");
-        return sellOffer.price;
+        price = sellOffer.price;
     }
 
     function cancelSellOffer(address erc721Address, uint256 tokenId, bool validateOwner) internal {
@@ -169,11 +170,4 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     function priceMinusCut(uint16 marketCut_, uint256 price) internal pure returns (uint256) {
         return price - (price * marketCut_ / 10_000);
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }

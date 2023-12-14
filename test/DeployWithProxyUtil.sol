@@ -1,23 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "../src/TossErc20V1.sol";
-import "../src/TossErc721GeneV1.sol";
-import "../src/TossErc721GeneUniqueV1.sol";
-import "../src/TossErc721MarketV1.sol";
-import "../src/TossExchangeTierV1.sol";
-import "../src/TossExchangeV1.sol";
-import "../src/TossInvestV1.sol";
-import "../src/TossMarketV1.sol";
-import "../src/TossSellerV1.sol";
-import "../src/TossWhitelistV1.sol";
-import "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { TossErc20V1, TossErc20Base } from "../src/TossErc20V1.sol";
+import { TossErc721GeneV1 } from "../src/TossErc721GeneV1.sol";
+import { TossErc721GeneUniqueV1 } from "../src/TossErc721GeneUniqueV1.sol";
+import { TossErc721MarketV1 } from "../src/TossErc721MarketV1.sol";
+import { TossExchangeTierV1 } from "../src/TossExchangeTierV1.sol";
+import { TossExchangeV1 } from "../src/TossExchangeV1.sol";
+import { TossInvestV1 } from "../src/TossInvestV1.sol";
+import { TossMarketV1 } from "../src/TossMarketV1.sol";
+import { TossSellerV1 } from "../src/TossSellerV1.sol";
+import { TossWhitelistV1 } from "../src/TossWhitelistV1.sol";
+import { TossUpgradeableProxy } from "../src/TossUpgradeableProxy.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 
 library DeployWithProxyUtil {
     using SafeERC20 for IERC20;
 
     function tossErc20V1(string memory name, string memory symbol, uint64 amount) internal returns (TossErc20V1) {
-        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc20V1()), abi.encodeCall(TossErc20V1.__TossErc20V1_init, (name, symbol,  amount)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc20V1()), abi.encodeCall(TossErc20V1.__TossErc20V1_init, (name, symbol, amount)));
 
         return TossErc20V1(address(proxy));
     }
@@ -60,8 +61,9 @@ library DeployWithProxyUtil {
         uint256 internalMinAmount,
         uint64 rate
     ) internal returns (TossExchangeV1) {
-        TossUpgradeableProxy proxy =
-        new TossUpgradeableProxy(address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, rate)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(
+            address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, rate))
+        );
 
         return TossExchangeV1(address(proxy));
     }
@@ -74,8 +76,10 @@ library DeployWithProxyUtil {
         uint64 rate,
         uint64 year
     ) internal returns (TossExchangeTierV1) {
-        TossUpgradeableProxy proxy =
-        new TossUpgradeableProxy(address(new TossExchangeTierV1()), abi.encodeCall(TossExchangeTierV1.__TossExchangeTierV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, rate, year)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(
+            address(new TossExchangeTierV1()),
+            abi.encodeCall(TossExchangeTierV1.__TossExchangeTierV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, rate, year))
+        );
 
         return TossExchangeTierV1(address(proxy));
     }
@@ -93,8 +97,9 @@ library DeployWithProxyUtil {
         uint16 platformCut,
         string memory erc721baseUri
     ) internal returns (TossInvestV1) {
-        TossUpgradeableProxy proxy =
-        new TossUpgradeableProxy(address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20,erc721Implementation,platformAddress,platformCut,erc721baseUri)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(
+            address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, platformCut, erc721baseUri))
+        );
 
         return TossInvestV1(address(proxy));
     }

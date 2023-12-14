@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "./Bases/TossWhitelistBase.sol";
+import { TossWhitelistBase } from "./Bases/TossWhitelistBase.sol";
 
 contract TossWhitelistV1 is TossWhitelistBase {
     /// @custom:oz-upgrades-unsafe-allow constructor
