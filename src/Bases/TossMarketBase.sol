@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -83,8 +84,8 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function withdrawBalance(uint256 amount) external onlyRole(EXTRACT_ROLE) {
-        require(amount <= IERC20(erc20).balanceOf(address(this)), "insufficient balance");
-        IERC20(erc20).safeTransfer(erc20BankAddress, amount);
+        require(amount <= erc20.balanceOf(address(this)), "insufficient balance");
+        erc20.safeTransfer(erc20BankAddress, amount);
     }
 
     function getMarketCut() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (uint16) {
@@ -107,7 +108,25 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         emit SellOfferCreated(owner, erc721Address, tokenId, startedAt, price);
     }
 
-    function buy(address erc721Address, uint256 tokenId, uint128 amount) external virtual whenNotPaused isInWhitelist(msg.sender) {
+    function buy(address erc721Address, uint256 tokenId, uint128 price) external virtual whenNotPaused isInWhitelist(msg.sender) {
+        buyInternal(erc721Address, tokenId, price);
+    }
+
+    function buyWithPermit(
+        address erc721Address,
+        uint256 tokenId,
+        uint128 price,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external isInWhitelist(msg.sender) {
+        IERC20Permit(address(erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        buyInternal(erc721Address, tokenId, price);
+    }
+
+    function buyInternal(address erc721Address, uint256 tokenId, uint128 buyPrice) private {
         SellOffer memory sellOffer = erc721Markets[erc721Address][tokenId];
 
         uint128 startedAt = sellOffer.startedAt;
@@ -117,12 +136,12 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         require(msg.sender != owner, "owner is trying to buy his own");
 
         uint128 price = sellOffer.price;
-        require(price == amount, "price is not the same");
+        require(price == buyPrice, "price is not the same");
 
         delete erc721Markets[erc721Address][tokenId];
 
-        IERC20(erc20).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(erc20).safeTransfer(owner, priceMinusCut(marketCut, price));
+        erc20.safeTransferFrom(msg.sender, address(this), price);
+        erc20.safeTransfer(owner, priceMinusCut(marketCut, price));
         IERC721(erc721Address).safeTransferFrom(address(this), msg.sender, tokenId);
 
         emit SellOfferSold(owner, erc721Address, tokenId, startedAt, price, msg.sender);

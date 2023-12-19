@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { TossErc20Base } from "./TossErc20Base.sol";
@@ -82,7 +83,17 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         _convertToInternal(externalAmount, externalAmount * rate / 10_000);
     }
 
+    function convertToInternalWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
+        IERC20Permit(address(externalErc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        _convertToInternal(externalAmount, externalAmount * rate / 10_000);
+    }
+
     function convertToExternal(uint128 internalAmount) public virtual {
+        _convertToExternal(internalAmount * 10_000 / rate, internalAmount);
+    }
+
+    function convertToExternalWithPermit(uint128 internalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
+        IERC20Permit(address(internalErc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         _convertToExternal(internalAmount * 10_000 / rate, internalAmount);
     }
 

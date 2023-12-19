@@ -91,15 +91,15 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function buyErc721(ITossSellErc721 erc721, uint8 amount) external isInWhitelist(msg.sender) {
-        _buyErc721(erc721, amount);
+        buyErc721Internal(erc721, amount);
     }
 
     function buyErc721WithPermit(ITossSellErc721 erc721, uint8 buyAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
         IERC20Permit(address(erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
-        _buyErc721(erc721, buyAmount);
+        buyErc721Internal(erc721, buyAmount);
     }
 
-    function _buyErc721(ITossSellErc721 erc721, uint8 amount) private {
+    function buyErc721Internal(ITossSellErc721 erc721, uint8 amount) private {
         require(address(erc721) != address(0), "erc721 address invalid");
         require(amount > 0, "create amount needs to be greater than 0");
 
@@ -124,6 +124,15 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function convertToOffchain(uint256 erc20Amount) external isInWhitelist(msg.sender) {
+        convertToOffchainInternal(erc20Amount);
+    }
+
+    function convertToOffchainWithPermit(uint256 erc20Amount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
+        IERC20Permit(address(erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        convertToOffchainInternal(erc20Amount);
+    }
+
+    function convertToOffchainInternal(uint256 erc20Amount) private {
         uint256 balance = erc20.balanceOf(msg.sender);
         require(balance >= erc20Amount, "insufficient balance");
         require(erc20Amount >= convertToOffchainMinAmount, "less than the minimum conversion value");

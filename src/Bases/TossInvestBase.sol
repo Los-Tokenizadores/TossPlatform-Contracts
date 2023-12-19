@@ -5,6 +5,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
@@ -254,6 +255,15 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function invest(uint256 projectId, uint16 amount) external isInWhitelist(msg.sender) {
+        investInternal(projectId, amount);
+    }
+
+    function investWithPermit(uint256 projectId, uint16 investAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
+        IERC20Permit(address(erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        investInternal(projectId, investAmount);
+    }
+
+    function investInternal(uint256 projectId, uint16 amount) private {
         require(projectId < projects.length, "project not exist");
         ProjectInfo storage projectInfo = projects[projectId];
         require(projectInfo.confirmed, "project not confirmed");
@@ -332,10 +342,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
         TossErc721MarketV1 erc721;
         if (projectInfo.erc721Address == address(0)) {
-            TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-                address(erc721Implementation), 
-                abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol))
-            );
+            TossUpgradeableProxy proxy =
+                new TossUpgradeableProxy(address(erc721Implementation), abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol)));
             projectInfo.erc721Address = address(proxy);
             erc721 = TossErc721MarketV1(address(proxy));
             if (bytes(erc721baseUri).length > 0) {

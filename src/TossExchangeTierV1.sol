@@ -72,7 +72,17 @@ contract TossExchangeTierV1 is TossExchangeBase {
         return consume + toConsume <= limit;
     }
 
-    function convertToInternal(uint128 amount) public virtual override {
+    function convertToInternal(uint128 externalAmount) public virtual override {
+        consumeLimit(externalAmount);
+        super.convertToInternal(externalAmount);
+    }
+
+    function convertToInternalWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual override {
+        consumeLimit(externalAmount);
+        super.convertToInternalWithPermit(externalAmount, amount, deadline, v, r, s);
+    }
+
+    function consumeLimit(uint128 amount) private {
         Balance storage userBalance = userToBalance[msg.sender];
         if (userBalance.lastTransactionYear < currentYear) {
             userBalance.lastTransactionYear = currentYear;
@@ -80,6 +90,5 @@ contract TossExchangeTierV1 is TossExchangeBase {
         }
         require(hasLimit(amount, userBalance.consume, tiers[userBalance.tier]), "user reach anual limit");
         userBalance.consume = userBalance.consume + amount;
-        super.convertToInternal(amount);
     }
 }
