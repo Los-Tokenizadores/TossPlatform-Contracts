@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
-import "./TossUUPSUpgradeable.sol";
-import "./TossErc20Base.sol";
-import "../Interfaces/ITossExchange.sol";
-import "./TossWhitelistClient.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
+import { TossErc20Base } from "./TossErc20Base.sol";
+import { ITossExchange } from "../Interfaces/ITossExchange.sol";
+import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 
 abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, AccessControlUpgradeable, TossUUPSUpgradeable {
     using SafeERC20 for IERC20;

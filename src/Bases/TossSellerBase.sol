@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { SafeERC20, IERC20, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
@@ -90,21 +90,30 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         erc20.safeTransfer(erc20BankAddress, amount);
     }
 
-    function buyErc721(ITossSellErc721 erc721, uint8 amount_) external isInWhitelist(msg.sender) {
+    function buyErc721(ITossSellErc721 erc721, uint8 amount) external isInWhitelist(msg.sender) {
+        _buyErc721(erc721, amount);
+    }
+
+    function buyErc721WithPermit(ITossSellErc721 erc721, uint8 buyAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
+        IERC20Permit(address(erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        _buyErc721(erc721, buyAmount);
+    }
+
+    function _buyErc721(ITossSellErc721 erc721, uint8 amount) private {
         require(address(erc721) != address(0), "erc721 address invalid");
-        require(amount_ > 0, "create amount needs to be greater than 0");
+        require(amount > 0, "create amount needs to be greater than 0");
 
         Erc721SellInfo memory erc721Sell = erc721Sells[erc721];
         require(erc721Sell.price > 0, "erc721 not in sell in this seller");
-        require(amount_ <= erc721Sell.maxAmount, "create amount needs to be less than assigned limit");
+        require(amount <= erc721Sell.maxAmount, "create amount needs to be less than assigned limit");
 
-        uint256 price = uint256(erc721Sell.price * amount_);
+        uint256 price = uint256(erc721Sell.price * amount);
         uint256 balance = erc20.balanceOf(msg.sender);
         require(balance >= price, "insufficient balance to transaction");
 
         erc20.safeTransferFrom(msg.sender, address(this), price);
 
-        erc721.sellErc721(msg.sender, amount_);
+        erc721.sellErc721(msg.sender, amount);
     }
 
     function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external onlyRole(DEFAULT_ADMIN_ROLE) {
