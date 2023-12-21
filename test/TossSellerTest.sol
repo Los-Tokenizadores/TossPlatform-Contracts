@@ -9,14 +9,14 @@ contract TossSellerTest is BaseTest {
         uint64 amount = 10;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
-        assertEq(address(seller.erc20()), address(erc20));
+        assertEq(address(seller.getErc20()), address(erc20));
     }
 
     function test_buyErc721() public {
         uint64 amount = 10;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
-        assertEq(address(seller.erc20()), address(erc20));
+        assertEq(address(seller.getErc20()), address(erc20));
 
         TossErc721GeneV1 erc721 = DeployWithProxyUtil.tossErc721GeneV1("Erc721 Test", "E721T");
 
@@ -34,7 +34,7 @@ contract TossSellerTest is BaseTest {
         uint64 amount = 10;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
-        assertEq(address(seller.erc20()), address(erc20));
+        assertEq(address(seller.getErc20()), address(erc20));
 
         TossErc721GeneV1 erc721 = DeployWithProxyUtil.tossErc721GeneV1("Erc721 Test", "E721T");
 
@@ -51,6 +51,6 @@ contract TossSellerTest is BaseTest {
         bytes32 digest = sigUtils.getTypedDataHash(permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
 
-        seller.buyErc721(erc721, 1, permit.value, permit.deadline, v, r, s);
+        seller.buyErc721WithPermit(erc721, 1, permit.value, permit.deadline, v, r, s);
     }
 }

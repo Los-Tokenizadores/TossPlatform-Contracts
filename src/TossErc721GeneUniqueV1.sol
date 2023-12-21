@@ -16,10 +16,12 @@ contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
     }
 
     function addGenes(uint256[] memory genes) external override onlyRole(MINTER_ROLE) {
+        TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
+
         for (uint256 i; i < genes.length;) {
             if (uniqueGene[genes[i]] == 0) {
                 uniqueGene[genes[i]] = 1;
-                rangeOfGene.push(genes[i]);
+                $.rangeOfGene.push(genes[i]);
             }
             unchecked {
                 ++i;

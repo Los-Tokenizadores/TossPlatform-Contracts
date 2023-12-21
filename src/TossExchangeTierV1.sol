@@ -42,13 +42,17 @@ contract TossExchangeTierV1 is TossExchangeBase {
     }
 
     function setYear(uint64 year) external virtual onlyRole(YEAR_ROLE) {
-        require(currentYear != year, "is the same year");
+        if (currentYear == year) {
+            revert("is the same year");
+        }
         currentYear = year;
         emit YearChanged(year);
     }
 
     function setTierLimit(uint8 tier, uint128 limit) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(tier > 0, "tier 0 needs to be limited to 0");
+        if (tier == 0) {
+            revert("tier 0 needs to be limited to 0");
+        }
         tiers[tier] = limit;
     }
 

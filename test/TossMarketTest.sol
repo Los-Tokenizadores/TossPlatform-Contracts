@@ -10,6 +10,6 @@ contract TossMarketTest is BaseTest {
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), cut);
 
-        assertEq(address(market.erc20()), address(erc20));
+        assertEq(address(market.getErc20()), address(erc20));
     }
 }

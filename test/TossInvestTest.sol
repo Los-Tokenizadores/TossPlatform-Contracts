@@ -11,8 +11,8 @@ contract TossInvestTest is BaseTest {
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossInvestV1 invest = DeployWithProxyUtil.tossInvestV1(IERC20(address(erc20)), erc721Implementation, alice, 1000, uri);
 
-        assertEq(address(invest.erc20()), address(erc20));
+        assertEq(address(invest.getErc20()), address(erc20));
         assertEq(address(invest.getErc721Implementation()), address(erc721Implementation));
-        assertEq(invest.erc721baseUri(), uri);
+        assertEq(invest.getErc721BaseUri(), uri);
     }
 }

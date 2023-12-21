@@ -27,14 +27,17 @@ abstract contract TossErc20Base is
         _disableInitializers();
     }
 
-    function __TossErc20Base_init(string memory name, string memory symbol, uint64 amount) public initializer {
+    function __TossErc20Base_init(string memory name, string memory symbol, uint64 amount) public onlyInitializing {
         __ERC20_init(name, symbol);
         __ERC20Burnable_init();
         __ERC20Pausable_init();
         __AccessControl_init();
         __ERC20Permit_init(name);
         __TossUUPSUpgradeable_init();
+        __TossErc20Base_init_unchained(amount);
+    }
 
+    function __TossErc20Base_init_unchained(uint64 amount) public onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
@@ -57,12 +60,8 @@ abstract contract TossErc20Base is
         _unpause();
     }
 
-    function getWhitelist() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
-        return whitelistAddress;
-    }
-
-    function setWhitelist(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        whitelistAddress = newAddress;
+    function setWhitelist(address newAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setWhitelist(newAddress);
     }
 
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {

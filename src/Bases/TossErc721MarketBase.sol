@@ -9,24 +9,39 @@ import { ITossMarket } from "../Interfaces/ITossMarket.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 
 abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable, ERC721PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
+    /// @custom:storage-location erc7201:tossplatform.storage.TossErc721MarketBase
+    struct TossErc721MarketBaseStorage {
+        address marketAddress;
+        string baseUri;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("tossplatform.storage.TossErc721MarketBase")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant TossErc721MarketBaseStorageLocation = 0x7632e33b12507a4855f6678ca0e8955963b6dfcb053a9dd74381736814525400;
+
+    function _getTossErc721MarketBaseStorage() private pure returns (TossErc721MarketBaseStorage storage $) {
+        assembly {
+            $.slot := TossErc721MarketBaseStorageLocation
+        }
+    }
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-
-    address public marketAddress;
-    string private baseUri;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function __TossErc721MarketBase_init(string memory name_, string memory symbol_) public initializer {
+    function __TossErc721MarketBase_init(string memory name_, string memory symbol_) public onlyInitializing {
         __ERC721_init(name_, symbol_);
         __ERC721Pausable_init();
         __AccessControl_init();
         __TossUUPSUpgradeable_init();
+        __TossErc721MarketBase_init_unchained();
+    }
 
+    function __TossErc721MarketBase_init_unchained() public onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
@@ -43,12 +58,8 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
         _unpause();
     }
 
-    function getWhitelist() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
-        return whitelistAddress;
-    }
-
-    function setWhitelist(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        whitelistAddress = newAddress;
+    function setWhitelist(address newAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setWhitelist(newAddress);
     }
 
     function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) whenNotPaused returns (address) {
@@ -58,15 +69,15 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
     // The following functions are overrides required by Solidity.
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return baseUri;
+        return _getTossErc721MarketBaseStorage().baseUri;
     }
 
     function getBaseUri() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
-        return baseUri;
+        return _baseURI();
     }
 
     function setBaseUri(string memory baseUri_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        baseUri = baseUri_;
+        _getTossErc721MarketBaseStorage().baseUri = baseUri_;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
@@ -74,14 +85,19 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
     }
 
     function createSellOffer(uint256 tokenId, uint128 price) external whenNotPaused {
-        require(marketAddress != address(0), "Market Address not set");
+        TossErc721MarketBaseStorage storage $ = _getTossErc721MarketBaseStorage();
+        require($.marketAddress != address(0), "Market Address not set");
         require(msg.sender == ownerOf(tokenId), "Not tokenId owner");
 
-        approve(marketAddress, tokenId);
-        ITossMarket(marketAddress).createSellOffer(tokenId, price, msg.sender);
+        approve($.marketAddress, tokenId);
+        ITossMarket($.marketAddress).createSellOffer(tokenId, price, msg.sender);
+    }
+
+    function getMarket() external view returns (address) {
+        return _getTossErc721MarketBaseStorage().marketAddress;
     }
 
     function setMarket(address _address) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        marketAddress = _address;
+        _getTossErc721MarketBaseStorage().marketAddress = _address;
     }
 }
