@@ -44,7 +44,7 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
         _getTossWhitelistBaseStorage().whitelist[address_] = enabled;
     }
 
-    function isInWhitelist(address address_) external view override returns (bool) {
+    function isInWhitelist(address address_) external view override returns (bool value) {
         return _getTossWhitelistBaseStorage().whitelist[address_];
     }
 }

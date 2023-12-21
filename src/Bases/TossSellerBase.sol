@@ -7,12 +7,13 @@ import { SafeERC20, IERC20, IERC20Permit } from "@openzeppelin/contracts/token/E
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
+import "../Interfaces/TossErrors.sol";
 
 abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossSellerBase
     struct TossSellerBaseStorage {
-        uint32 convertToOffchainRate;
         uint256 convertToOffchainMinAmount;
+        uint32 convertToOffchainRate;
         uint16 convertToOffchainCut;
         uint32 convertToErc20Rate;
         uint32 convertToErc20MinAmount;
@@ -59,7 +60,9 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function __TossSellerBase_init_unchained(IERC20 erc20_) public onlyInitializing {
-        require(address(erc20_) != address(0));
+        if (address(erc20_) == address(0)) {
+            revert TossAddressIsZero("erc20");
+        }
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
@@ -85,26 +88,27 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         _setWhitelist(newAddress);
     }
 
-    function getErc20() external view returns (IERC20) {
+    function getErc20() external view returns (IERC20 erc20) {
         return _getTossSellerBaseStorage().erc20;
     }
 
-    function getErc721Sells(ITossSellErc721 erc721) external view returns (Erc721SellInfo memory) {
+    function getErc721Sells(ITossSellErc721 erc721) external view returns (Erc721SellInfo memory info) {
         return _getTossSellerBaseStorage().erc721Sells[erc721];
     }
 
-    function getErc20BankAddress() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
+    function getErc20BankAddress() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address bankAddress) {
         return _getTossSellerBaseStorage().erc20BankAddress;
     }
 
     function setErc20BankAddress(address newAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newAddress != address(0));
+        if (newAddress == address(0)) {
+            revert TossAddressIsZero("bank");
+        }
         _getTossSellerBaseStorage().erc20BankAddress = newAddress;
     }
 
     function withdrawBalance(uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
-        require(amount <= $.erc20.balanceOf(address(this)), "insufficient balance");
         $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
 
@@ -119,26 +123,37 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     function buyErc721Internal(ITossSellErc721 erc721, uint8 amount) private {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
-        require(address(erc721) != address(0), "erc721 address invalid");
-        require(amount > 0, "create amount needs to be greater than 0");
+        if (address(erc721) == address(0)) {
+            revert TossAddressIsZero("erc721");
+        }
+        if (amount == 0) {
+            revert TossValueIsZero("amount");
+        }
 
         Erc721SellInfo memory erc721Sell = $.erc721Sells[erc721];
-        require(erc721Sell.price > 0, "erc721 not in sell in this seller");
-        require(amount <= erc721Sell.maxAmount, "create amount needs to be less than assigned limit");
+        if (erc721Sell.price == 0) {
+            revert TossSellerNotOnSell(address(erc721));
+        }
+        if (amount > erc721Sell.maxAmount) {
+            revert TossSellerBuyAmountGreatherThanMax(address(erc721), amount, erc721Sell.maxAmount);
+        }
 
         uint256 price = uint256(erc721Sell.price * amount);
-        uint256 balance = $.erc20.balanceOf(msg.sender);
-        require(balance >= price, "insufficient balance to transaction");
-
         $.erc20.safeTransferFrom(msg.sender, address(this), price);
 
         erc721.sellErc721(msg.sender, amount);
     }
 
     function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(address(erc721) != address(0), "invalid erc721 address");
-        require(maxAmount > 0, "maxAmount needs to be greater than 0");
-        require(maxAmount <= 40, "maxAmount needs to be less or equals than 40");
+        if (address(erc721) == address(0)) {
+            revert TossAddressIsZero("erc721");
+        }
+        if (maxAmount == 0) {
+            revert TossValueIsZero("maxAmount");
+        }
+        if (maxAmount > 40) {
+            revert TossSellerBuyMaxAmountExceeded(maxAmount, 40);
+        }
         _getTossSellerBaseStorage().erc721Sells[erc721] = Erc721SellInfo({ price: price, maxAmount: maxAmount });
     }
 
@@ -151,11 +166,17 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         convertToOffchainInternal(erc20Amount);
     }
 
+    error TossSellerNotOnSell(address erc721);
+    error TossSellerBuyAmountGreatherThanMax(address erc721, uint8 amount, uint8 max);
+    error TossSellerBuyMaxAmountExceeded(uint8 amount, uint256 max);
+    error TossSellConvertOffchainAmountLessThanMin(uint256 amount, uint256 min);
+    error TossSellConvertErc20AmountLessThanMin(uint32 amount, uint32 min);
+
     function convertToOffchainInternal(uint256 erc20Amount) private {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
-        uint256 balance = $.erc20.balanceOf(msg.sender);
-        require(balance >= erc20Amount, "insufficient balance");
-        require(erc20Amount >= $.convertToOffchainMinAmount, "less than the minimum conversion value");
+        if (erc20Amount < $.convertToOffchainMinAmount) {
+            revert TossSellConvertOffchainAmountLessThanMin(erc20Amount, $.convertToOffchainMinAmount);
+        }
 
         $.erc20.safeTransferFrom(msg.sender, address(this), erc20Amount);
 
@@ -167,69 +188,83 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     function convertToErc20(address user, uint32 offchainAmount) external onlyRole(CONVERT_ROLE) isInWhitelist(user) {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
-        require(user != address(0));
-        require(offchainAmount >= $.convertToErc20MinAmount, "less than the minimum conversion value");
+        if (user == address(0)) {
+            revert TossAddressIsZero("user");
+        }
+        if (offchainAmount < $.convertToErc20MinAmount) {
+            revert TossSellConvertErc20AmountLessThanMin(offchainAmount, $.convertToErc20MinAmount);
+        }
 
         uint256 erc20Amount = offchainAmount * (10 ** decimals) / $.convertToErc20Rate * (10_000 - $.convertToErc20Cut) / 10_000;
 
-        uint256 balance = $.erc20.balanceOf(address(this));
-        require(balance >= erc20Amount, "insufficient balance");
         $.erc20.safeTransfer(user, erc20Amount);
 
         emit ConvertToErc20(user, erc20Amount, offchainAmount);
     }
 
-    function getConvertToOffchainRate() external view returns (uint32) {
+    function getConvertToOffchainRate() external view returns (uint32 rate) {
         return _getTossSellerBaseStorage().convertToOffchainRate;
     }
 
     function setConvertToOffchainRate(uint32 newRate) external onlyRole(CONVERT_ROLE) {
-        require(newRate >= 1);
+        if (newRate == 0) {
+            revert TossValueIsZero("rate");
+        }
         _getTossSellerBaseStorage().convertToOffchainRate = newRate;
     }
 
-    function getConvertToOffchainMinAmount() external view returns (uint256) {
+    function getConvertToOffchainMinAmount() external view returns (uint256 minAmount) {
         return _getTossSellerBaseStorage().convertToOffchainMinAmount;
     }
 
     function setConvertToOffchainMinAmount(uint256 newAmount) external onlyRole(CONVERT_ROLE) {
-        require(newAmount >= 10 ** decimals);
+        if (newAmount < 10 ** decimals) {
+            revert TossValueIsZero("min amount");
+        }
         _getTossSellerBaseStorage().convertToOffchainMinAmount = newAmount;
     }
 
-    function getConvertToOffchainCut() external view returns (uint16) {
+    function getConvertToOffchainCut() external view returns (uint16 cut) {
         return _getTossSellerBaseStorage().convertToOffchainCut;
     }
 
-    function setConvertToOffchainCut(uint16 newPercent) external onlyRole(CONVERT_ROLE) {
-        require(newPercent >= 0 && newPercent <= 10_000);
-        _getTossSellerBaseStorage().convertToOffchainCut = newPercent;
+    function setConvertToOffchainCut(uint16 newCut) external onlyRole(CONVERT_ROLE) {
+        if (newCut > 10_000) {
+            revert TossCutOutOfRange(newCut);
+        }
+        _getTossSellerBaseStorage().convertToOffchainCut = newCut;
     }
 
-    function getConvertToErc20Rate() external view returns (uint32) {
+    function getConvertToErc20Rate() external view returns (uint32 rate) {
         return _getTossSellerBaseStorage().convertToErc20Rate;
     }
 
     function setConvertToErc20Rate(uint32 newRate) external onlyRole(CONVERT_ROLE) {
-        require(newRate >= 1);
+        if (newRate == 0) {
+            revert TossValueIsZero("rate");
+        }
         _getTossSellerBaseStorage().convertToErc20Rate = newRate;
     }
 
-    function getConvertToErc20MinAmount() external view returns (uint32) {
+    function getConvertToErc20MinAmount() external view returns (uint32 minAmount) {
         return _getTossSellerBaseStorage().convertToErc20MinAmount;
     }
 
     function setConvertToErc20MinAmount(uint32 newAmount) external onlyRole(CONVERT_ROLE) {
-        require(newAmount >= 1);
+        if (newAmount == 0) {
+            revert TossValueIsZero("min amount");
+        }
         _getTossSellerBaseStorage().convertToErc20MinAmount = newAmount;
     }
 
-    function getConvertToErc20Cut() external view returns (uint16) {
+    function getConvertToErc20Cut() external view returns (uint16 cut) {
         return _getTossSellerBaseStorage().convertToErc20Cut;
     }
 
-    function setConvertToErc20Cut(uint16 newPercent) external onlyRole(CONVERT_ROLE) {
-        require(newPercent >= 0 && newPercent <= 10_000);
-        _getTossSellerBaseStorage().convertToErc20Cut = newPercent;
+    function setConvertToErc20Cut(uint16 newCut) external onlyRole(CONVERT_ROLE) {
+        if (newCut > 10_000) {
+            revert TossCutOutOfRange(newCut);
+        }
+        _getTossSellerBaseStorage().convertToErc20Cut = newCut;
     }
 }

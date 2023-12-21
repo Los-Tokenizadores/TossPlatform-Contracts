@@ -21,6 +21,8 @@ contract TossExchangeTierV1 is TossExchangeBase {
 
     event YearChanged(uint64 year);
 
+    error TossExchangeTierYearLimitReach();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -28,9 +30,9 @@ contract TossExchangeTierV1 is TossExchangeBase {
 
     function __TossExchangeTierV1_init(
         IERC20 externalErc20_,
-        uint256 externalMinAmount_,
+        uint128 externalMinAmount_,
         TossErc20Base internalErc20_,
-        uint256 internalMinAmount_,
+        uint128 internalMinAmount_,
         uint64 rate_,
         uint64 year
     ) public initializer {
@@ -56,11 +58,11 @@ contract TossExchangeTierV1 is TossExchangeBase {
         tiers[tier] = limit;
     }
 
-    function getUserTier(address user) external view returns (uint8) {
+    function getUserTier(address user) external view returns (uint8 tier) {
         return userToBalance[user].tier;
     }
 
-    function getUserBalance(address user) external view returns (uint256) {
+    function getUserBalance(address user) external view returns (uint256 balance) {
         Balance memory userBalance = userToBalance[user];
         if (userBalance.lastTransactionYear == currentYear) {
             return userBalance.consume;
@@ -72,8 +74,8 @@ contract TossExchangeTierV1 is TossExchangeBase {
         userToBalance[user].tier = tier;
     }
 
-    function hasLimit(uint256 toConsume, uint128 consume, uint256 limit) private pure returns (bool) {
-        return consume + toConsume <= limit;
+    function limitReach(uint256 toConsume, uint128 consume, uint256 limit) private pure returns (bool) {
+        return consume + toConsume > limit;
     }
 
     function convertToInternal(uint128 externalAmount) public virtual override {
@@ -92,7 +94,9 @@ contract TossExchangeTierV1 is TossExchangeBase {
             userBalance.lastTransactionYear = currentYear;
             userBalance.consume = 0;
         }
-        require(hasLimit(amount, userBalance.consume, tiers[userBalance.tier]), "user reach anual limit");
+        if (limitReach(amount, userBalance.consume, tiers[userBalance.tier])) {
+            revert TossExchangeTierYearLimitReach();
+        }
         userBalance.consume = userBalance.consume + amount;
     }
 }

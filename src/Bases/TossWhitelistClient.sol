@@ -28,7 +28,7 @@ abstract contract TossWhitelistClient {
         _;
     }
 
-    function getWhitelist() external view returns (address) {
+    function getWhitelist() external view returns (address whitelistAddress) {
         return _getTossWhitelistClientStorage().whitelistAddress;
     }
 

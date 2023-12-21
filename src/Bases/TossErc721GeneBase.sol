@@ -21,9 +21,10 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
             $.slot := TossErc721GeneBaseStorageLocation
         }
     }
-    //TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
 
     event Created(address indexed account, uint256 indexed tokenId, uint256 indexed gene);
+
+    error TossErc721GeneNotEnoughGenes(uint256 totalGenes, uint8 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -37,14 +38,12 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
 
     function __TossErc721GeneBase_init_unchained() public onlyInitializing { }
 
-    function getRangeGeneLength() external view returns (uint256) {
-        TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        return $.rangeOfGene.length;
+    function getRangeGeneLength() external view returns (uint256 genesLength) {
+        return _getTossErc721GeneBaseStorage().rangeOfGene.length;
     }
 
-    function getRangeGene() external view onlyRole(MINTER_ROLE) returns (uint256[] memory) {
-        TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        return $.rangeOfGene;
+    function getRangeGene() external view onlyRole(MINTER_ROLE) returns (uint256[] memory genes) {
+        return _getTossErc721GeneBaseStorage().rangeOfGene;
     }
 
     function addGenes(uint256[] memory genes) external virtual onlyRole(MINTER_ROLE) {
@@ -57,20 +56,19 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         }
     }
 
-    function getErc721Data(uint256 tokenId) public view returns (uint256) {
-        TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        require(_ownerOf(tokenId) != address(0), "Token not exist");
-        return $.erc721Genes[tokenId];
+    function getErc721Gene(uint256 tokenId) external view returns (uint256 gene) {
+        _requireOwned(tokenId);
+        return _getTossErc721GeneBaseStorage().erc721Genes[tokenId];
     }
 
     function sellErc721(address _owner, uint8 _amount) external onlyRole(MINTER_ROLE) {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        require($.rangeOfGene.length >= _amount, "Insufficient genes to mint");
+        if (_amount > $.rangeOfGene.length) {
+            revert TossErc721GeneNotEnoughGenes($.rangeOfGene.length, _amount);
+        }
         for (uint8 i; i < _amount;) {
-            uint256 index = _randomGeneIndex();
-            require(index < $.rangeOfGene.length, "index of gene out of range");
+            uint256 index = _randomGeneIndex($);
             uint256 gene = $.rangeOfGene[index];
-
             uint256 tokenId = $.nextTokenId++;
             _safeMint(_owner, tokenId);
 
@@ -84,11 +82,11 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         }
     }
 
-    function _randomGeneIndex() private returns (uint256) {
-        TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
+    function _randomGeneIndex(TossErc721GeneBaseStorage storage $) private returns (uint256) {
         uint256 randomN = uint256(blockhash(block.number));
         uint256 index = uint256(keccak256(abi.encodePacked(randomN, $.nonce, block.prevrandao))) % $.rangeOfGene.length;
         $.nonce++;
+        assert(index < $.rangeOfGene.length);
         return index;
     }
 

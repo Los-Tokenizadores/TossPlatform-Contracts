@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "./BaseTest.sol";
 
 contract TossExchangeTest is BaseTest {
-    function test_initialization(uint256 externalMinAmount, uint256 internalMinAmount, uint64 rate) public {
+    function test_initialization(uint128 externalMinAmount, uint128 internalMinAmount, uint64 rate) public {
         vm.assume(externalMinAmount > 0);
         vm.assume(internalMinAmount > 0);
         vm.assume(rate > 0);
@@ -18,7 +18,7 @@ contract TossExchangeTest is BaseTest {
         assertEq(address(exchange.getInternalErc20()), address(internalErc20));
     }
 
-    function test_initializationTier(uint256 externalMinAmount, uint256 internalMinAmount, uint64 rate) public {
+    function test_initializationTier(uint128 externalMinAmount, uint128 internalMinAmount, uint64 rate) public {
         vm.assume(externalMinAmount > 0);
         vm.assume(internalMinAmount > 0);
         vm.assume(rate > 0);

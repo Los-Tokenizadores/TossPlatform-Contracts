@@ -12,6 +12,7 @@ import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 import { TossErc721MarketV1 } from "../TossErc721MarketV1.sol";
 import { TossUpgradeableProxy } from "../TossUpgradeableProxy.sol";
+import "../Interfaces/TossErrors.sol";
 
 abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossInvestBase
@@ -36,10 +37,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     using SafeERC20 for IERC20;
-
-    error Erc721AddressNotExist(address);
-    error InvalidAddressIsEmpty(string);
-    error CutOutOfRange(uint16);
 
     uint256 constant GAS_EXTRA_RETURN = 100_000;
     uint256 constant GAS_EXTRA_MINT = 500_000;
@@ -68,6 +65,24 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     event ProjectErc721Created(uint256 indexed projectId, address indexed erc721Address, address implementationAddress);
     event ProjectFinished(uint256 indexed projectId);
 
+    error TossInvestProjectNotFoundByErc721(address erc721);
+    error TossInvestInvalidErc721Implementation(TossErc721MarketV1 implementation);
+    error TossInvestProjectNotExist(uint256 projectId);
+    error TossInvestProjectTargetAmountIsZero();
+    error TossInvestProjectTargetIsGreaterThanMax(uint32 targetAmount, uint32 maxAmount);
+    error TossInvestProjectPriceIsZero();
+    error TossInvestProjectStartAtLessThanCurrentDate(uint64 startAt, uint256 currentDate);
+    error TossInvestProjectStartAtGreaterThanFinishAt(uint64 startAt, uint64 finishAt);
+    error TossInvestProjectIsConfirmed();
+    error TossInvestProjectIsNotConfirmed();
+    error TossInvestProjectNotStarted();
+    error TossInvestProjectNotFinished();
+    error TossInvestProjectIsFinished();
+    error TossInvestProjectFullInvested();
+    error TossInvestNotProjectOwner(uint256 projectId);
+    error TossInvestAlreadyAllInvestmentReturned();
+    error TossInvestAlreadyAllErc721Minted();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -94,16 +109,16 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         string memory erc721baseUri_
     ) public onlyInitializing {
         if (address(erc20_) == address(0)) {
-            revert InvalidAddressIsEmpty("erc20");
+            revert TossAddressIsZero("erc20");
         }
         if (address(erc721Implementation_) == address(0)) {
-            revert InvalidAddressIsEmpty("erc721Implementation");
+            revert TossAddressIsZero("erc721Implementation");
         }
         if (platformAddress_ == address(0)) {
-            revert InvalidAddressIsEmpty("platformAddress");
+            revert TossAddressIsZero("platformAddress");
         }
         if (platformCut_ > 10_000) {
-            revert CutOutOfRange(platformCut_);
+            revert TossCutOutOfRange(platformCut_);
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -126,20 +141,22 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         _setWhitelist(newAddress);
     }
 
-    function getErc721Implementation() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
+    function getErc721Implementation() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (address implementation) {
         return address(_getTossInvestBaseStorage().erc721Implementation);
     }
 
     function setErc721Implementation(TossErc721MarketV1 newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(IERC165(address(newImplementation)).supportsInterface(type(IERC721).interfaceId), "Contract does not support IERC721");
+        if (!IERC165(address(newImplementation)).supportsInterface(type(IERC721).interfaceId)) {
+            revert TossInvestInvalidErc721Implementation(newImplementation);
+        }
         _getTossInvestBaseStorage().erc721Implementation = newImplementation;
     }
 
-    function getErc20() external view returns (IERC20) {
+    function getErc20() external view returns (IERC20 erc20) {
         return _getTossInvestBaseStorage().erc20;
     }
 
-    function getErc721BaseUri() external view returns (string memory) {
+    function getErc721BaseUri() external view returns (string memory erc721BaseUri) {
         return _getTossInvestBaseStorage().erc721BaseUri;
     }
 
@@ -147,13 +164,15 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         _getTossInvestBaseStorage().erc721BaseUri = erc721BaseUri_;
     }
 
-    function projectAmount() external view returns (uint256) {
+    function projectAmount() external view returns (uint256 amount) {
         return _getTossInvestBaseStorage().projects.length;
     }
 
     function getProjectInternal(uint256 projectId) internal view returns (ProjectInfo memory info, uint256 invested, uint256 inversors) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        require(projectId < $.projects.length, "project not exist");
+        if (projectId >= $.projects.length) {
+            revert TossInvestProjectNotExist(projectId);
+        }
         info = $.projects[projectId];
         invested = $.projectInvestors[projectId].length;
         inversors = countUniqueAddresses($.projectInvestors[projectId]);
@@ -163,13 +182,16 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         return getProjectInternal(projectId);
     }
 
-    function getProjectInvestors(uint256 projectId, uint256 index) external view returns (address) {
+    function getProjectInvestor(uint256 projectId, uint256 index) external view returns (address investorAddress) {
         return _getTossInvestBaseStorage().projectInvestors[projectId][index];
     }
 
     function getProjectByErc721Address(address erc721Address) external view returns (uint256 projectId, ProjectInfo memory info, uint256 invested, uint256 inversors) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        require(erc721Address != address(0), "address needs to be not 0x0");
+        if (erc721Address == address(0)) {
+            revert TossAddressIsZero("erc721");
+        }
+
         for (uint256 i; i < $.projects.length;) {
             if ($.projects[i].erc721Address == erc721Address) {
                 (info, invested, inversors) = getProjectInternal(i);
@@ -181,7 +203,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             }
         }
 
-        revert Erc721AddressNotExist(erc721Address);
+        revert TossInvestProjectNotFoundByErc721(erc721Address);
     }
 
     function countUniqueAddresses(address[] memory addresses) private pure returns (uint256) {
@@ -203,9 +225,12 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function isAddressInArray(address addr, address[] memory arr, uint256 count) private pure returns (bool) {
-        for (uint256 i = 0; i < count; i++) {
+        for (uint256 i; i < count;) {
             if (arr[i] == addr) {
                 return true;
+            }
+            unchecked {
+                ++i;
             }
         }
         return false;
@@ -221,13 +246,24 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint64 finishAt,
         address projectWallet
     ) external onlyRole(PROJECT_ROLE) {
-        require(targetAmount > 0, "targetAmount needs to be greater than 0");
-        require(targetAmount <= maxAmount, "max amount needs to be greater or equal to targetAmount");
-        require(price > 0, "prices needs to be greater than 0");
-        require(startAt > block.timestamp, "start at needs to be greater than current date");
-        require(finishAt > block.timestamp, "finish at needs to be greater than current date");
-        require(startAt < finishAt, "finish at needs to be greater than startAt");
-        require(projectWallet != address(0), "project wallet invalid");
+        if (targetAmount == 0) {
+            revert TossInvestProjectTargetAmountIsZero();
+        }
+        if (targetAmount > maxAmount) {
+            revert TossInvestProjectTargetIsGreaterThanMax(targetAmount, maxAmount);
+        }
+        if (price == 0) {
+            revert TossInvestProjectPriceIsZero();
+        }
+        if (startAt < block.timestamp) {
+            revert TossInvestProjectStartAtLessThanCurrentDate(startAt, block.timestamp);
+        }
+        if (startAt > finishAt) {
+            revert TossInvestProjectStartAtGreaterThanFinishAt(startAt, finishAt);
+        }
+        if (projectWallet == address(0)) {
+            revert TossAddressIsZero("project wallet");
+        }
 
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         uint256 projectId = $.projects.length;
@@ -263,18 +299,32 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         address projectWallet
     ) external onlyRole(PROJECT_ROLE) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        require(projectId < $.projects.length, "project not exist");
+        if (projectId >= $.projects.length) {
+            revert TossInvestProjectNotExist(projectId);
+        }
         ProjectInfo storage projectInfo = $.projects[projectId];
-        require(!projectInfo.confirmed, "project already confirmed");
+        if (projectInfo.confirmed) {
+            revert TossInvestProjectIsConfirmed();
+        }
 
-        require(targetAmount > 0, "targetAmount needs to be greater than 0");
-        require(targetAmount <= maxAmount, "max amount needs to be greater or equal to targetAmount");
-        require(price > 0, "prices needs to be greater than 0");
-        require(startAt > block.timestamp, "finish at needs to be greater than current date");
-        require(finishAt > block.timestamp, "finish at needs to be greater than current date");
-        require(startAt < finishAt, "finish at needs to be greater than startAt");
-        require(projectWallet != address(0), "project wallet invalid");
-
+        if (targetAmount == 0) {
+            revert TossInvestProjectTargetAmountIsZero();
+        }
+        if (targetAmount > maxAmount) {
+            revert TossInvestProjectTargetIsGreaterThanMax(targetAmount, maxAmount);
+        }
+        if (price == 0) {
+            revert TossInvestProjectPriceIsZero();
+        }
+        if (startAt < block.timestamp) {
+            revert TossInvestProjectStartAtLessThanCurrentDate(startAt, block.timestamp);
+        }
+        if (startAt > finishAt) {
+            revert TossInvestProjectStartAtGreaterThanFinishAt(startAt, finishAt);
+        }
+        if (projectWallet == address(0)) {
+            revert TossAddressIsZero("project wallet");
+        }
         projectInfo.name = name;
         projectInfo.symbol = symbol;
         projectInfo.targetAmount = targetAmount;
@@ -287,10 +337,16 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     function confirm(uint256 projectId) external {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        require(projectId < $.projects.length, "project not exist");
+        if (projectId >= $.projects.length) {
+            revert TossInvestProjectNotExist(projectId);
+        }
         ProjectInfo storage projectInfo = $.projects[projectId];
-        require(!projectInfo.confirmed, "project already confirmed");
-        require(msg.sender == projectInfo.projectWallet, "not project owner");
+        if (projectInfo.confirmed) {
+            revert TossInvestProjectIsConfirmed();
+        }
+        if (msg.sender != projectInfo.projectWallet) {
+            revert TossInvestNotProjectOwner(projectId);
+        }
 
         projectInfo.confirmed = true;
 
@@ -308,15 +364,25 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     function investInternal(uint256 projectId, uint16 amount) private {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        require(projectId < $.projects.length, "project not exist");
+        if (projectId >= $.projects.length) {
+            revert TossInvestProjectNotExist(projectId);
+        }
         ProjectInfo storage projectInfo = $.projects[projectId];
-        require(projectInfo.confirmed, "project not confirmed");
-        require(projectInfo.startAt <= block.timestamp, "project hasn't started");
-        require(block.timestamp <= projectInfo.finishAt, "project has ended");
+        if (!projectInfo.confirmed) {
+            revert TossInvestProjectIsNotConfirmed();
+        }
+        if (projectInfo.startAt > block.timestamp) {
+            revert TossInvestProjectNotStarted();
+        }
+        if (block.timestamp > projectInfo.finishAt) {
+            revert TossInvestProjectIsFinished();
+        }
 
         address[] storage investors = $.projectInvestors[projectId];
         uint256 investorAmount = investors.length;
-        require(investorAmount + amount <= projectInfo.maxAmount, "project already full of investors");
+        if (investorAmount + amount > projectInfo.maxAmount) {
+            revert TossInvestProjectFullInvested();
+        }
 
         $.erc20.safeTransferFrom(msg.sender, address(this), amount * projectInfo.price);
 
@@ -333,11 +399,13 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     function finish(uint256 projectId) external {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         ProjectInfo storage projectInfo = $.projects[projectId];
-        require(projectInfo.confirmed, "project not confirmed");
+        if (!projectInfo.confirmed) {
+            revert TossInvestProjectIsNotConfirmed();
+        }
 
         address[] storage investors = $.projectInvestors[projectId];
-        if (investors.length < projectInfo.maxAmount) {
-            require(block.timestamp >= projectInfo.finishAt, "project is not ended");
+        if (investors.length < projectInfo.maxAmount && block.timestamp < projectInfo.finishAt) {
+            revert TossInvestProjectNotFinished();
         }
 
         uint256 length = investors.length;
@@ -356,9 +424,11 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         uint32 lastIndex = projectInfo.lastIndex;
         uint256 length = investors.length;
-        require(length > lastIndex, "project already return all investments");
-        uint256 price = projectInfo.price;
+        if (length <= lastIndex) {
+            revert TossInvestAlreadyAllInvestmentReturned();
+        }
 
+        uint256 price = projectInfo.price;
         uint32 i = lastIndex;
         address lastInvestor = investors[i];
         uint256 acumulated = 0;
@@ -385,7 +455,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         uint32 lastIndex = projectInfo.lastIndex;
         uint256 length = investors.length;
-        require(length > lastIndex, "project already fully minted");
+        if (length <= lastIndex) {
+            revert TossInvestAlreadyAllErc721Minted();
+        }
 
         TossErc721MarketV1 erc721;
         if (projectInfo.erc721Address == address(0)) {

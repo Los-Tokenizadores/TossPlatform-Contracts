@@ -24,6 +24,8 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
         }
     }
 
+    error TossErc721MarketNotSet();
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -66,13 +68,11 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
         return super._update(to, tokenId, auth);
     }
 
-    // The following functions are overrides required by Solidity.
-
     function _baseURI() internal view virtual override returns (string memory) {
         return _getTossErc721MarketBaseStorage().baseUri;
     }
 
-    function getBaseUri() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
+    function getBaseUri() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory baseUri) {
         return _baseURI();
     }
 
@@ -86,14 +86,14 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
 
     function createSellOffer(uint256 tokenId, uint128 price) external whenNotPaused {
         TossErc721MarketBaseStorage storage $ = _getTossErc721MarketBaseStorage();
-        require($.marketAddress != address(0), "Market Address not set");
-        require(msg.sender == ownerOf(tokenId), "Not tokenId owner");
-
-        approve($.marketAddress, tokenId);
+        if ($.marketAddress == address(0)) {
+            revert TossErc721MarketNotSet();
+        }
+        _approve($.marketAddress, tokenId, msg.sender);
         ITossMarket($.marketAddress).createSellOffer(tokenId, price, msg.sender);
     }
 
-    function getMarket() external view returns (address) {
+    function getMarket() external view returns (address marketAddress) {
         return _getTossErc721MarketBaseStorage().marketAddress;
     }
 

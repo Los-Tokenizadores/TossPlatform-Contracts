@@ -19,8 +19,4 @@ contract TossErc721MarketV1 is TossErc721MarketBase {
         _safeMint(to, id);
         emit Created(to, id);
     }
-
-    function _update(address to, uint256 tokenId, address auth) internal virtual override whenNotPaused returns (address) {
-        return super._update(to, tokenId, auth);
-    }
 }

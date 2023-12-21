@@ -9,7 +9,7 @@ abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
         __UUPSUpgradeable_init();
     }
 
-    function getImplementation() public view returns (address) {
+    function getImplementation() public view returns (address implementation) {
         return ERC1967Utils.getImplementation();
     }
 }

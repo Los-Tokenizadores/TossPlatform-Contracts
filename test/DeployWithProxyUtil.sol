@@ -56,9 +56,9 @@ library DeployWithProxyUtil {
 
     function tossExchangeV1(
         IERC20 externalErc20,
-        uint256 externalMinAmount,
+        uint128 externalMinAmount,
         TossErc20Base internalErc20,
-        uint256 internalMinAmount,
+        uint128 internalMinAmount,
         uint64 rate
     ) internal returns (TossExchangeV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(
@@ -70,9 +70,9 @@ library DeployWithProxyUtil {
 
     function tossExchangeTierV1(
         IERC20 externalErc20,
-        uint256 externalMinAmount,
+        uint128 externalMinAmount,
         TossErc20Base internalErc20,
-        uint256 internalMinAmount,
+        uint128 internalMinAmount,
         uint64 rate,
         uint64 year
     ) internal returns (TossExchangeTierV1) {

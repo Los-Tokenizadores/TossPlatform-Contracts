@@ -8,12 +8,13 @@ import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { TossErc20Base } from "./TossErc20Base.sol";
 import { ITossExchange } from "../Interfaces/ITossExchange.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
+import "../Interfaces/TossErrors.sol";
 
 abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, AccessControlUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossExchangeBase
     struct TossExchangeBaseStorage {
-        uint256 externalMinAmount;
-        uint256 internalMinAmount;
+        uint128 externalMinAmount;
+        uint128 internalMinAmount;
         IERC20 externalErc20;
         TossErc20Base internalErc20;
         uint64 rate;
@@ -35,6 +36,11 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
     event ConvertedToInternal(address indexed account, uint256 externalAmount, uint256 internalAmount);
     event ConvertedToExternal(address indexed account, uint256 externalAmount, uint256 internalAmount);
 
+    error TossExchangeExternalAndInternalErc20AreEqual();
+    error TossExchangeRateIsZero();
+    error TossExchangeMinAmountIsZero(string parameter);
+    error TossExchangeAmounIsLessThanMin(string parameter, uint128 amount, uint128 min);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -42,9 +48,9 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
 
     function __TossExchangeBase_init(
         IERC20 externalErc20_,
-        uint256 externalMinAmount_,
+        uint128 externalMinAmount_,
         TossErc20Base internalErc20_,
-        uint256 internalMinAmount_,
+        uint128 internalMinAmount_,
         uint64 rate_
     ) public onlyInitializing {
         __AccessControl_init();
@@ -54,17 +60,29 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
 
     function __TossExchangeBase_init_unchained(
         IERC20 externalErc20_,
-        uint256 externalMinAmount_,
+        uint128 externalMinAmount_,
         TossErc20Base internalErc20_,
-        uint256 internalMinAmount_,
+        uint128 internalMinAmount_,
         uint64 rate_
     ) public onlyInitializing {
-        require(address(externalErc20_) != address(0), "external erc20 address is empty");
-        require(address(internalErc20_) != address(0), "internal erc20 address is empty");
-        require(address(externalErc20_) != address(internalErc20_), "external and internal erc20 are the same");
-        require(rate_ > 0, "rate needs to be greater than 0");
-        require(externalMinAmount_ > 0, "external min needs to be greater than 0");
-        require(internalMinAmount_ > 0, "internal min needs to be greater than 0");
+        if (address(externalErc20_) == address(0)) {
+            revert TossAddressIsZero("external");
+        }
+        if (address(internalErc20_) == address(0)) {
+            revert TossAddressIsZero("internal");
+        }
+        if (address(externalErc20_) == address(internalErc20_)) {
+            revert TossExchangeExternalAndInternalErc20AreEqual();
+        }
+        if (rate_ == 0) {
+            revert TossExchangeRateIsZero();
+        }
+        if (externalMinAmount_ == 0) {
+            revert TossExchangeMinAmountIsZero("external");
+        }
+        if (internalMinAmount_ == 0) {
+            revert TossExchangeMinAmountIsZero("internal");
+        }
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
@@ -84,33 +102,37 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         _setWhitelist(newAddress);
     }
 
-    function getExternalMinAmount() external view returns (uint256) {
+    function getExternalMinAmount() external view returns (uint128 minAmount) {
         return _getTossExchangeBaseStorage().externalMinAmount;
     }
 
-    function setExternalMinAmount(uint256 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(value > 0, "min needs to be greater than 0");
+    function setExternalMinAmount(uint128 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (value == 0) {
+            revert TossExchangeMinAmountIsZero("external");
+        }
         _getTossExchangeBaseStorage().externalMinAmount = value;
     }
 
-    function getInternalMinAmount() external view returns (uint256) {
+    function getInternalMinAmount() external view returns (uint128 minAmount) {
         return _getTossExchangeBaseStorage().internalMinAmount;
     }
 
-    function setInternalMinAmount(uint256 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(value > 0, "min needs to be greater than 0");
+    function setInternalMinAmount(uint128 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (value == 0) {
+            revert TossExchangeMinAmountIsZero("internal");
+        }
         _getTossExchangeBaseStorage().internalMinAmount = value;
     }
 
-    function getExternalErc20() external view returns (IERC20) {
+    function getExternalErc20() external view returns (IERC20 erc20) {
         return _getTossExchangeBaseStorage().externalErc20;
     }
 
-    function getInternalErc20() external view returns (TossErc20Base) {
+    function getInternalErc20() external view returns (TossErc20Base erc20) {
         return _getTossExchangeBaseStorage().internalErc20;
     }
 
-    function getRate() external view returns (uint64) {
+    function getRate() external view returns (uint64 rate) {
         return _getTossExchangeBaseStorage().rate;
     }
 
@@ -136,8 +158,9 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
 
     function _convertToInternal(uint128 externalAmount, uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
-        require(internalAmount >= $.internalMinAmount, "amount need greater than the minimum amount");
-        require($.externalErc20.balanceOf(msg.sender) >= externalAmount, "insufficient balance");
+        if (internalAmount < $.internalMinAmount) {
+            revert TossExchangeAmounIsLessThanMin("internal", internalAmount, $.internalMinAmount);
+        }
 
         $.externalErc20.safeTransferFrom(msg.sender, address(this), externalAmount);
         $.internalErc20.mint(msg.sender, internalAmount);
@@ -147,8 +170,9 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
 
     function _convertToExternal(uint128 externalAmount, uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
-        require(externalAmount >= $.externalMinAmount, "amount need greater than the minimum amount");
-        require($.internalErc20.balanceOf(msg.sender) >= internalAmount, "insufficient balance");
+        if (externalAmount < $.externalMinAmount) {
+            revert TossExchangeAmounIsLessThanMin("external", externalAmount, $.externalMinAmount);
+        }
 
         $.internalErc20.burnFrom(msg.sender, internalAmount);
         $.externalErc20.safeTransfer(msg.sender, externalAmount);
