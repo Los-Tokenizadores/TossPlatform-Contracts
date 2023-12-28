@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { TossErc721GeneBase } from "./Bases/TossErc721GeneBase.sol";
 
 contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
+    uint256 private constant AVAILABLE = 0;
+    uint256 private constant UNAVAILABLE = 1;
     mapping(uint256 => uint256) private uniqueGene;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -19,8 +21,8 @@ contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
 
         for (uint256 i; i < genes.length;) {
-            if (uniqueGene[genes[i]] == 0) {
-                uniqueGene[genes[i]] = 1;
+            if (uniqueGene[genes[i]] == AVAILABLE) {
+                uniqueGene[genes[i]] = UNAVAILABLE;
                 $.rangeOfGene.push(genes[i]);
             }
             unchecked {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
@@ -33,8 +33,10 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    event ConvertedToInternal(address indexed account, uint256 externalAmount, uint256 internalAmount);
-    event ConvertedToExternal(address indexed account, uint256 externalAmount, uint256 internalAmount);
+    uint128 private constant RATE_PRECISION = 10_000;
+
+    event ConvertedToInternal(address indexed account, uint256 indexed externalAmount, uint256 indexed internalAmount);
+    event ConvertedToExternal(address indexed account, uint256 indexed externalAmount, uint256 indexed internalAmount);
 
     error TossExchangeExternalAndInternalErc20AreEqual();
     error TossExchangeRateIsZero();
@@ -136,28 +138,29 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         return _getTossExchangeBaseStorage().rate;
     }
 
-    function convertToInternal(uint128 externalAmount) public virtual {
-        _convertToInternal(externalAmount, externalAmount * _getTossExchangeBaseStorage().rate / 10_000);
+    function convertToInternal(uint128 externalAmount) external virtual {
+        _convertToInternal(externalAmount);
     }
 
     function convertToInternalWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         IERC20Permit(address($.externalErc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
-        _convertToInternal(externalAmount, externalAmount * $.rate / 10_000);
+        _convertToInternal(externalAmount);
     }
 
-    function convertToExternal(uint128 internalAmount) public virtual {
-        _convertToExternal(internalAmount * 10_000 / _getTossExchangeBaseStorage().rate, internalAmount);
+    function convertToExternal(uint128 internalAmount) external virtual {
+        _convertToExternal(internalAmount);
     }
 
     function convertToExternalWithPermit(uint128 internalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         IERC20Permit(address($.internalErc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
-        _convertToExternal(internalAmount * 10_000 / $.rate, internalAmount);
+        _convertToExternal(internalAmount);
     }
 
-    function _convertToInternal(uint128 externalAmount, uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
+    function _convertToInternal(uint128 externalAmount) internal virtual isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
+        uint128 internalAmount = externalAmount * $.rate / RATE_PRECISION;
         if (internalAmount < $.internalMinAmount) {
             revert TossExchangeAmounIsLessThanMin("internal", internalAmount, $.internalMinAmount);
         }
@@ -168,8 +171,9 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         emit ConvertedToInternal(msg.sender, externalAmount, internalAmount);
     }
 
-    function _convertToExternal(uint128 externalAmount, uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
+    function _convertToExternal(uint128 internalAmount) internal virtual isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
+        uint128 externalAmount = internalAmount * RATE_PRECISION / $.rate;
         if (externalAmount < $.externalMinAmount) {
             revert TossExchangeAmounIsLessThanMin("external", externalAmount, $.externalMinAmount);
         }

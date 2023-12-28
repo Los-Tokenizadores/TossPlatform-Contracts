@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC20BurnableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
@@ -27,7 +27,7 @@ abstract contract TossErc20Base is
         _disableInitializers();
     }
 
-    function __TossErc20Base_init(string memory name, string memory symbol, uint64 amount) public onlyInitializing {
+    function __TossErc20Base_init(string memory name, string memory symbol, uint256 amount) public onlyInitializing {
         __ERC20_init(name, symbol);
         __ERC20Burnable_init();
         __ERC20Pausable_init();
@@ -37,13 +37,13 @@ abstract contract TossErc20Base is
         __TossErc20Base_init_unchained(amount);
     }
 
-    function __TossErc20Base_init_unchained(uint64 amount) public onlyInitializing {
+    function __TossErc20Base_init_unchained(uint256 amount) public onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
 
-        _mint(msg.sender, amount * 10 ** decimals());
+        _mint(msg.sender, amount);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
@@ -52,11 +52,11 @@ abstract contract TossErc20Base is
         super._update(from, to, value);
     }
 
-    function pause() public onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
+    function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
@@ -64,7 +64,7 @@ abstract contract TossErc20Base is
         _setWhitelist(newAddress);
     }
 
-    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
 import { TossErc721MarketBase } from "./TossErc721MarketBase.sol";

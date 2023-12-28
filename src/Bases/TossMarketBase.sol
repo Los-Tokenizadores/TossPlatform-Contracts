@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
@@ -30,6 +30,8 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     using SafeERC20 for IERC20;
+
+    uint256 private constant MARKET_CUT_PRECISION = 10_000;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant EXTRACT_ROLE = keccak256("EXTRACT_ROLE");
@@ -71,7 +73,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
         }
-        if (marketCut_ > 10_000) {
+        if (marketCut_ > MARKET_CUT_PRECISION) {
             revert TossCutOutOfRange(marketCut_);
         }
 
@@ -87,6 +89,14 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
+
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function setWhitelist(address newAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         _setWhitelist(newAddress);
@@ -117,21 +127,22 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function changeMarketCut(uint16 cut) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (cut > 10_000) {
+        if (cut > MARKET_CUT_PRECISION) {
             revert TossCutOutOfRange(cut);
         }
         _getTossMarketBaseStorage().marketCut = cut;
     }
 
-    function createSellOffer(uint256 tokenId, uint128 price, address owner) public virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
         address erc721Address = msg.sender;
         if (IERC721(erc721Address).ownerOf(tokenId) != owner) {
             revert TossMarketNotOwnerOfErc721(owner);
         }
 
-        IERC721(erc721Address).safeTransferFrom(owner, address(this), tokenId);
         uint128 startedAt = uint128(block.timestamp);
         _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId] = SellOffer({ price: price, startedAt: startedAt, owner: owner });
+
+        IERC721(erc721Address).safeTransferFrom(owner, address(this), tokenId);
 
         emit SellOfferCreated(owner, erc721Address, tokenId, startedAt, price);
     }
@@ -229,6 +240,6 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function priceMinusCut(uint16 marketCut_, uint256 price) internal pure returns (uint256) {
-        return price - (price * marketCut_ / 10_000);
+        return price - (price * marketCut_ / MARKET_CUT_PRECISION);
     }
 }

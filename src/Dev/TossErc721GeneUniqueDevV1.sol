@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { TossErc721GeneUniqueV1 } from "../TossErc721GeneUniqueV1.sol";
 

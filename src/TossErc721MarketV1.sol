@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { TossErc721MarketBase } from "./Bases/TossErc721MarketBase.sol";
 
@@ -15,7 +15,7 @@ contract TossErc721MarketV1 is TossErc721MarketBase {
         __TossErc721MarketBase_init(name_, symbol_);
     }
 
-    function safeMint(address to, uint256 id) public onlyRole(MINTER_ROLE) {
+    function safeMint(address to, uint256 id) external onlyRole(MINTER_ROLE) {
         _safeMint(to, id);
         emit Created(to, id);
     }

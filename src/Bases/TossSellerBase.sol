@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -34,18 +34,26 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     using SafeERC20 for IERC20;
 
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant CONVERT_ROLE = keccak256("CONVERT_ROLE");
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    uint8 private constant decimals = 18;
-
     struct Erc721SellInfo {
         uint128 price;
         uint8 maxAmount;
     }
 
-    event ConvertToOffchain(address indexed account, uint256 erc20Amount, uint32 offchainAmount);
-    event ConvertToErc20(address indexed account, uint256 erc20Amount, uint32 offchainAmount);
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant CONVERT_ROLE = keccak256("CONVERT_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    uint8 private constant decimals = 18;
+    uint8 private constant SELL_MAX_LIMIT = 40;
+    uint16 private constant CUT_PRECISION = 10_000;
+
+    event ConvertToOffchain(address indexed account, uint256 indexed erc20Amount, uint32 indexed offchainAmount);
+    event ConvertToErc20(address indexed account, uint256 indexed erc20Amount, uint32 indexed offchainAmount);
+
+    error TossSellerNotOnSell(address erc721);
+    error TossSellerBuyAmountGreatherThanMax(address erc721, uint8 amount, uint8 max);
+    error TossSellerBuyMaxAmountExceeded(uint8 amount, uint256 max);
+    error TossSellConvertOffchainAmountLessThanMin(uint256 amount, uint256 min);
+    error TossSellConvertErc20AmountLessThanMin(uint32 amount, uint32 min);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -74,7 +82,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         $.erc20BankAddress = msg.sender;
 
         $.convertToOffchainRate = 100;
-        $.convertToOffchainMinAmount = 1 * 10 ** 18;
+        $.convertToOffchainMinAmount = 1 ether;
         $.convertToOffchainCut = 0;
 
         $.convertToErc20Rate = 500;
@@ -83,6 +91,14 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
+
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function setWhitelist(address newAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         _setWhitelist(newAddress);
@@ -151,8 +167,8 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (maxAmount == 0) {
             revert TossValueIsZero("maxAmount");
         }
-        if (maxAmount > 40) {
-            revert TossSellerBuyMaxAmountExceeded(maxAmount, 40);
+        if (maxAmount > SELL_MAX_LIMIT) {
+            revert TossSellerBuyMaxAmountExceeded(maxAmount, SELL_MAX_LIMIT);
         }
         _getTossSellerBaseStorage().erc721Sells[erc721] = Erc721SellInfo({ price: price, maxAmount: maxAmount });
     }
@@ -166,12 +182,6 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         convertToOffchainInternal(erc20Amount);
     }
 
-    error TossSellerNotOnSell(address erc721);
-    error TossSellerBuyAmountGreatherThanMax(address erc721, uint8 amount, uint8 max);
-    error TossSellerBuyMaxAmountExceeded(uint8 amount, uint256 max);
-    error TossSellConvertOffchainAmountLessThanMin(uint256 amount, uint256 min);
-    error TossSellConvertErc20AmountLessThanMin(uint32 amount, uint32 min);
-
     function convertToOffchainInternal(uint256 erc20Amount) private {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
         if (erc20Amount < $.convertToOffchainMinAmount) {
@@ -180,8 +190,8 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 
         $.erc20.safeTransferFrom(msg.sender, address(this), erc20Amount);
 
-        uint256 offchainAmountBig = erc20Amount * $.convertToOffchainRate * (10_000 - $.convertToOffchainCut) / 10_000;
-        uint32 offchainAmount = uint32(offchainAmountBig / (10 ** decimals));
+        uint256 offchainAmountBig = erc20Amount * $.convertToOffchainRate * (CUT_PRECISION - $.convertToOffchainCut) / CUT_PRECISION;
+        uint32 offchainAmount = uint32(offchainAmountBig / 1 ether);
 
         emit ConvertToOffchain(msg.sender, erc20Amount, offchainAmount);
     }
@@ -195,7 +205,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossSellConvertErc20AmountLessThanMin(offchainAmount, $.convertToErc20MinAmount);
         }
 
-        uint256 erc20Amount = offchainAmount * (10 ** decimals) / $.convertToErc20Rate * (10_000 - $.convertToErc20Cut) / 10_000;
+        uint256 erc20Amount = offchainAmount * 1 ether / $.convertToErc20Rate * (CUT_PRECISION - $.convertToErc20Cut) / CUT_PRECISION;
 
         $.erc20.safeTransfer(user, erc20Amount);
 
@@ -217,11 +227,11 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         return _getTossSellerBaseStorage().convertToOffchainMinAmount;
     }
 
-    function setConvertToOffchainMinAmount(uint256 newAmount) external onlyRole(CONVERT_ROLE) {
-        if (newAmount < 10 ** decimals) {
-            revert TossValueIsZero("min amount");
+    function setConvertToOffchainMinAmount(uint256 minAmount) external onlyRole(CONVERT_ROLE) {
+        if (minAmount < 1 ether) {
+            revert TossValueIsLessThanOne("min amount");
         }
-        _getTossSellerBaseStorage().convertToOffchainMinAmount = newAmount;
+        _getTossSellerBaseStorage().convertToOffchainMinAmount = minAmount;
     }
 
     function getConvertToOffchainCut() external view returns (uint16 cut) {
@@ -229,7 +239,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function setConvertToOffchainCut(uint16 newCut) external onlyRole(CONVERT_ROLE) {
-        if (newCut > 10_000) {
+        if (newCut > CUT_PRECISION) {
             revert TossCutOutOfRange(newCut);
         }
         _getTossSellerBaseStorage().convertToOffchainCut = newCut;
@@ -250,11 +260,11 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         return _getTossSellerBaseStorage().convertToErc20MinAmount;
     }
 
-    function setConvertToErc20MinAmount(uint32 newAmount) external onlyRole(CONVERT_ROLE) {
-        if (newAmount == 0) {
+    function setConvertToErc20MinAmount(uint32 minAmount) external onlyRole(CONVERT_ROLE) {
+        if (minAmount == 0) {
             revert TossValueIsZero("min amount");
         }
-        _getTossSellerBaseStorage().convertToErc20MinAmount = newAmount;
+        _getTossSellerBaseStorage().convertToErc20MinAmount = minAmount;
     }
 
     function getConvertToErc20Cut() external view returns (uint16 cut) {
@@ -262,7 +272,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function setConvertToErc20Cut(uint16 newCut) external onlyRole(CONVERT_ROLE) {
-        if (newCut > 10_000) {
+        if (newCut > CUT_PRECISION) {
             revert TossCutOutOfRange(newCut);
         }
         _getTossSellerBaseStorage().convertToErc20Cut = newCut;

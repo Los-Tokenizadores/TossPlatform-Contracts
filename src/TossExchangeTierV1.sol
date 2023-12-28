@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TossErc20Base } from "./Bases/TossErc20Base.sol";
@@ -8,20 +8,21 @@ import { TossExchangeBase } from "./Bases/TossExchangeBase.sol";
 contract TossExchangeTierV1 is TossExchangeBase {
     bytes32 public constant YEAR_ROLE = keccak256("YEAR_ROLE");
 
-    uint64 public currentYear;
-
     struct Balance {
         uint128 consume;
         uint8 tier;
         uint64 lastTransactionYear;
     }
 
+    uint64 public currentYear;
     mapping(address => Balance) private userToBalance;
     uint256[50] public tiers;
 
-    event YearChanged(uint64 year);
+    event YearChanged(uint64 indexed year);
 
     error TossExchangeTierYearLimitReach();
+    error TossExchangeTierYearIsTheSame();
+    error TossExchangeTierTier0CantChange();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -45,7 +46,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
 
     function setYear(uint64 year) external virtual onlyRole(YEAR_ROLE) {
         if (currentYear == year) {
-            revert("is the same year");
+            revert TossExchangeTierYearIsTheSame();
         }
         currentYear = year;
         emit YearChanged(year);
@@ -53,7 +54,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
 
     function setTierLimit(uint8 tier, uint128 limit) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         if (tier == 0) {
-            revert("tier 0 needs to be limited to 0");
+            revert TossExchangeTierTier0CantChange();
         }
         tiers[tier] = limit;
     }
@@ -78,9 +79,9 @@ contract TossExchangeTierV1 is TossExchangeBase {
         return consume + toConsume > limit;
     }
 
-    function convertToInternal(uint128 externalAmount) public virtual override {
+    function convertToInternal(uint128 externalAmount) external virtual override {
         consumeLimit(externalAmount);
-        super.convertToInternal(externalAmount);
+        _convertToInternal(externalAmount);
     }
 
     function convertToInternalWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual override {

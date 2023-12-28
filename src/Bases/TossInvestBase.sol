@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -38,8 +38,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     using SafeERC20 for IERC20;
 
-    uint256 constant GAS_EXTRA_RETURN = 100_000;
-    uint256 constant GAS_EXTRA_MINT = 500_000;
+    uint256 private constant PLATFORM_CUT_PRECISION = 10_000;
+    uint256 private constant GAS_EXTRA_RETURN = 100_000;
+    uint256 private constant GAS_EXTRA_MINT = 500_000;
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -59,10 +60,10 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         string symbol;
     }
 
-    event ProjectInvested(uint256 indexed projectId, address indexed account, uint16 amount);
+    event ProjectInvested(uint256 indexed projectId, address indexed account, uint16 indexed amount);
     event ProjectAdded(uint256 indexed projectId);
     event ProjectConfirmed(uint256 indexed projectId, address indexed account);
-    event ProjectErc721Created(uint256 indexed projectId, address indexed erc721Address, address implementationAddress);
+    event ProjectErc721Created(uint256 indexed projectId, address indexed erc721Address, address indexed implementationAddress);
     event ProjectFinished(uint256 indexed projectId);
 
     error TossInvestProjectNotFoundByErc721(address erc721);
@@ -117,7 +118,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (platformAddress_ == address(0)) {
             revert TossAddressIsZero("platformAddress");
         }
-        if (platformCut_ > 10_000) {
+        if (platformCut_ > PLATFORM_CUT_PRECISION) {
             revert TossCutOutOfRange(platformCut_);
         }
 
@@ -136,6 +137,14 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
+
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function setWhitelist(address newAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         _setWhitelist(newAddress);
@@ -471,7 +480,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             erc721.grantRole(erc721.DEFAULT_ADMIN_ROLE(), $.tossProjectAddress);
             erc721.grantRole(erc721.UPGRADER_ROLE(), $.tossProjectAddress);
             uint256 total = projectInfo.price * length;
-            uint256 platformAmount = total * $.platformCut / 10_000;
+            uint256 platformAmount = total * $.platformCut / PLATFORM_CUT_PRECISION;
             $.erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
             $.erc20.safeTransfer($.platformAddress, platformAmount);
             projectInfo.mintedAt = uint64(block.timestamp);
