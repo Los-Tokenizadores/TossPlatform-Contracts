@@ -5,6 +5,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -14,7 +15,7 @@ import { TossErc721MarketV1 } from "../TossErc721MarketV1.sol";
 import { TossUpgradeableProxy } from "../TossUpgradeableProxy.sol";
 import "../Interfaces/TossErrors.sol";
 
-abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
+abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossInvestBase
     struct TossInvestBaseStorage {
         string erc721BaseUri;
@@ -38,13 +39,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     using SafeERC20 for IERC20;
 
-    uint256 private constant PLATFORM_CUT_PRECISION = 10_000;
-    uint256 private constant GAS_EXTRA_RETURN = 100_000;
-    uint256 private constant GAS_EXTRA_MINT = 500_000;
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-
     struct ProjectInfo {
         uint128 price;
         uint32 targetAmount;
@@ -60,6 +54,13 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         string symbol;
     }
 
+    uint256 private constant PLATFORM_CUT_PRECISION = 10_000;
+    uint256 private constant GAS_EXTRA_RETURN = 100_000;
+    uint256 private constant GAS_EXTRA_MINT = 500_000;
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
     event ProjectInvested(uint256 indexed projectId, address indexed account, uint16 indexed amount);
     event ProjectAdded(uint256 indexed projectId);
     event ProjectConfirmed(uint256 indexed projectId, address indexed account);
@@ -69,9 +70,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossInvestProjectNotFoundByErc721(address erc721);
     error TossInvestInvalidErc721Implementation(TossErc721MarketV1 implementation);
     error TossInvestProjectNotExist(uint256 projectId);
-    error TossInvestProjectTargetAmountIsZero();
     error TossInvestProjectTargetIsGreaterThanMax(uint32 targetAmount, uint32 maxAmount);
-    error TossInvestProjectPriceIsZero();
     error TossInvestProjectStartAtLessThanCurrentDate(uint64 startAt, uint256 currentDate);
     error TossInvestProjectStartAtGreaterThanFinishAt(uint64 startAt, uint64 finishAt);
     error TossInvestProjectIsConfirmed();
@@ -98,6 +97,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     ) public onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
+        __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
         __TossInvestBase_init_unchained(erc20_, erc721Implementation_, platformAddress_, platformCut_, erc721baseUri_);
     }
@@ -177,6 +177,36 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         return _getTossInvestBaseStorage().projects.length;
     }
 
+    function countUniqueAddresses(address[] memory addresses) private pure returns (uint256) {
+        address[] memory uniqueAddresses = new address[](addresses.length);
+        uint256 uniqueCount = 0;
+
+        for (uint256 i; i < addresses.length;) {
+            if (!isAddressInArray(addresses[i], uniqueAddresses, uniqueCount)) {
+                uniqueAddresses[uniqueCount] = addresses[i];
+                ++uniqueCount;
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        return uniqueCount;
+    }
+
+    function isAddressInArray(address addr, address[] memory arr, uint256 count) private pure returns (bool) {
+        for (uint256 i; i < count;) {
+            if (arr[i] == addr) {
+                return true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        return false;
+    }
+
     function getProjectInternal(uint256 projectId) internal view returns (ProjectInfo memory info, uint256 invested, uint256 inversors) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         if (projectId >= $.projects.length) {
@@ -215,36 +245,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         revert TossInvestProjectNotFoundByErc721(erc721Address);
     }
 
-    function countUniqueAddresses(address[] memory addresses) private pure returns (uint256) {
-        address[] memory uniqueAddresses = new address[](addresses.length);
-        uint256 uniqueCount;
-
-        for (uint256 i; i < addresses.length;) {
-            if (!isAddressInArray(addresses[i], uniqueAddresses, uniqueCount)) {
-                uniqueAddresses[uniqueCount] = addresses[i];
-                ++uniqueCount;
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        return uniqueCount;
-    }
-
-    function isAddressInArray(address addr, address[] memory arr, uint256 count) private pure returns (bool) {
-        for (uint256 i; i < count;) {
-            if (arr[i] == addr) {
-                return true;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        return false;
-    }
-
     function addProject(
         string memory name,
         string memory symbol,
@@ -256,13 +256,13 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         address projectWallet
     ) external onlyRole(PROJECT_ROLE) {
         if (targetAmount == 0) {
-            revert TossInvestProjectTargetAmountIsZero();
+            revert TossValueIsZero("target amount");
         }
         if (targetAmount > maxAmount) {
             revert TossInvestProjectTargetIsGreaterThanMax(targetAmount, maxAmount);
         }
         if (price == 0) {
-            revert TossInvestProjectPriceIsZero();
+            revert TossValueIsZero("price");
         }
         if (startAt < block.timestamp) {
             revert TossInvestProjectStartAtLessThanCurrentDate(startAt, block.timestamp);
@@ -311,19 +311,19 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (projectId >= $.projects.length) {
             revert TossInvestProjectNotExist(projectId);
         }
+
         ProjectInfo storage projectInfo = $.projects[projectId];
         if (projectInfo.confirmed) {
             revert TossInvestProjectIsConfirmed();
         }
-
         if (targetAmount == 0) {
-            revert TossInvestProjectTargetAmountIsZero();
+            revert TossValueIsZero("target amount");
         }
         if (targetAmount > maxAmount) {
             revert TossInvestProjectTargetIsGreaterThanMax(targetAmount, maxAmount);
         }
         if (price == 0) {
-            revert TossInvestProjectPriceIsZero();
+            revert TossValueIsZero("price");
         }
         if (startAt < block.timestamp) {
             revert TossInvestProjectStartAtLessThanCurrentDate(startAt, block.timestamp);
@@ -349,6 +349,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (projectId >= $.projects.length) {
             revert TossInvestProjectNotExist(projectId);
         }
+
         ProjectInfo storage projectInfo = $.projects[projectId];
         if (projectInfo.confirmed) {
             revert TossInvestProjectIsConfirmed();
@@ -362,11 +363,19 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         emit ProjectConfirmed(projectId, msg.sender);
     }
 
-    function invest(uint256 projectId, uint16 amount) external isInWhitelist(msg.sender) {
+    function invest(uint256 projectId, uint16 amount) external isInWhitelist(msg.sender) nonReentrant {
         investInternal(projectId, amount);
     }
 
-    function investWithPermit(uint256 projectId, uint16 investAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
+    function investWithPermit(
+        uint256 projectId,
+        uint16 investAmount,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external isInWhitelist(msg.sender) nonReentrant {
         IERC20Permit(address(_getTossInvestBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         investInternal(projectId, investAmount);
     }
@@ -393,8 +402,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossInvestProjectFullInvested();
         }
 
-        $.erc20.safeTransferFrom(msg.sender, address(this), amount * projectInfo.price);
-
         for (uint256 i = 0; i < amount;) {
             investors.push(msg.sender);
             unchecked {
@@ -403,9 +410,11 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
 
         emit ProjectInvested(projectId, msg.sender, amount);
+
+        $.erc20.safeTransferFrom(msg.sender, address(this), amount * projectInfo.price);
     }
 
-    function finish(uint256 projectId) external {
+    function finish(uint256 projectId) external nonReentrant {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         ProjectInfo storage projectInfo = $.projects[projectId];
         if (!projectInfo.confirmed) {
@@ -429,38 +438,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
     }
 
-    function finishReturnInvestment(ProjectInfo storage projectInfo, address[] storage investors) private {
-        TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        uint32 lastIndex = projectInfo.lastIndex;
-        uint256 length = investors.length;
-        if (length <= lastIndex) {
-            revert TossInvestAlreadyAllInvestmentReturned();
-        }
-
-        uint256 price = projectInfo.price;
-        uint32 i = lastIndex;
-        address lastInvestor = investors[i];
-        uint256 acumulated = 0;
-        for (; i < length;) {
-            if (lastInvestor == investors[i]) {
-                ++acumulated;
-            } else {
-                $.erc20.safeTransfer(lastInvestor, acumulated * price);
-                lastInvestor = investors[i];
-                acumulated = 1;
-            }
-            unchecked {
-                ++i;
-            }
-            if (gasleft() < GAS_EXTRA_RETURN) {
-                break;
-            }
-        }
-        $.erc20.safeTransfer(lastInvestor, acumulated * price);
-        projectInfo.lastIndex = i;
-    }
-
-    function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] storage investors) private {
+    function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] memory investors) private {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         uint32 lastIndex = projectInfo.lastIndex;
         uint256 length = investors.length;
@@ -500,5 +478,36 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             }
         }
         projectInfo.lastIndex = i;
+    }
+
+    function finishReturnInvestment(ProjectInfo storage projectInfo, address[] memory investors) private {
+        TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
+        uint32 lastIndex = projectInfo.lastIndex;
+        uint256 length = investors.length;
+        if (length <= lastIndex) {
+            revert TossInvestAlreadyAllInvestmentReturned();
+        }
+
+        uint256 price = projectInfo.price;
+        uint32 i = lastIndex;
+        address lastInvestor = investors[i];
+        uint256 acumulated = 0;
+        for (; i < length;) {
+            if (lastInvestor == investors[i]) {
+                ++acumulated;
+            } else {
+                $.erc20.safeTransfer(lastInvestor, acumulated * price);
+                lastInvestor = investors[i];
+                acumulated = 1;
+            }
+            unchecked {
+                ++i;
+            }
+            if (gasleft() < GAS_EXTRA_RETURN) {
+                break;
+            }
+        }
+        projectInfo.lastIndex = i;
+        $.erc20.safeTransfer(lastInvestor, acumulated * price);
     }
 }

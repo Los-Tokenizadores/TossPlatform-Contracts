@@ -4,14 +4,23 @@ pragma solidity 0.8.23;
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { ERC721PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossMarket } from "../Interfaces/ITossMarket.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
+import "../Interfaces/TossErrors.sol";
 
-abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable, ERC721PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
+abstract contract TossErc721MarketBase is
+    TossWhitelistClient,
+    ERC721Upgradeable,
+    ERC721PausableUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    TossUUPSUpgradeable
+{
     /// @custom:storage-location erc7201:tossplatform.storage.TossErc721MarketBase
     struct TossErc721MarketBaseStorage {
-        address marketAddress;
+        ITossMarket market;
         string baseUri;
     }
 
@@ -39,6 +48,7 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
         __ERC721_init(name_, symbol_);
         __ERC721Pausable_init();
         __AccessControl_init();
+        __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
         __TossErc721MarketBase_init_unchained();
     }
@@ -80,24 +90,27 @@ abstract contract TossErc721MarketBase is TossWhitelistClient, ERC721Upgradeable
         _getTossErc721MarketBaseStorage().baseUri = baseUri_;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
-    function createSellOffer(uint256 tokenId, uint128 price) external whenNotPaused {
+    function createSellOffer(uint256 tokenId, uint128 price) external whenNotPaused nonReentrant {
         TossErc721MarketBaseStorage storage $ = _getTossErc721MarketBaseStorage();
-        if ($.marketAddress == address(0)) {
+        if (address($.market) == address(0)) {
             revert TossErc721MarketNotSet();
         }
-        _approve($.marketAddress, tokenId, msg.sender);
-        ITossMarket($.marketAddress).createSellOffer(tokenId, price, msg.sender);
+        _approve(address($.market), tokenId, msg.sender);
+        $.market.createSellOffer(tokenId, price, msg.sender);
     }
 
     function getMarket() external view returns (address marketAddress) {
-        return _getTossErc721MarketBaseStorage().marketAddress;
+        return address(_getTossErc721MarketBaseStorage().market);
     }
 
-    function setMarket(address _address) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _getTossErc721MarketBaseStorage().marketAddress = _address;
+    function setMarket(ITossMarket market) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
+            revert TossUnsupportedInterface("ITossMarket");
+        }
+        _getTossErc721MarketBaseStorage().market = market;
     }
 }

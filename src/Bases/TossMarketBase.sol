@@ -4,14 +4,16 @@ pragma solidity 0.8.23;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossMarket } from "../Interfaces/ITossMarket.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 import "../Interfaces/TossErrors.sol";
 
-abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
+abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossMarketBase
     struct TossMarketBaseStorage {
         address erc20BankAddress;
@@ -62,9 +64,14 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         return this.onERC721Received.selector;
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, AccessControlUpgradeable) returns (bool) {
+        return interfaceId == type(ITossMarket).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) public onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
+        __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
         __TossMarketBase_init_unchained(erc20_, marketCut_);
     }
@@ -117,7 +124,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _getTossMarketBaseStorage().erc20BankAddress = newAddress;
     }
 
-    function withdrawBalance(uint256 amount) external onlyRole(EXTRACT_ROLE) {
+    function withdrawBalance(uint256 amount) external onlyRole(EXTRACT_ROLE) nonReentrant {
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
         $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
@@ -133,7 +140,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _getTossMarketBaseStorage().marketCut = cut;
     }
 
-    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) nonReentrant {
         address erc721Address = msg.sender;
         if (IERC721(erc721Address).ownerOf(tokenId) != owner) {
             revert TossMarketNotOwnerOfErc721(owner);
@@ -142,12 +149,12 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         uint128 startedAt = uint128(block.timestamp);
         _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId] = SellOffer({ price: price, startedAt: startedAt, owner: owner });
 
-        IERC721(erc721Address).safeTransferFrom(owner, address(this), tokenId);
-
         emit SellOfferCreated(owner, erc721Address, tokenId, startedAt, price);
+
+        IERC721(erc721Address).safeTransferFrom(owner, address(this), tokenId);
     }
 
-    function buy(address erc721Address, uint256 tokenId, uint128 price) external whenNotPaused isInWhitelist(msg.sender) {
+    function buy(address erc721Address, uint256 tokenId, uint128 price) external whenNotPaused isInWhitelist(msg.sender) nonReentrant {
         buyInternal(erc721Address, tokenId, price);
     }
 
@@ -160,7 +167,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external whenNotPaused isInWhitelist(msg.sender) {
+    ) external whenNotPaused isInWhitelist(msg.sender) nonReentrant {
         IERC20Permit(address(_getTossMarketBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         buyInternal(erc721Address, tokenId, price);
     }
@@ -186,18 +193,18 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
         delete $.erc721Markets[erc721Address][tokenId];
 
+        emit SellOfferSold(owner, erc721Address, tokenId, startedAt, price, msg.sender);
+
         $.erc20.safeTransferFrom(msg.sender, address(this), price);
         $.erc20.safeTransfer(owner, priceMinusCut($.marketCut, price));
         IERC721(erc721Address).safeTransferFrom(address(this), msg.sender, tokenId);
-
-        emit SellOfferSold(owner, erc721Address, tokenId, startedAt, price, msg.sender);
     }
 
-    function cancel(address erc721Address, uint256 tokenId) external {
+    function cancel(address erc721Address, uint256 tokenId) external nonReentrant {
         cancelSellOffer(erc721Address, tokenId, true);
     }
 
-    function cancelWhenPaused(address erc721Address, uint256 tokenId) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) {
+    function cancelWhenPaused(address erc721Address, uint256 tokenId) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         cancelSellOffer(erc721Address, tokenId, false);
     }
 
@@ -226,13 +233,17 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         if (!onSell(startedAt)) {
             revert TossMarketErc721NotOnSell(erc721Address, tokenId);
         }
+
         address owner = sellOffer.owner;
         if (validateOwner && msg.sender != owner) {
             revert TossMarketNotOwnerOfErc721(owner);
         }
+
         delete $.erc721Markets[erc721Address][tokenId];
-        IERC721(erc721Address).safeTransferFrom(address(this), owner, tokenId);
+
         emit SellOfferCancelled(owner, erc721Address, tokenId, startedAt);
+
+        IERC721(erc721Address).safeTransferFrom(address(this), owner, tokenId);
     }
 
     function onSell(uint128 startedAt) internal pure returns (bool) {

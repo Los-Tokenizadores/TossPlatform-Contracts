@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import { ITossSellErc721 } from "../src/Interfaces/ITossSellErc721.sol";
 import "./BaseTest.sol";
-import { SigUtils } from "./utils/SigUtils.sol";
 
 contract TossSellerTest is BaseTest {
     function test_initialization() public {
-        uint64 amount = 10;
+        uint256 amount = 10 ether;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
         assertEq(address(seller.getErc20()), address(erc20));
     }
 
     function test_buyErc721() public {
-        uint64 amount = 10;
+        uint256 amount = 10 ether;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
         assertEq(address(seller.getErc20()), address(erc20));
@@ -31,7 +31,7 @@ contract TossSellerTest is BaseTest {
     }
 
     function test_buyErc721Permit() public {
-        uint64 amount = 10;
+        uint256 amount = 10 ether;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
         assertEq(address(seller.getErc20()), address(erc20));
@@ -52,5 +52,16 @@ contract TossSellerTest is BaseTest {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
 
         seller.buyErc721WithPermit(erc721, 1, permit.value, permit.deadline, v, r, s);
+    }
+
+    function test_setErc721SellFailWithUnsupported() public {
+        uint256 amount = 10 ether;
+        TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
+        TossSellerV1 seller = DeployWithProxyUtil.tossSellerV1(IERC20(address(erc20)));
+        assertEq(address(seller.getErc20()), address(erc20));
+
+        TossErc721MarketV1 erc721 = DeployWithProxyUtil.tossErc721MarketV1("Erc721 Test", "E721T");
+        vm.expectRevert(abi.encodeWithSelector(TossUnsupportedInterface.selector, "ITossSellErc721"));
+        seller.setErc721Sell(ITossSellErc721(address(erc721)), 1 ether, 1);
     }
 }

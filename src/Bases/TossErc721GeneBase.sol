@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
 import { TossErc721MarketBase } from "./TossErc721MarketBase.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
     /// @custom:storage-location erc7201:tossplatform.storage.TossErc721GeneBase
@@ -38,6 +39,10 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
 
     function __TossErc721GeneBase_init_unchained() public onlyInitializing { }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, TossErc721MarketBase) returns (bool) {
+        return interfaceId == type(ITossSellErc721).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     function getRangeGeneLength() external view returns (uint256 genesLength) {
         return _getTossErc721GeneBaseStorage().rangeOfGene.length;
     }
@@ -61,7 +66,7 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         return _getTossErc721GeneBaseStorage().erc721Genes[tokenId];
     }
 
-    function sellErc721(address _owner, uint8 _amount) external onlyRole(MINTER_ROLE) {
+    function sellErc721(address _owner, uint8 _amount) external onlyRole(MINTER_ROLE) nonReentrant {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
         if (_amount > $.rangeOfGene.length) {
             revert TossErc721GeneNotEnoughGenes($.rangeOfGene.length, _amount);

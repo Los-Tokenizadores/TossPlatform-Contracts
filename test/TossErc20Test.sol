@@ -4,22 +4,22 @@ pragma solidity ^0.8.20;
 import "./BaseTest.sol";
 
 contract TossErc20Test is BaseTest {
-    function testFuzz_initialization(uint64 amount) public {
+    function testFuzz_initialization(uint256 amount) public {
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         assertEq(erc20.name(), "Erc20 Test");
         assertEq(erc20.symbol(), "E20T");
-        assertEq(erc20.totalSupply(), uint256(amount) * 1 ether);
+        assertEq(erc20.totalSupply(), amount);
     }
 
     function test_transfer() public {
-        uint64 amount = 10;
+        uint256 amount = 10 ether;
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
 
-        assertEq(erc20.balanceOf(owner), amount * 1 ether);
+        assertEq(erc20.balanceOf(owner), amount);
         uint256 transferAmount = 1 ether;
         erc20.transfer(alice, transferAmount);
 
-        assertEq(erc20.balanceOf(owner), amount * 1 ether - transferAmount);
+        assertEq(erc20.balanceOf(owner), amount - transferAmount);
         assertEq(erc20.balanceOf(alice), transferAmount);
     }
 

@@ -4,12 +4,13 @@ pragma solidity 0.8.23;
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { SafeERC20, IERC20, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 import "../Interfaces/TossErrors.sol";
 
-abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, TossUUPSUpgradeable {
+abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossSellerBase
     struct TossSellerBaseStorage {
         uint256 convertToOffchainMinAmount;
@@ -63,6 +64,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     function __TossSellerBase_init(IERC20 erc20_) public onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
+        __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
         __TossSellerBase_init_unchained(erc20_);
     }
@@ -123,16 +125,24 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         _getTossSellerBaseStorage().erc20BankAddress = newAddress;
     }
 
-    function withdrawBalance(uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withdrawBalance(uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
         $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
 
-    function buyErc721(ITossSellErc721 erc721, uint8 amount) external isInWhitelist(msg.sender) {
+    function buyErc721(ITossSellErc721 erc721, uint8 amount) external isInWhitelist(msg.sender) nonReentrant {
         buyErc721Internal(erc721, amount);
     }
 
-    function buyErc721WithPermit(ITossSellErc721 erc721, uint8 buyAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
+    function buyErc721WithPermit(
+        ITossSellErc721 erc721,
+        uint8 buyAmount,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external isInWhitelist(msg.sender) nonReentrant {
         IERC20Permit(address(_getTossSellerBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         buyErc721Internal(erc721, buyAmount);
     }
@@ -154,15 +164,18 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossSellerBuyAmountGreatherThanMax(address(erc721), amount, erc721Sell.maxAmount);
         }
 
-        uint256 price = uint256(erc721Sell.price * amount);
+        uint256 price = uint256(erc721Sell.price) * amount;
         $.erc20.safeTransferFrom(msg.sender, address(this), price);
 
         erc721.sellErc721(msg.sender, amount);
     }
 
-    function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         if (address(erc721) == address(0)) {
             revert TossAddressIsZero("erc721");
+        }
+        if (!erc721.supportsInterface(type(ITossSellErc721).interfaceId)) {
+            revert TossUnsupportedInterface("ITossSellErc721");
         }
         if (maxAmount == 0) {
             revert TossValueIsZero("maxAmount");
@@ -173,11 +186,11 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         _getTossSellerBaseStorage().erc721Sells[erc721] = Erc721SellInfo({ price: price, maxAmount: maxAmount });
     }
 
-    function convertToOffchain(uint256 erc20Amount) external isInWhitelist(msg.sender) {
+    function convertToOffchain(uint256 erc20Amount) external isInWhitelist(msg.sender) nonReentrant {
         convertToOffchainInternal(erc20Amount);
     }
 
-    function convertToOffchainWithPermit(uint256 erc20Amount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) {
+    function convertToOffchainWithPermit(uint256 erc20Amount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) nonReentrant {
         IERC20Permit(address(_getTossSellerBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         convertToOffchainInternal(erc20Amount);
     }
@@ -188,15 +201,15 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossSellConvertOffchainAmountLessThanMin(erc20Amount, $.convertToOffchainMinAmount);
         }
 
-        $.erc20.safeTransferFrom(msg.sender, address(this), erc20Amount);
-
         uint256 offchainAmountBig = erc20Amount * $.convertToOffchainRate * (CUT_PRECISION - $.convertToOffchainCut) / CUT_PRECISION;
         uint32 offchainAmount = uint32(offchainAmountBig / 1 ether);
 
         emit ConvertToOffchain(msg.sender, erc20Amount, offchainAmount);
+
+        $.erc20.safeTransferFrom(msg.sender, address(this), erc20Amount);
     }
 
-    function convertToErc20(address user, uint32 offchainAmount) external onlyRole(CONVERT_ROLE) isInWhitelist(user) {
+    function convertToErc20(address user, uint32 offchainAmount) external onlyRole(CONVERT_ROLE) isInWhitelist(user) nonReentrant {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
         if (user == address(0)) {
             revert TossAddressIsZero("user");
@@ -205,11 +218,11 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossSellConvertErc20AmountLessThanMin(offchainAmount, $.convertToErc20MinAmount);
         }
 
-        uint256 erc20Amount = offchainAmount * 1 ether / $.convertToErc20Rate * (CUT_PRECISION - $.convertToErc20Cut) / CUT_PRECISION;
-
-        $.erc20.safeTransfer(user, erc20Amount);
+        uint256 erc20Amount = offchainAmount * 1 ether * (CUT_PRECISION - $.convertToErc20Cut) / $.convertToErc20Rate / CUT_PRECISION;
 
         emit ConvertToErc20(user, erc20Amount, offchainAmount);
+
+        $.erc20.safeTransfer(user, erc20Amount);
     }
 
     function getConvertToOffchainRate() external view returns (uint32 rate) {

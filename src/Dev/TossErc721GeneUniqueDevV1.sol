@@ -13,7 +13,7 @@ contract TossErc721GeneUniqueDevV1 is TossErc721GeneUniqueV1 {
         __TossErc721GeneUniqueV1_init(name_, symbol_);
     }
 
-    function adminTransfer(address to, uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function adminTransfer(address to, uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         address from = ownerOf(tokenId);
         _transfer(from, to, tokenId);
     }

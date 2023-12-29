@@ -15,8 +15,9 @@ contract TossErc721MarketV1 is TossErc721MarketBase {
         __TossErc721MarketBase_init(name_, symbol_);
     }
 
-    function safeMint(address to, uint256 id) external onlyRole(MINTER_ROLE) {
-        _safeMint(to, id);
+    function safeMint(address to, uint256 id) external onlyRole(MINTER_ROLE) nonReentrant {
         emit Created(to, id);
+
+        _safeMint(to, id);
     }
 }

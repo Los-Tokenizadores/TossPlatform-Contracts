@@ -27,23 +27,23 @@ abstract contract TossErc20Base is
         _disableInitializers();
     }
 
-    function __TossErc20Base_init(string memory name, string memory symbol, uint256 amount) public onlyInitializing {
-        __ERC20_init(name, symbol);
+    function __TossErc20Base_init(string memory name_, string memory symbol_, uint256 amount_) public onlyInitializing {
+        __ERC20_init(name_, symbol_);
         __ERC20Burnable_init();
         __ERC20Pausable_init();
         __AccessControl_init();
-        __ERC20Permit_init(name);
+        __ERC20Permit_init(name_);
         __TossUUPSUpgradeable_init();
-        __TossErc20Base_init_unchained(amount);
+        __TossErc20Base_init_unchained(amount_);
     }
 
-    function __TossErc20Base_init_unchained(uint256 amount) public onlyInitializing {
+    function __TossErc20Base_init_unchained(uint256 amount_) public onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
 
-        _mint(msg.sender, amount);
+        _mint(msg.sender, amount_);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }

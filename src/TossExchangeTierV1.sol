@@ -42,6 +42,8 @@ contract TossExchangeTierV1 is TossExchangeBase {
         _grantRole(YEAR_ROLE, msg.sender);
 
         currentYear = year;
+
+        emit YearChanged(year);
     }
 
     function setYear(uint64 year) external virtual onlyRole(YEAR_ROLE) {
@@ -79,7 +81,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
         return consume + toConsume > limit;
     }
 
-    function convertToInternal(uint128 externalAmount) external virtual override {
+    function convertToInternal(uint128 externalAmount) external virtual override nonReentrant {
         consumeLimit(externalAmount);
         _convertToInternal(externalAmount);
     }

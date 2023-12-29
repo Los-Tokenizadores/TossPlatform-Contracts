@@ -5,7 +5,7 @@ import "./BaseTest.sol";
 
 contract TossInvestTest is BaseTest {
     function test_initialization() public {
-        uint64 amount = 10;
+        uint256 amount = 10 ether;
         string memory uri = "uritest";
         TossErc721MarketV1 erc721Implementation = new TossErc721MarketV1();
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);

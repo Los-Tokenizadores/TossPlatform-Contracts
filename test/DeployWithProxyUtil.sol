@@ -9,6 +9,7 @@ import { TossExchangeTierV1 } from "../src/TossExchangeTierV1.sol";
 import { TossExchangeV1 } from "../src/TossExchangeV1.sol";
 import { TossInvestV1 } from "../src/TossInvestV1.sol";
 import { TossMarketV1 } from "../src/TossMarketV1.sol";
+import { ITossMarket } from "../src/Interfaces/ITossMarket.sol";
 import { TossSellerV1 } from "../src/TossSellerV1.sol";
 import { TossWhitelistV1 } from "../src/TossWhitelistV1.sol";
 import { TossUpgradeableProxy } from "../src/TossUpgradeableProxy.sol";
@@ -17,7 +18,7 @@ import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/Saf
 library DeployWithProxyUtil {
     using SafeERC20 for IERC20;
 
-    function tossErc20V1(string memory name, string memory symbol, uint64 amount) internal returns (TossErc20V1) {
+    function tossErc20V1(string memory name, string memory symbol, uint256 amount) internal returns (TossErc20V1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc20V1()), abi.encodeCall(TossErc20V1.__TossErc20V1_init, (name, symbol, amount)));
 
         return TossErc20V1(address(proxy));
