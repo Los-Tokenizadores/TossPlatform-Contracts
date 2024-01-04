@@ -154,7 +154,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         return address(_getTossInvestBaseStorage().erc721Implementation);
     }
 
-    function setErc721Implementation(TossErc721MarketV1 newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function setErc721Implementation(TossErc721MarketV1 newImplementation) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!IERC165(address(newImplementation)).supportsInterface(type(IERC721).interfaceId)) {
             revert TossInvestInvalidErc721Implementation(newImplementation);
         }
@@ -363,7 +363,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         emit ProjectConfirmed(projectId, msg.sender);
     }
 
-    function invest(uint256 projectId, uint16 amount) external isInWhitelist(msg.sender) nonReentrant {
+    function invest(uint256 projectId, uint16 amount) external nonReentrant isInWhitelist(msg.sender) {
         investInternal(projectId, amount);
     }
 
@@ -375,7 +375,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external isInWhitelist(msg.sender) nonReentrant {
+    ) external nonReentrant isInWhitelist(msg.sender) {
         IERC20Permit(address(_getTossInvestBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         investInternal(projectId, investAmount);
     }

@@ -124,7 +124,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _getTossMarketBaseStorage().erc20BankAddress = newAddress;
     }
 
-    function withdrawBalance(uint256 amount) external onlyRole(EXTRACT_ROLE) nonReentrant {
+    function withdrawBalance(uint256 amount) external nonReentrant onlyRole(EXTRACT_ROLE)  {
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
         $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
@@ -140,7 +140,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _getTossMarketBaseStorage().marketCut = cut;
     }
 
-    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) nonReentrant {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override nonReentrant whenNotPaused onlyRole(ERC721_SELLER_ROLE)  {
         address erc721Address = msg.sender;
         if (IERC721(erc721Address).ownerOf(tokenId) != owner) {
             revert TossMarketNotOwnerOfErc721(msg.sender, owner);
@@ -154,7 +154,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         IERC721(erc721Address).safeTransferFrom(owner, address(this), tokenId);
     }
 
-    function buy(address erc721Address, uint256 tokenId, uint128 price) external whenNotPaused isInWhitelist(msg.sender) nonReentrant {
+    function buy(address erc721Address, uint256 tokenId, uint128 price) external nonReentrant whenNotPaused isInWhitelist(msg.sender)  {
         buyInternal(erc721Address, tokenId, price);
     }
 
@@ -167,7 +167,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external whenNotPaused isInWhitelist(msg.sender) nonReentrant {
+    ) external nonReentrant whenNotPaused isInWhitelist(msg.sender)  {
         IERC20Permit(address(_getTossMarketBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         buyInternal(erc721Address, tokenId, price);
     }
@@ -204,7 +204,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         cancelSellOffer(erc721Address, tokenId, true);
     }
 
-    function cancelWhenPaused(address erc721Address, uint256 tokenId) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function cancelWhenPaused(address erc721Address, uint256 tokenId) external nonReentrant whenPaused onlyRole(DEFAULT_ADMIN_ROLE)  {
         cancelSellOffer(erc721Address, tokenId, false);
     }
 

@@ -94,7 +94,7 @@ abstract contract TossErc721MarketBase is
         return super.supportsInterface(interfaceId);
     }
 
-    function createSellOffer(uint256 tokenId, uint128 price) external whenNotPaused nonReentrant {
+    function createSellOffer(uint256 tokenId, uint128 price) external nonReentrant whenNotPaused {
         TossErc721MarketBaseStorage storage $ = _getTossErc721MarketBaseStorage();
         if (address($.market) == address(0)) {
             revert TossErc721MarketNotSet();
@@ -107,7 +107,7 @@ abstract contract TossErc721MarketBase is
         return address(_getTossErc721MarketBaseStorage().market);
     }
 
-    function setMarket(ITossMarket market) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function setMarket(ITossMarket market) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
             revert TossUnsupportedInterface("ITossMarket");
         }

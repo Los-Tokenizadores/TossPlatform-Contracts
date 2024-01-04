@@ -125,12 +125,12 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         _getTossSellerBaseStorage().erc20BankAddress = newAddress;
     }
 
-    function withdrawBalance(uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function withdrawBalance(uint256 amount) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
         $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
 
-    function buyErc721(ITossSellErc721 erc721, uint8 amount) external isInWhitelist(msg.sender) nonReentrant {
+    function buyErc721(ITossSellErc721 erc721, uint8 amount) external nonReentrant isInWhitelist(msg.sender) {
         buyErc721Internal(erc721, amount);
     }
 
@@ -142,7 +142,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external isInWhitelist(msg.sender) nonReentrant {
+    ) external nonReentrant isInWhitelist(msg.sender) {
         IERC20Permit(address(_getTossSellerBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         buyErc721Internal(erc721, buyAmount);
     }
@@ -170,7 +170,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         erc721.sellErc721(msg.sender, amount);
     }
 
-    function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function setErc721Sell(ITossSellErc721 erc721, uint128 price, uint8 maxAmount) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(erc721) == address(0)) {
             revert TossAddressIsZero("erc721");
         }
@@ -186,11 +186,11 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         _getTossSellerBaseStorage().erc721Sells[erc721] = Erc721SellInfo({ price: price, maxAmount: maxAmount });
     }
 
-    function convertToOffchain(uint256 erc20Amount) external isInWhitelist(msg.sender) nonReentrant {
+    function convertToOffchain(uint256 erc20Amount) external nonReentrant isInWhitelist(msg.sender) {
         convertToOffchainInternal(erc20Amount);
     }
 
-    function convertToOffchainWithPermit(uint256 erc20Amount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isInWhitelist(msg.sender) nonReentrant {
+    function convertToOffchainWithPermit(uint256 erc20Amount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external nonReentrant isInWhitelist(msg.sender) {
         IERC20Permit(address(_getTossSellerBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         convertToOffchainInternal(erc20Amount);
     }
@@ -209,7 +209,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         $.erc20.safeTransferFrom(msg.sender, address(this), erc20Amount);
     }
 
-    function convertToErc20(address user, uint32 offchainAmount) external onlyRole(CONVERT_ROLE) isInWhitelist(user) nonReentrant {
+    function convertToErc20(address user, uint32 offchainAmount) external nonReentrant onlyRole(CONVERT_ROLE) isInWhitelist(user)  {
         TossSellerBaseStorage storage $ = _getTossSellerBaseStorage();
         if (user == address(0)) {
             revert TossAddressIsZero("user");

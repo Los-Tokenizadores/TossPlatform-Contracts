@@ -66,7 +66,7 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         return _getTossErc721GeneBaseStorage().erc721Genes[tokenId];
     }
 
-    function sellErc721(address _owner, uint8 _amount) external onlyRole(MINTER_ROLE) nonReentrant {
+    function sellErc721(address _owner, uint8 _amount) external nonReentrant onlyRole(MINTER_ROLE) {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
         if (_amount > $.rangeOfGene.length) {
             revert TossErc721GeneNotEnoughGenes($.rangeOfGene.length, _amount);
