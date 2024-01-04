@@ -34,10 +34,9 @@ contract TossExchangeTierV1 is TossExchangeBase {
         uint128 externalMinAmount_,
         TossErc20Base internalErc20_,
         uint128 internalMinAmount_,
-        uint64 rate_,
         uint64 year
     ) public initializer {
-        __TossExchangeBase_init(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_, rate_);
+        __TossExchangeBase_init(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_);
 
         _grantRole(YEAR_ROLE, msg.sender);
 

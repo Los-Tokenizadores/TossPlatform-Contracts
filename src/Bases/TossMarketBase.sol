@@ -50,8 +50,8 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     event SellOfferSold(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt, uint128 price, address buyer);
     event SellOfferCancelled(address indexed owner, address indexed erc721Address, uint256 indexed tokenId, uint128 startedAt);
 
-    error TossMarketNotOwnerOfErc721(address);
-    error TossMarketIsOwnerOfErc721(address);
+    error TossMarketNotOwnerOfErc721(address sender, address owner);
+    error TossMarketIsOwnerOfErc721(address sender);
     error TossMarketErc721NotOnSell(address erc721, uint256 tokenId);
     error TossMarketSellPriceChange(uint128 realPrice, uint128 userPrice);
 
@@ -143,7 +143,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override whenNotPaused onlyRole(ERC721_SELLER_ROLE) nonReentrant {
         address erc721Address = msg.sender;
         if (IERC721(erc721Address).ownerOf(tokenId) != owner) {
-            revert TossMarketNotOwnerOfErc721(owner);
+            revert TossMarketNotOwnerOfErc721(msg.sender, owner);
         }
 
         uint128 startedAt = uint128(block.timestamp);
@@ -183,7 +183,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
         address owner = sellOffer.owner;
         if (msg.sender == owner) {
-            revert TossMarketIsOwnerOfErc721(owner);
+            revert TossMarketIsOwnerOfErc721(msg.sender);
         }
 
         uint128 price = sellOffer.price;
@@ -236,7 +236,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
         address owner = sellOffer.owner;
         if (validateOwner && msg.sender != owner) {
-            revert TossMarketNotOwnerOfErc721(owner);
+            revert TossMarketNotOwnerOfErc721(msg.sender, owner);
         }
 
         delete $.erc721Markets[erc721Address][tokenId];

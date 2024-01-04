@@ -52,7 +52,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     error TossSellerNotOnSell(address erc721);
     error TossSellerBuyAmountGreatherThanMax(address erc721, uint8 amount, uint8 max);
-    error TossSellerBuyMaxAmountExceeded(uint8 amount, uint256 max);
+    error TossSellerBuyMaxAmountExceeded(uint8 amount, uint8 max);
     error TossSellConvertOffchainAmountLessThanMin(uint256 amount, uint256 min);
     error TossSellConvertErc20AmountLessThanMin(uint32 amount, uint32 min);
 
@@ -242,7 +242,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     function setConvertToOffchainMinAmount(uint256 minAmount) external onlyRole(CONVERT_ROLE) {
         if (minAmount < 1 ether) {
-            revert TossValueIsLessThanOne("min amount");
+            revert TossValueIsLessThanOneEther("min amount");
         }
         _getTossSellerBaseStorage().convertToOffchainMinAmount = minAmount;
     }

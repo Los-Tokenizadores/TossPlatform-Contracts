@@ -59,11 +59,10 @@ library DeployWithProxyUtil {
         IERC20 externalErc20,
         uint128 externalMinAmount,
         TossErc20Base internalErc20,
-        uint128 internalMinAmount,
-        uint64 rate
+        uint128 internalMinAmount
     ) internal returns (TossExchangeV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-            address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, rate))
+            address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount))
         );
 
         return TossExchangeV1(address(proxy));
@@ -74,12 +73,11 @@ library DeployWithProxyUtil {
         uint128 externalMinAmount,
         TossErc20Base internalErc20,
         uint128 internalMinAmount,
-        uint64 rate,
         uint64 year
     ) internal returns (TossExchangeTierV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(
             address(new TossExchangeTierV1()),
-            abi.encodeCall(TossExchangeTierV1.__TossExchangeTierV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, rate, year))
+            abi.encodeCall(TossExchangeTierV1.__TossExchangeTierV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, year))
         );
 
         return TossExchangeTierV1(address(proxy));

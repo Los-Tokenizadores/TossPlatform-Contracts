@@ -107,7 +107,7 @@ abstract contract TossErc721MarketBase is
         return address(_getTossErc721MarketBaseStorage().market);
     }
 
-    function setMarket(ITossMarket market) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMarket(ITossMarket market) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
             revert TossUnsupportedInterface("ITossMarket");
         }

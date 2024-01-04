@@ -154,7 +154,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         return address(_getTossInvestBaseStorage().erc721Implementation);
     }
 
-    function setErc721Implementation(TossErc721MarketV1 newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setErc721Implementation(TossErc721MarketV1 newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         if (!IERC165(address(newImplementation)).supportsInterface(type(IERC721).interfaceId)) {
             revert TossInvestInvalidErc721Implementation(newImplementation);
         }
@@ -459,10 +459,11 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             erc721.grantRole(erc721.UPGRADER_ROLE(), $.tossProjectAddress);
             uint256 total = projectInfo.price * length;
             uint256 platformAmount = total * $.platformCut / PLATFORM_CUT_PRECISION;
-            $.erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
-            $.erc20.safeTransfer($.platformAddress, platformAmount);
             projectInfo.mintedAt = uint64(block.timestamp);
             emit ProjectErc721Created(projectId, projectInfo.erc721Address, address($.erc721Implementation));
+
+            $.erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
+            $.erc20.safeTransfer($.platformAddress, platformAmount);
         } else {
             erc721 = TossErc721MarketV1(projectInfo.erc721Address);
         }
