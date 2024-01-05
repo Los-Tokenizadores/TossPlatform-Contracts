@@ -2,20 +2,20 @@
 pragma solidity 0.8.23;
 
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { TossErc20Base } from "./TossErc20Base.sol";
-import { ITossExchange } from "../Interfaces/ITossExchange.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 import "../Interfaces/TossErrors.sol";
 
-abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
+abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossExchangeBase
     struct TossExchangeBaseStorage {
-        uint128 externalMinAmount;
-        uint128 internalMinAmount;
+        uint128 depositMinAmount;
+        uint128 withdrawMinAmount;
         IERC20 externalErc20;
         TossErc20Base internalErc20;
         uint64 rate;
@@ -33,9 +33,10 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
     using SafeERC20 for IERC20;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
-    event ConvertedToInternal(address indexed account, uint256 indexed amount);
-    event ConvertedToExternal(address indexed account, uint256 indexed amount);
+    event Deposited(address indexed account, uint256 indexed amount);
+    event Withdrawn(address indexed account, uint256 indexed amount);
 
     error TossExchangeAmounIsLessThanMin(string parameter, uint256 amount, uint256 min);
     error TossExchangeExternalAndInternalErc20AreEqual();
@@ -46,18 +47,19 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         _disableInitializers();
     }
 
-    function __TossExchangeBase_init(IERC20 externalErc20_, uint128 externalMinAmount_, TossErc20Base internalErc20_, uint128 internalMinAmount_) public onlyInitializing {
+    function __TossExchangeBase_init(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_) public onlyInitializing {
+        __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
-        __TossExchangeBase_init_unchained(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_);
+        __TossExchangeBase_init_unchained(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
     }
 
     function __TossExchangeBase_init_unchained(
         IERC20 externalErc20_,
-        uint128 externalMinAmount_,
+        uint128 depositMinAmount_,
         TossErc20Base internalErc20_,
-        uint128 internalMinAmount_
+        uint128 withdrawMinAmount_
     ) public onlyInitializing {
         if (address(externalErc20_) == address(0)) {
             revert TossAddressIsZero("external");
@@ -72,49 +74,58 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
             revert TossExchangeExternalAndInternalErc20HaveDifferentDecimalAmount();
         }
 
-        if (externalMinAmount_ == 0) {
-            revert TossValueIsZero("external min");
+        if (depositMinAmount_ == 0) {
+            revert TossValueIsZero("deposit min");
         }
-        if (internalMinAmount_ == 0) {
-            revert TossValueIsZero("internal min");
+        if (withdrawMinAmount_ == 0) {
+            revert TossValueIsZero("withdraw min");
         }
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
+        _grantRole(PAUSER_ROLE, msg.sender);
 
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         $.externalErc20 = externalErc20_;
         $.internalErc20 = internalErc20_;
 
-        $.externalMinAmount = externalMinAmount_;
-        $.internalMinAmount = internalMinAmount_;
+        $.depositMinAmount = depositMinAmount_;
+        $.withdrawMinAmount = withdrawMinAmount_;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
+
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function setWhitelist(address newAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         _setWhitelist(newAddress);
     }
 
-    function getExternalMinAmount() external view returns (uint128 minAmount) {
-        return _getTossExchangeBaseStorage().externalMinAmount;
+    function getDepositMinAmount() external view returns (uint128 minAmount) {
+        return _getTossExchangeBaseStorage().depositMinAmount;
     }
 
-    function setExternalMinAmount(uint128 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDepositMinAmount(uint128 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         if (value == 0) {
-            revert TossValueIsZero("external min");
+            revert TossValueIsZero("deposit min");
         }
-        _getTossExchangeBaseStorage().externalMinAmount = value;
+        _getTossExchangeBaseStorage().depositMinAmount = value;
     }
 
-    function getInternalMinAmount() external view returns (uint128 minAmount) {
-        return _getTossExchangeBaseStorage().internalMinAmount;
+    function getWithdrawMinAmount() external view returns (uint128 minAmount) {
+        return _getTossExchangeBaseStorage().withdrawMinAmount;
     }
 
-    function setInternalMinAmount(uint128 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setWithdrawMinAmount(uint128 value) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         if (value == 0) {
-            revert TossValueIsZero("internal min");
+            revert TossValueIsZero("withdraw min");
         }
-        _getTossExchangeBaseStorage().internalMinAmount = value;
+        _getTossExchangeBaseStorage().withdrawMinAmount = value;
     }
 
     function getExternalErc20() external view returns (IERC20 erc20) {
@@ -125,23 +136,23 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         return _getTossExchangeBaseStorage().internalErc20;
     }
 
-    function convertToInternal(uint128 amount) external virtual nonReentrant {
-        _convertToInternal(amount);
+    function deposit(uint128 amount) external virtual {
+        depositInternal(amount);
     }
 
-    function convertToInternalWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual nonReentrant {
+    function depositWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         IERC20Permit(address($.externalErc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
-        _convertToInternal(externalAmount);
+        depositInternal(externalAmount);
     }
 
-    function _convertToInternal(uint128 amount) internal virtual isInWhitelist(msg.sender) {
+    function depositInternal(uint128 amount) internal virtual nonReentrant whenNotPaused isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
-        if (amount < $.externalMinAmount) {
-            revert TossExchangeAmounIsLessThanMin("external", amount, $.externalMinAmount);
+        if (amount < $.depositMinAmount) {
+            revert TossExchangeAmounIsLessThanMin("external", amount, $.depositMinAmount);
         }
 
-        emit ConvertedToInternal(msg.sender, amount);
+        emit Deposited(msg.sender, amount);
 
         $.externalErc20.safeTransferFrom(msg.sender, address(this), amount);
         $.internalErc20.mint(msg.sender, amount);
@@ -149,23 +160,23 @@ abstract contract TossExchangeBase is ITossExchange, TossWhitelistClient, Access
         assert(_validState($));
     }
 
-    function convertToExternal(uint128 amount) external virtual nonReentrant {
-        _convertToExternal(amount);
+    function withdraw(uint128 amount) external virtual {
+        withdrawInternal(amount);
     }
 
-    function convertToExternalWithPermit(uint128 internalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual nonReentrant {
+    function withdrawWithPermit(uint128 internalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         IERC20Permit(address($.internalErc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
-        _convertToExternal(internalAmount);
+        withdrawInternal(internalAmount);
     }
 
-    function _convertToExternal(uint128 amount) internal virtual isInWhitelist(msg.sender) {
+    function withdrawInternal(uint128 amount) internal virtual nonReentrant whenNotPaused isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
-        if (amount < $.internalMinAmount) {
-            revert TossExchangeAmounIsLessThanMin("internal", amount, $.internalMinAmount);
+        if (amount < $.withdrawMinAmount) {
+            revert TossExchangeAmounIsLessThanMin("internal", amount, $.withdrawMinAmount);
         }
 
-        emit ConvertedToExternal(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
 
         $.internalErc20.burnFrom(msg.sender, amount);
         $.externalErc20.safeTransfer(msg.sender, amount);

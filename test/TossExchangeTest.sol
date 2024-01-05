@@ -4,33 +4,33 @@ pragma solidity ^0.8.20;
 import "./BaseTest.sol";
 
 contract TossExchangeTest is BaseTest {
-    function test_initialization(uint128 externalMinAmount, uint128 internalMinAmount) public {
-        vm.assume(externalMinAmount > 0);
-        vm.assume(internalMinAmount > 0);
+    function test_initialization(uint128 depositMinAmount, uint128 withdrawMinAmount) public {
+        vm.assume(depositMinAmount > 0);
+        vm.assume(withdrawMinAmount > 0);
 
         uint256 amount = 10 ether;
         TossErc20V1 externalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossErc20V1 internalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
-        TossExchangeV1 exchange = DeployWithProxyUtil.tossExchangeV1(IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount);
+        TossExchangeV1 exchange = DeployWithProxyUtil.tossExchangeV1(IERC20(address(externalErc20)), depositMinAmount, internalErc20, withdrawMinAmount);
 
         assertEq(address(exchange.getExternalErc20()), address(externalErc20));
         assertEq(address(exchange.getInternalErc20()), address(internalErc20));
     }
 
-    function test_initializationTier(uint128 externalMinAmount, uint128 internalMinAmount) public {
-        vm.assume(externalMinAmount > 0);
-        vm.assume(internalMinAmount > 0);
+    function test_initializationTier(uint128 depositMinAmount, uint128 withdrawMinAmount) public {
+        vm.assume(depositMinAmount > 0);
+        vm.assume(withdrawMinAmount > 0);
         uint64 year = 2023;
         uint256 amount = 10 ether;
         TossErc20V1 externalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
         TossErc20V1 internalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
-        TossExchangeTierV1 exchange = DeployWithProxyUtil.tossExchangeTierV1(IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount, year);
+        TossExchangeTierV1 exchange = DeployWithProxyUtil.tossExchangeTierV1(IERC20(address(externalErc20)), depositMinAmount, internalErc20, withdrawMinAmount, year);
 
         assertEq(address(exchange.getExternalErc20()), address(externalErc20));
         assertEq(address(exchange.getInternalErc20()), address(internalErc20));
     }
 
-    function test_tierConvertToInternalWithPermit(uint128 amount) public {
+    function test_tierDepositWithPermit(uint128 amount) public {
         vm.assume(amount > 0);
 
         TossErc20V1 externalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
@@ -44,32 +44,37 @@ contract TossExchangeTest is BaseTest {
         bytes32 digest = sigUtils.getTypedDataHash(permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
 
-        exchange.convertToInternalWithPermit(amount, permit.value, permit.deadline, v, r, s);
+        exchange.depositWithPermit(amount, permit.value, permit.deadline, v, r, s);
         assertEq(internalErc20.balanceOf(owner), uint256(amount));
         assertEq(externalErc20.balanceOf(address(exchange)), amount);
         assertEq(externalErc20.balanceOf(owner), 0);
     }
 
-    function test_tierConvertToInternalAndExternal(uint128 amount) public {
-        uint128 externalMinAmount = 1;
-        uint128 internalMinAmount = 1;
+    function test_tierDepositAndWithdraw(uint128 amount) public {
+        uint128 depositMinAmount = 1;
+        uint128 withdrawMinAmount = 1;
 
         uint256 mintAmount = 100 ether;
-        amount = uint128(bound(amount, externalMinAmount, mintAmount));
+        amount = uint128(bound(amount, depositMinAmount, mintAmount));
         TossErc20V1 externalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", mintAmount);
         TossErc20V1 internalErc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", 0);
-        TossExchangeTierV1 exchange = DeployWithProxyUtil.tossExchangeTierV1(IERC20(address(externalErc20)), externalMinAmount, internalErc20, internalMinAmount, 2023);
+        TossExchangeTierV1 exchange = DeployWithProxyUtil.tossExchangeTierV1(IERC20(address(externalErc20)), depositMinAmount, internalErc20, withdrawMinAmount, 2023);
         internalErc20.grantRole(internalErc20.MINTER_ROLE(), address(exchange));
+
         exchange.setTierLimit(1, amount);
         exchange.setUserTier(owner, 1);
+
         externalErc20.approve(address(exchange), amount);
-        exchange.convertToInternal(amount);
+        exchange.deposit(amount);
+
         uint256 internalAmount = internalErc20.balanceOf(owner);
         assertEq(internalErc20.balanceOf(owner), uint256(amount));
         assertEq(externalErc20.balanceOf(address(exchange)), amount);
         assertEq(externalErc20.balanceOf(owner), mintAmount - amount);
+
         internalErc20.approve(address(exchange), internalAmount);
-        exchange.convertToExternal(uint128(internalAmount));
+        exchange.withdraw(uint128(internalAmount));
+
         assertEq(internalErc20.balanceOf(owner), 0);
         assertEq(externalErc20.balanceOf(address(exchange)), 0);
         assertEq(externalErc20.balanceOf(owner), mintAmount);

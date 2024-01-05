@@ -11,7 +11,7 @@ contract TossExchangeV1 is TossExchangeBase {
         _disableInitializers();
     }
 
-    function __TossExchangeV1_init(IERC20 externalErc20_, uint128 externalMinAmount_, TossErc20Base internalErc20_, uint128 internalMinAmount_) public initializer {
-        __TossExchangeBase_init(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_);
+    function __TossExchangeV1_init(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_) public initializer {
+        __TossExchangeBase_init(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
     }
 }

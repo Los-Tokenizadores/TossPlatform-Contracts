@@ -363,24 +363,16 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         emit ProjectConfirmed(projectId, msg.sender);
     }
 
-    function invest(uint256 projectId, uint16 amount) external nonReentrant isInWhitelist(msg.sender) {
+    function invest(uint256 projectId, uint16 amount) external {
         investInternal(projectId, amount);
     }
 
-    function investWithPermit(
-        uint256 projectId,
-        uint16 investAmount,
-        uint256 amount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant isInWhitelist(msg.sender) {
+    function investWithPermit(uint256 projectId, uint16 investAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         IERC20Permit(address(_getTossInvestBaseStorage().erc20)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         investInternal(projectId, investAmount);
     }
 
-    function investInternal(uint256 projectId, uint16 amount) private {
+    function investInternal(uint256 projectId, uint16 amount) private nonReentrant whenNotPaused isInWhitelist(msg.sender) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         if (projectId >= $.projects.length) {
             revert TossInvestProjectNotExist(projectId);
@@ -414,7 +406,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         $.erc20.safeTransferFrom(msg.sender, address(this), amount * projectInfo.price);
     }
 
-    function finish(uint256 projectId) external nonReentrant {
+    function finish(uint256 projectId) external nonReentrant whenNotPaused {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         ProjectInfo storage projectInfo = $.projects[projectId];
         if (!projectInfo.confirmed) {

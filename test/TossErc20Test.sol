@@ -2,25 +2,45 @@
 pragma solidity ^0.8.20;
 
 import "./BaseTest.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract TossErc20Test is BaseTest {
-    function testFuzz_initialization(uint256 amount) public {
-        TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
-        assertEq(erc20.name(), "Erc20 Test");
-        assertEq(erc20.symbol(), "E20T");
-        assertEq(erc20.totalSupply(), amount);
+    TossErc20V1 erc20;
+    uint256 amount = 10 ether;
+
+    function setUp() public override {
+        super.setUp();
+        erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
+    }
+
+    function testFuzz_initialization(uint256 amount_) public {
+        TossErc20V1 erc20Init = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount_);
+        assertEq(erc20Init.name(), "Erc20 Test");
+        assertEq(erc20Init.symbol(), "E20T");
+        assertEq(erc20Init.totalSupply(), amount_);
     }
 
     function test_transfer() public {
-        uint256 amount = 10 ether;
-        TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
-
         assertEq(erc20.balanceOf(owner), amount);
         uint256 transferAmount = 1 ether;
         erc20.transfer(alice, transferAmount);
 
         assertEq(erc20.balanceOf(owner), amount - transferAmount);
         assertEq(erc20.balanceOf(alice), transferAmount);
+    }
+
+    function test_transferWhenPauseFail() public {
+        erc20.pause();
+        uint256 transferAmount = 1 ether;
+        vm.expectRevert(abi.encodeWithSelector(PausableUpgradeable.EnforcedPause.selector));
+        erc20.transfer(alice, transferAmount);
+    }
+
+    function test_mintWhenPauseFail() public {
+        erc20.pause();
+        uint256 transferAmount = 1 ether;
+        vm.expectRevert(abi.encodeWithSelector(PausableUpgradeable.EnforcedPause.selector));
+        erc20.mint(alice, transferAmount);
     }
 
     // function test_mintOne() public {

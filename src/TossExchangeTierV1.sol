@@ -31,12 +31,12 @@ contract TossExchangeTierV1 is TossExchangeBase {
 
     function __TossExchangeTierV1_init(
         IERC20 externalErc20_,
-        uint128 externalMinAmount_,
+        uint128 depositMinAmount_,
         TossErc20Base internalErc20_,
-        uint128 internalMinAmount_,
+        uint128 withdrawMinAmount_,
         uint64 year
     ) public initializer {
-        __TossExchangeBase_init(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_);
+        __TossExchangeBase_init(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
 
         _grantRole(YEAR_ROLE, msg.sender);
 
@@ -45,7 +45,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
         emit YearChanged(year);
     }
 
-    function setYear(uint64 year) external virtual onlyRole(YEAR_ROLE) {
+    function setYear(uint64 year) external onlyRole(YEAR_ROLE) {
         if (currentYear == year) {
             revert TossExchangeTierYearIsTheSame();
         }
@@ -53,7 +53,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
         emit YearChanged(year);
     }
 
-    function setTierLimit(uint8 tier, uint128 limit) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setTierLimit(uint8 tier, uint128 limit) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (tier == 0) {
             revert TossExchangeTierTier0CantChange();
         }
@@ -80,14 +80,14 @@ contract TossExchangeTierV1 is TossExchangeBase {
         return consume + toConsume > limit;
     }
 
-    function convertToInternal(uint128 externalAmount) external virtual override nonReentrant {
+    function deposit(uint128 externalAmount) external override {
         consumeLimit(externalAmount);
-        _convertToInternal(externalAmount);
+        depositInternal(externalAmount);
     }
 
-    function convertToInternalWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual override {
+    function depositWithPermit(uint128 externalAmount, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public override {
         consumeLimit(externalAmount);
-        super.convertToInternalWithPermit(externalAmount, amount, deadline, v, r, s);
+        super.depositWithPermit(externalAmount, amount, deadline, v, r, s);
     }
 
     function consumeLimit(uint128 amount) private {
