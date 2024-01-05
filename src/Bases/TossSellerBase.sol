@@ -210,7 +210,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossSellConvertErc20AmountLessThanMin(offchainAmount, $.convertToErc20MinAmount);
         }
 
-        uint256 erc20Amount = offchainAmount * 1 ether * (CUT_PRECISION - $.convertToErc20Cut) / $.convertToErc20Rate / CUT_PRECISION;
+        uint256 erc20Amount = uint256(offchainAmount) * 1 ether * (CUT_PRECISION - $.convertToErc20Cut) / $.convertToErc20Rate / CUT_PRECISION;
 
         emit ConvertToErc20(user, erc20Amount, offchainAmount);
 

@@ -254,7 +254,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint64 startAt,
         uint64 finishAt,
         address projectWallet
-    ) external onlyRole(PROJECT_ROLE) {
+    ) external whenNotPaused onlyRole(PROJECT_ROLE) {
         if (targetAmount == 0) {
             revert TossValueIsZero("target amount");
         }
@@ -306,7 +306,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint64 startAt,
         uint64 finishAt,
         address projectWallet
-    ) external onlyRole(PROJECT_ROLE) {
+    ) external whenNotPaused onlyRole(PROJECT_ROLE) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         if (projectId >= $.projects.length) {
             revert TossInvestProjectNotExist(projectId);
@@ -344,7 +344,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         projectInfo.projectWallet = projectWallet;
     }
 
-    function confirm(uint256 projectId) external {
+    function confirm(uint256 projectId) external whenNotPaused {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         if (projectId >= $.projects.length) {
             revert TossInvestProjectNotExist(projectId);

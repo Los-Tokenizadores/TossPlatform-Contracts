@@ -43,6 +43,13 @@ contract TossErc20Test is BaseTest {
         erc20.mint(alice, transferAmount);
     }
 
+    function test_burnWhenPauseFail() public {
+        erc20.pause();
+        uint256 transferAmount = 1 ether;
+        vm.expectRevert(abi.encodeWithSelector(PausableUpgradeable.EnforcedPause.selector));
+        erc20.burn(transferAmount);
+    }
+
     // function test_mintOne() public {
     //     uint256 balanceBefore = address(nftmin).balance;
     //     nftmin.mintOne{value: 1 ether}();
