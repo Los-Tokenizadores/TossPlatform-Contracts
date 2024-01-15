@@ -43,9 +43,8 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant CONVERT_ROLE = keccak256("CONVERT_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    uint8 private constant decimals = 18;
     uint8 private constant SELL_MAX_LIMIT = 40;
-    uint16 private constant CUT_PRECISION = 10_000;
+    uint16 public constant CUT_PRECISION = 10_000;
 
     event ConvertToOffchain(address indexed account, uint256 indexed erc20Amount, uint32 indexed offchainAmount);
     event ConvertToErc20(address indexed account, uint256 indexed erc20Amount, uint32 indexed offchainAmount);
