@@ -14,6 +14,13 @@ contract TossErc20Test is BaseTest {
         erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount);
     }
 
+    function test_upgrade() public {
+        TossErc20V1 erc20Init = new TossErc20V1();
+        assertNotEq(erc20.getImplementation(), address(erc20Init));
+        erc20.upgradeToAndCall(address(erc20Init), "");
+        assertEq(erc20.getImplementation(), address(erc20Init));
+    }
+
     function testFuzz_initialization(uint256 amount_) public {
         TossErc20V1 erc20Init = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", amount_);
         assertEq(erc20Init.name(), "Erc20 Test");
@@ -28,6 +35,29 @@ contract TossErc20Test is BaseTest {
 
         assertEq(erc20.balanceOf(owner), amount - transferAmount);
         assertEq(erc20.balanceOf(alice), transferAmount);
+    }
+
+    function test_unpause() public {
+        assertEq(erc20.balanceOf(owner), amount);
+        uint256 transferAmount = 1 ether;
+        erc20.transfer(alice, transferAmount);
+        assertEq(erc20.balanceOf(alice), transferAmount);
+        erc20.pause();
+        vm.expectRevert(abi.encodeWithSelector(PausableUpgradeable.EnforcedPause.selector));
+        erc20.transfer(alice, transferAmount);
+        assertEq(erc20.balanceOf(alice), transferAmount);
+        erc20.unpause();
+        erc20.transfer(alice, transferAmount);
+        assertEq(erc20.balanceOf(alice), transferAmount * 2);
+    }
+
+    function test_transferNotInWhitelistRevert() public {
+        erc20.setWhitelist(address(whitelist));
+        whitelist.set(owner, true);
+        assertEq(erc20.balanceOf(owner), amount);
+        uint256 transferAmount = 1 ether;
+        vm.expectRevert(abi.encodeWithSelector(TossWhitelistClient.TossWhitelistNotInWhitelist.selector, alice));
+        erc20.transfer(alice, transferAmount);
     }
 
     function test_transferFromWithApprove() public {
@@ -60,6 +90,22 @@ contract TossErc20Test is BaseTest {
         uint256 transferAmount = 1 ether;
         vm.expectRevert(abi.encodeWithSelector(PausableUpgradeable.EnforcedPause.selector));
         erc20.mint(alice, transferAmount);
+    }
+
+    function test_burn() public {
+        uint256 transferAmount = 1 ether;
+        erc20.burn(transferAmount);
+        assertEq(erc20.balanceOf(owner), amount - transferAmount);
+    }
+
+    function test_burnFrom() public {
+        uint256 transferAmount = 1 ether;
+        erc20.transfer(alice, transferAmount);
+        vm.startPrank(alice);
+        erc20.approve(owner, transferAmount);
+        vm.startPrank(owner);
+        erc20.burnFrom(alice, transferAmount);
+        assertEq(erc20.balanceOf(owner), amount - transferAmount);
     }
 
     function test_burnWhenPauseFail() public {

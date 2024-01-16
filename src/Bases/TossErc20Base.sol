@@ -27,7 +27,7 @@ abstract contract TossErc20Base is
         _disableInitializers();
     }
 
-    function __TossErc20Base_init(string memory name_, string memory symbol_, uint256 amount_) public onlyInitializing {
+    function __TossErc20Base_init(string memory name_, string memory symbol_, uint256 amount_) internal onlyInitializing {
         __ERC20_init(name_, symbol_);
         __ERC20Burnable_init();
         __ERC20Pausable_init();
@@ -37,7 +37,7 @@ abstract contract TossErc20Base is
         __TossErc20Base_init_unchained(amount_);
     }
 
-    function __TossErc20Base_init_unchained(uint256 amount_) public onlyInitializing {
+    function __TossErc20Base_init_unchained(uint256 amount_) internal onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
@@ -48,7 +48,7 @@ abstract contract TossErc20Base is
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
-    function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+    function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable, ERC20PausableUpgradeable) isInWhitelist(to) {
         super._update(from, to, value);
     }
 

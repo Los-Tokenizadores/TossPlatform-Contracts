@@ -27,13 +27,13 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
         _disableInitializers();
     }
 
-    function __TossWhitelistBase_init() public onlyInitializing {
+    function __TossWhitelistBase_init() internal onlyInitializing {
         __AccessControl_init();
         __TossUUPSUpgradeable_init();
         __TossWhitelistBase_init_unchained();
     }
 
-    function __TossWhitelistBase_init_unchained() public onlyInitializing {
+    function __TossWhitelistBase_init_unchained() internal onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
     }

@@ -5,7 +5,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { ERC1967Utils } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
-    function __TossUUPSUpgradeable_init() public onlyInitializing {
+    function __TossUUPSUpgradeable_init() internal onlyInitializing {
         __UUPSUpgradeable_init();
     }
 

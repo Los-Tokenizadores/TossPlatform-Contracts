@@ -32,12 +32,12 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
         _disableInitializers();
     }
 
-    function __TossErc721GeneBase_init(string memory name_, string memory symbol_) public onlyInitializing {
+    function __TossErc721GeneBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __TossErc721MarketBase_init(name_, symbol_);
         __TossErc721GeneBase_init_unchained();
     }
 
-    function __TossErc721GeneBase_init_unchained() public onlyInitializing { }
+    function __TossErc721GeneBase_init_unchained() internal onlyInitializing { }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, TossErc721MarketBase) returns (bool) {
         return interfaceId == type(ITossSellErc721).interfaceId || super.supportsInterface(interfaceId);

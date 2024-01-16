@@ -60,7 +60,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         _disableInitializers();
     }
 
-    function __TossSellerBase_init(IERC20 erc20_) public onlyInitializing {
+    function __TossSellerBase_init(IERC20 erc20_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -68,7 +68,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         __TossSellerBase_init_unchained(erc20_);
     }
 
-    function __TossSellerBase_init_unchained(IERC20 erc20_) public onlyInitializing {
+    function __TossSellerBase_init_unchained(IERC20 erc20_) internal onlyInitializing {
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
         }

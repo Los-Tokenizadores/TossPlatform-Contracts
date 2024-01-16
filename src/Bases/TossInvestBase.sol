@@ -94,7 +94,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         address platformAddress_,
         uint16 platformCut_,
         string memory erc721baseUri_
-    ) public onlyInitializing {
+    ) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -108,7 +108,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         address platformAddress_,
         uint16 platformCut_,
         string memory erc721baseUri_
-    ) public onlyInitializing {
+    ) internal onlyInitializing {
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
         }

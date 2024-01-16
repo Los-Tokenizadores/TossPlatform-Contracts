@@ -5,6 +5,8 @@ import { Test } from "forge-std/Test.sol";
 import { SigUtils } from "./utils/SigUtils.sol";
 import "./DeployWithProxyUtil.sol";
 import "../src/interfaces/TossErrors.sol";
+import { TossWhitelistClient } from "../src/Bases/TossWhitelistClient.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 abstract contract BaseTest is Test {
     uint256 internal constant ownerPrivateKey = 0x1;
@@ -14,9 +16,11 @@ abstract contract BaseTest is Test {
     address internal owner = vm.addr(ownerPrivateKey);
     address internal alice = vm.addr(alicePrivateKey);
     address internal bob = vm.addr(bobPrivateKey);
+    TossWhitelistV1 internal whitelist;
 
     function setUp() public virtual {
         vm.deal(owner, 1000 ether);
         vm.startPrank(owner);
+        whitelist = DeployWithProxyUtil.tossWhitelistV1();
     }
 }

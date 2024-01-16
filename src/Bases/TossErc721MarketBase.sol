@@ -44,7 +44,7 @@ abstract contract TossErc721MarketBase is
         _disableInitializers();
     }
 
-    function __TossErc721MarketBase_init(string memory name_, string memory symbol_) public onlyInitializing {
+    function __TossErc721MarketBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __ERC721_init(name_, symbol_);
         __ERC721Pausable_init();
         __AccessControl_init();
@@ -53,7 +53,7 @@ abstract contract TossErc721MarketBase is
         __TossErc721MarketBase_init_unchained();
     }
 
-    function __TossErc721MarketBase_init_unchained() public onlyInitializing {
+    function __TossErc721MarketBase_init_unchained() internal onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);

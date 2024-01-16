@@ -60,7 +60,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _disableInitializers();
     }
 
-    function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) public onlyInitializing {
+    function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -68,7 +68,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         __TossMarketBase_init_unchained(erc20_, marketCut_);
     }
 
-    function __TossMarketBase_init_unchained(IERC20 erc20_, uint16 marketCut_) public onlyInitializing {
+    function __TossMarketBase_init_unchained(IERC20 erc20_, uint16 marketCut_) internal onlyInitializing {
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
         }
