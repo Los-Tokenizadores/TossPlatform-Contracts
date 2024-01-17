@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import "./BaseTest.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 contract TossErc20Test is BaseTest {
@@ -51,13 +50,17 @@ contract TossErc20Test is BaseTest {
         assertEq(erc20.balanceOf(alice), transferAmount * 2);
     }
 
-    function test_transferNotInWhitelistRevert() public {
+    function test_transferWhitelist() public {
         erc20.setWhitelist(address(whitelist));
         whitelist.set(owner, true);
         assertEq(erc20.balanceOf(owner), amount);
         uint256 transferAmount = 1 ether;
         vm.expectRevert(abi.encodeWithSelector(TossWhitelistClient.TossWhitelistNotInWhitelist.selector, alice));
         erc20.transfer(alice, transferAmount);
+        whitelist.set(alice, true);
+        erc20.transfer(alice, transferAmount);
+        assertEq(erc20.balanceOf(alice), transferAmount);
+        assertEq(erc20.balanceOf(owner), amount - transferAmount);
     }
 
     function test_transferFromWithApprove() public {

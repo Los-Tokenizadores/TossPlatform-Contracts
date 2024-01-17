@@ -74,7 +74,11 @@ abstract contract TossErc721MarketBase is
         _setWhitelist(newAddress);
     }
 
-    function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) whenNotPaused returns (address) {
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) isInWhitelist(to) whenNotPaused returns (address) {
         return super._update(to, tokenId, auth);
     }
 
