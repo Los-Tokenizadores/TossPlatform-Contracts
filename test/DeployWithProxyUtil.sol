@@ -2,21 +2,23 @@
 pragma solidity ^0.8.20;
 
 import { TossErc20V1, TossErc20Base } from "../src/TossErc20V1.sol";
-import { TossErc721GeneV1 } from "../src/TossErc721GeneV1.sol";
+import { TossErc721GeneV1, TossErc721GeneBase } from "../src/TossErc721GeneV1.sol";
 import { TossErc721GeneUniqueV1 } from "../src/TossErc721GeneUniqueV1.sol";
-import { TossErc721MarketV1 } from "../src/TossErc721MarketV1.sol";
+import { TossErc721MarketV1, TossErc721MarketBase } from "../src/TossErc721MarketV1.sol";
 import { TossExchangeTierV1 } from "../src/TossExchangeTierV1.sol";
-import { TossExchangeV1 } from "../src/TossExchangeV1.sol";
-import { TossInvestV1 } from "../src/TossInvestV1.sol";
-import { TossMarketV1 } from "../src/TossMarketV1.sol";
+import { TossExchangeV1, TossExchangeBase } from "../src/TossExchangeV1.sol";
+import { TossInvestV1, TossInvestBase } from "../src/TossInvestV1.sol";
+import { TossMarketV1, TossMarketBase } from "../src/TossMarketV1.sol";
 import { ITossMarket } from "../src/Interfaces/ITossMarket.sol";
-import { TossSellerV1 } from "../src/TossSellerV1.sol";
-import { TossWhitelistV1 } from "../src/TossWhitelistV1.sol";
+import { TossSellerV1, TossSellerBase } from "../src/TossSellerV1.sol";
+import { TossWhitelistV1, TossWhitelistBase } from "../src/TossWhitelistV1.sol";
 import { TossUpgradeableProxy } from "../src/TossUpgradeableProxy.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
 
 library DeployWithProxyUtil {
     using SafeERC20 for IERC20;
+
+    function test() public { }
 
     function tossErc20V1(string memory name, string memory symbol, uint256 amount) internal returns (TossErc20V1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc20V1()), abi.encodeCall(TossErc20V1.__TossErc20V1_init, (name, symbol, amount)));
@@ -55,12 +57,7 @@ library DeployWithProxyUtil {
         return TossMarketV1(address(proxy));
     }
 
-    function tossExchangeV1(
-        IERC20 externalErc20,
-        uint128 externalMinAmount,
-        TossErc20Base internalErc20,
-        uint128 internalMinAmount
-    ) internal returns (TossExchangeV1) {
+    function tossExchangeV1(IERC20 externalErc20, uint128 externalMinAmount, TossErc20Base internalErc20, uint128 internalMinAmount) internal returns (TossExchangeV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(
             address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount))
         );

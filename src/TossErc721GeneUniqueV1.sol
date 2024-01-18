@@ -21,9 +21,10 @@ contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
 
         for (uint256 i; i < genes.length;) {
-            if (uniqueGene[genes[i]] == AVAILABLE) {
-                uniqueGene[genes[i]] = UNAVAILABLE;
-                $.rangeOfGene.push(genes[i]);
+            uint256 gene = genes[i];
+            if (uniqueGene[gene] == AVAILABLE) {
+                uniqueGene[gene] = UNAVAILABLE;
+                $.rangeOfGene.push(gene);
             }
             unchecked {
                 ++i;

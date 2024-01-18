@@ -72,35 +72,26 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
             revert TossErc721GeneNotEnoughGenes($.rangeOfGene.length, _amount);
         }
         for (uint8 i; i < _amount;) {
-            uint256 index = _randomGeneIndex($);
-            uint256 gene = $.rangeOfGene[index];
+            uint256 gene = randomGene($);
             uint256 tokenId = $.nextTokenId++;
+            $.erc721Genes[tokenId] = gene;
+            emit Created(_owner, tokenId, gene);
+
             _safeMint(_owner, tokenId);
 
-            $.erc721Genes[tokenId] = gene;
-            _remove(index);
-
-            emit Created(_owner, tokenId, gene);
             unchecked {
                 ++i;
             }
         }
     }
 
-    function _randomGeneIndex(TossErc721GeneBaseStorage storage $) private returns (uint256) {
+    function randomGene(TossErc721GeneBaseStorage storage $) private returns (uint256) {
         uint256 randomN = uint256(blockhash(block.number));
         uint256 index = uint256(keccak256(abi.encodePacked(randomN, $.nonce, block.prevrandao))) % $.rangeOfGene.length;
         $.nonce++;
-        assert(index < $.rangeOfGene.length);
-        return index;
-    }
-
-    function _remove(uint256 _index) private {
-        TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        if (_index >= $.rangeOfGene.length) {
-            return;
-        }
-        $.rangeOfGene[_index] = $.rangeOfGene[$.rangeOfGene.length - 1];
+        uint256 gene = $.rangeOfGene[index];
+        $.rangeOfGene[index] = $.rangeOfGene[$.rangeOfGene.length - 1];
         $.rangeOfGene.pop();
+        return gene;
     }
 }

@@ -9,7 +9,6 @@ import { TossWhitelistClient } from "../src/Bases/TossWhitelistClient.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { TossErc721MarketBase } from "../src/Bases/TossErc721MarketBase.sol";
 
 abstract contract BaseTest is Test {
     uint256 internal constant ownerPrivateKey = 0x1;
@@ -26,4 +25,6 @@ abstract contract BaseTest is Test {
         vm.startPrank(owner);
         whitelist = DeployWithProxyUtil.tossWhitelistV1();
     }
+
+    function test() public { }
 }
