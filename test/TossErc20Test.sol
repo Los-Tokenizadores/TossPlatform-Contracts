@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import "./BaseTest.sol";
-import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 contract TossErc20Test is BaseTest {
     TossErc20V1 erc20;
@@ -18,6 +17,9 @@ contract TossErc20Test is BaseTest {
         assertNotEq(erc20.getImplementation(), address(erc20Init));
         erc20.upgradeToAndCall(address(erc20Init), "");
         assertEq(erc20.getImplementation(), address(erc20Init));
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, erc20.UPGRADER_ROLE()));
+        erc20.upgradeToAndCall(address(erc20Init), "");
     }
 
     function testFuzz_initialization(uint256 amount_) public {

@@ -149,7 +149,7 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
     function depositInternal(uint128 amount) internal virtual nonReentrant whenNotPaused isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         if (amount < $.depositMinAmount) {
-            revert TossExchangeAmounIsLessThanMin("external", amount, $.depositMinAmount);
+            revert TossExchangeAmounIsLessThanMin("deposit", amount, $.depositMinAmount);
         }
 
         emit Deposited(msg.sender, amount);
@@ -173,7 +173,7 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
     function withdrawInternal(uint128 amount) internal virtual nonReentrant whenNotPaused isInWhitelist(msg.sender) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
         if (amount < $.withdrawMinAmount) {
-            revert TossExchangeAmounIsLessThanMin("internal", amount, $.withdrawMinAmount);
+            revert TossExchangeAmounIsLessThanMin("withdraw", amount, $.withdrawMinAmount);
         }
 
         emit Withdrawn(msg.sender, amount);

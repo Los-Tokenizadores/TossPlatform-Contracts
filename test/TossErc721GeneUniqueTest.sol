@@ -23,6 +23,9 @@ contract TossErc721GeneUniqueTest is BaseTest {
         assertNotEq(erc721.getImplementation(), address(erc721Init));
         erc721.upgradeToAndCall(address(erc721Init), "");
         assertEq(erc721.getImplementation(), address(erc721Init));
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, erc721.UPGRADER_ROLE()));
+        erc721.upgradeToAndCall(address(erc721Init), "");
     }
 
     function test_sellErc721() public {

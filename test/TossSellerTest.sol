@@ -24,6 +24,9 @@ contract TossSellerTest is BaseTest {
         assertNotEq(seller.getImplementation(), address(sellerInit));
         seller.upgradeToAndCall(address(sellerInit), "");
         assertEq(seller.getImplementation(), address(sellerInit));
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, seller.UPGRADER_ROLE()));
+        seller.upgradeToAndCall(address(sellerInit), "");
     }
 
     function test_initialization() public {

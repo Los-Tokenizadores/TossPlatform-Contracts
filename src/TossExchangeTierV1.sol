@@ -6,23 +6,25 @@ import { TossErc20Base } from "./Bases/TossErc20Base.sol";
 import { TossExchangeBase } from "./Bases/TossExchangeBase.sol";
 
 contract TossExchangeTierV1 is TossExchangeBase {
-    bytes32 public constant YEAR_ROLE = keccak256("YEAR_ROLE");
-
     struct Balance {
         uint128 consume;
         uint8 tier;
         uint64 lastTransactionYear;
     }
 
+    bytes32 public constant YEAR_ROLE = keccak256("YEAR_ROLE");
+    bytes32 public constant TIER_ROLE = keccak256("TIER_ROLE");
     uint64 public currentYear;
     mapping(address => Balance) private userToBalance;
-    uint256[50] public tiers;
+    uint8 public constant TIER_MAX_LENGTH = 50;
+    uint256[TIER_MAX_LENGTH] public tiers;
 
     event YearChanged(uint64 indexed year);
 
     error TossExchangeTierYearLimitReach();
     error TossExchangeTierYearIsTheSame();
     error TossExchangeTierTier0CantChange();
+    error TossExchangeTierInvalidTier(uint8 tier);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -39,6 +41,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
         __TossExchangeBase_init(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
 
         _grantRole(YEAR_ROLE, msg.sender);
+        _grantRole(TIER_ROLE, msg.sender);
 
         currentYear = year;
 
@@ -53,10 +56,14 @@ contract TossExchangeTierV1 is TossExchangeBase {
         emit YearChanged(year);
     }
 
-    function setTierLimit(uint8 tier, uint128 limit) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setTierLimit(uint8 tier, uint128 limit) external onlyRole(TIER_ROLE) {
         if (tier == 0) {
             revert TossExchangeTierTier0CantChange();
         }
+        if (tier >= TIER_MAX_LENGTH) {
+            revert TossExchangeTierInvalidTier(tier);
+        }
+
         tiers[tier] = limit;
     }
 
@@ -72,7 +79,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
         return 0;
     }
 
-    function setUserTier(address user, uint8 tier) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setUserTier(address user, uint8 tier) external onlyRole(TIER_ROLE) {
         userToBalance[user].tier = tier;
     }
 

@@ -33,7 +33,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     using SafeERC20 for IERC20;
 
-    uint256 private constant MARKET_CUT_PRECISION = 10_000;
+    uint16 public constant CUT_PRECISION = 10_000;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant EXTRACT_ROLE = keccak256("EXTRACT_ROLE");
@@ -72,7 +72,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
         }
-        if (marketCut_ > MARKET_CUT_PRECISION) {
+        if (marketCut_ > CUT_PRECISION) {
             revert TossCutOutOfRange(marketCut_);
         }
 
@@ -129,23 +129,23 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
 
-    function getMarketCut() external view onlyRole(DEFAULT_ADMIN_ROLE) returns (uint16 cut) {
+    function getMarketCut() external view returns (uint16 cut) {
         return _getTossMarketBaseStorage().marketCut;
     }
 
-    function changeMarketCut(uint16 cut) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (cut > MARKET_CUT_PRECISION) {
+    function setMarketCut(uint16 cut) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (cut > CUT_PRECISION) {
             revert TossCutOutOfRange(cut);
         }
         _getTossMarketBaseStorage().marketCut = cut;
     }
 
-    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override nonReentrant whenNotPaused onlyRole(ERC721_SELLER_ROLE) {
+    function createSellOffer(
+        uint256 tokenId,
+        uint128 price,
+        address owner
+    ) external virtual override nonReentrant whenNotPaused isInWhitelist(owner) onlyRole(ERC721_SELLER_ROLE) {
         address erc721Address = msg.sender;
-        if (IERC721(erc721Address).ownerOf(tokenId) != owner) {
-            revert TossMarketNotOwnerOfErc721(msg.sender, owner);
-        }
-
         uint128 startedAt = uint128(block.timestamp);
         _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId] = SellOffer({ price: price, startedAt: startedAt, owner: owner });
 
@@ -219,7 +219,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         IERC721(erc721Address).safeTransferFrom(address(this), owner, tokenId);
     }
 
-    function get(address erc721Address, uint256 tokenId) external view returns (address owner, uint256 price, uint128 startedAt) {
+    function get(address erc721Address, uint256 tokenId) external view returns (address owner, uint128 price, uint128 startedAt) {
         SellOffer memory sellOffer = _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId];
         startedAt = sellOffer.startedAt;
         if (!onSell(startedAt)) {
@@ -242,6 +242,6 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function priceMinusCut(uint16 marketCut_, uint256 price) internal pure returns (uint256) {
-        return price - (price * marketCut_ / MARKET_CUT_PRECISION);
+        return price - (price * marketCut_ / CUT_PRECISION);
     }
 }
