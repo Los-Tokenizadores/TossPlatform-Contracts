@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { TossErc20V1, TossErc20Base } from "../src/TossErc20V1.sol";
 import { TossErc721GeneV1, TossErc721GeneBase } from "../src/TossErc721GeneV1.sol";
 import { TossErc721GeneUniqueV1 } from "../src/TossErc721GeneUniqueV1.sol";
+import { TossErc721GeneUniqueDevV1 } from "../src/Dev/TossErc721GeneUniqueDevV1.sol";
 import { TossErc721MarketV1, TossErc721MarketBase } from "../src/TossErc721MarketV1.sol";
 import { TossExchangeTierV1 } from "../src/TossExchangeTierV1.sol";
 import { TossExchangeV1, TossExchangeBase } from "../src/TossExchangeV1.sol";
@@ -45,6 +46,13 @@ library DeployWithProxyUtil {
         return TossErc721GeneUniqueV1(address(proxy));
     }
 
+    function tossErc721GeneUniqueDevV1(string memory name, string memory symbol) internal returns (TossErc721GeneUniqueDevV1) {
+        TossUpgradeableProxy proxy =
+            new TossUpgradeableProxy(address(new TossErc721GeneUniqueDevV1()), abi.encodeCall(TossErc721GeneUniqueDevV1.__TossErc721GeneUniqueDevV1_init, (name, symbol)));
+
+        return TossErc721GeneUniqueDevV1(address(proxy));
+    }
+
     function tossErc721MarketV1(string memory name, string memory symbol) internal returns (TossErc721MarketV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc721MarketV1()), abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (name, symbol)));
 
@@ -57,9 +65,9 @@ library DeployWithProxyUtil {
         return TossMarketV1(address(proxy));
     }
 
-    function tossExchangeV1(IERC20 externalErc20, uint128 externalMinAmount, TossErc20Base internalErc20, uint128 internalMinAmount) internal returns (TossExchangeV1) {
+    function tossExchangeV1(IERC20 externalErc20, uint128 depositMinAmount, TossErc20Base internalErc20, uint128 withdrawMinAmount) internal returns (TossExchangeV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-            address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount))
+            address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, depositMinAmount, internalErc20, withdrawMinAmount))
         );
 
         return TossExchangeV1(address(proxy));

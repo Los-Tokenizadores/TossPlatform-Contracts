@@ -36,6 +36,16 @@ contract TossErc721GeneTest is BaseTest {
         assertEq(erc721.ownerOf(0), owner);
     }
 
+    function test_sellErc721WithoutRoleRevert() public {
+        uint256[] memory genes = new uint256[](1);
+        uint256 gene1 = 333_333;
+        genes[0] = gene1;
+        erc721.addGenes(genes);
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, erc721.MINTER_ROLE()));
+        erc721.sellErc721(owner, 1);
+    }
+
     function test_sellErc721NotEnoughGenesRevert(uint8 amount) public {
         vm.assume(amount > 0);
         erc721.grantRole(erc721.MINTER_ROLE(), owner);
