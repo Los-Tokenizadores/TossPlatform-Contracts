@@ -41,6 +41,7 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
     error TossExchangeAmounIsLessThanMin(string parameter, uint256 amount, uint256 min);
     error TossExchangeExternalAndInternalErc20AreEqual();
     error TossExchangeExternalAndInternalErc20HaveDifferentDecimalAmount();
+    error TossExchangeInvalidState(uint256 externalAmount, uint256 internalAmount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -157,7 +158,9 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
         $.externalErc20.safeTransferFrom(msg.sender, address(this), amount);
         $.internalErc20.mint(msg.sender, amount);
 
-        assert(_validState($));
+        if (!validStateInternal($)) {
+            revert TossExchangeInvalidState($.externalErc20.balanceOf(address(this)), $.internalErc20.totalSupply());
+        }
     }
 
     function withdraw(uint128 amount) external virtual {
@@ -181,15 +184,17 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
         $.internalErc20.burnFrom(msg.sender, amount);
         $.externalErc20.safeTransfer(msg.sender, amount);
 
-        assert(_validState($));
+        if (!validStateInternal($)) {
+            revert TossExchangeInvalidState($.externalErc20.balanceOf(address(this)), $.internalErc20.totalSupply());
+        }
     }
 
     function validState() external view returns (bool valid) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
-        return _validState($);
+        return validStateInternal($);
     }
 
-    function _validState(TossExchangeBaseStorage memory $) private view returns (bool valid) {
+    function validStateInternal(TossExchangeBaseStorage memory $) private view returns (bool valid) {
         return $.externalErc20.balanceOf(address(this)) >= $.internalErc20.totalSupply();
     }
 }

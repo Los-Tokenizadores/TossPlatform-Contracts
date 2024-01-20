@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "./BaseTest.sol";
+import { IERC721 } from "@openzeppelin/contracts/interfaces/IERC721.sol";
 
 contract TossErc721GeneTest is BaseTest {
     TossErc721GeneV1 erc721;
@@ -26,6 +27,10 @@ contract TossErc721GeneTest is BaseTest {
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, erc721.UPGRADER_ROLE()));
         erc721.upgradeToAndCall(address(erc721Init), "");
+    }
+
+    function test_supportInterface() public {
+        assertTrue(erc721.supportsInterface(type(IERC721).interfaceId));
     }
 
     function test_sellErc721() public {

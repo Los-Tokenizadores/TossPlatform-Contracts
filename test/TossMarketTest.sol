@@ -40,6 +40,10 @@ contract TossMarketTest is BaseTest {
         new TossUpgradeableProxy(address(marketImp), abi.encodeCall(TossMarketV1.__TossMarketV1_init, (IERC20(address(0)), 33)));
     }
 
+    function test_supportInterface() public {
+        assertTrue(market.supportsInterface(type(IAccessControl).interfaceId));
+    }
+
     function test_createSellOfferAndCancel(uint128 price) public {
         erc721.safeMint(owner, 0);
 

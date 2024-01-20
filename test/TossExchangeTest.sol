@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./BaseTest.sol";
 import { MockErc20Decimals } from "./utils/MockErc20Decimals.sol";
+import { MockErc20TransferCommision } from "./utils/MockErc20TransferCommision.sol";
 
 contract TossExchangeTest is BaseTest {
     TossErc20V1 private externalErc20;
@@ -219,5 +220,39 @@ contract TossExchangeTest is BaseTest {
         exchange.setWithdrawMinAmount(0);
 
         assertEq(min, exchange.getWithdrawMinAmount());
+    }
+
+    function test_invalidateStateRevert(uint128 amount) public {
+        uint256 commision = 10;
+        amount = uint128(bound(amount, commision * 10, mintAmount - commision * 5));
+        MockErc20TransferCommision externalErc20Commision = new MockErc20TransferCommision(mintAmount, commision);
+        assertEq(externalErc20Commision.balanceOf(owner), mintAmount);
+        TossExchangeV1 exchangeInvalid = DeployWithProxyUtil.tossExchangeV1(IERC20(address(externalErc20Commision)), depositMinAmount, internalErc20, withdrawMinAmount);
+        internalErc20.grantRole(internalErc20.MINTER_ROLE(), address(exchangeInvalid));
+
+        externalErc20Commision.approve(address(exchangeInvalid), amount);
+        vm.expectRevert(abi.encodeWithSelector(TossExchangeBase.TossExchangeInvalidState.selector, amount - commision, amount));
+        exchangeInvalid.deposit(amount);
+        externalErc20Commision.transfer(address(exchangeInvalid), commision);
+        exchangeInvalid.deposit(amount);
+
+        assertEq(internalErc20.balanceOf(owner), uint256(amount), "internal owner balance");
+        assertEq(externalErc20Commision.balanceOf(address(exchangeInvalid)), amount, "external exchange balance");
+        assertEq(externalErc20Commision.balanceOf(owner), mintAmount - amount - commision, "external owner balance");
+
+        uint256 internalAmount = internalErc20.balanceOf(owner);
+        internalErc20.approve(address(exchangeInvalid), internalAmount);
+        exchangeInvalid.withdraw(uint128(internalAmount));
+
+        assertEq(internalErc20.balanceOf(owner), 0, "internal owner balance");
+        assertEq(externalErc20Commision.balanceOf(address(exchangeInvalid)), 0, "external exchange balance");
+        assertEq(externalErc20Commision.balanceOf(owner), mintAmount - commision * 2, "external owner balance");
+
+        externalErc20Commision.transfer(address(exchangeInvalid), amount);
+        internalErc20.mint(address(owner), amount);
+
+        internalErc20.approve(address(exchangeInvalid), amount);
+        vm.expectRevert(abi.encodeWithSelector(TossExchangeBase.TossExchangeInvalidState.selector, 0, commision));
+        exchangeInvalid.withdraw(uint128(amount - commision));
     }
 }
