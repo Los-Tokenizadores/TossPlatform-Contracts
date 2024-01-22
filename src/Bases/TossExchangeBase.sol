@@ -158,9 +158,7 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
         $.externalErc20.safeTransferFrom(msg.sender, address(this), amount);
         $.internalErc20.mint(msg.sender, amount);
 
-        if (!validStateInternal($)) {
-            revert TossExchangeInvalidState($.externalErc20.balanceOf(address(this)), $.internalErc20.totalSupply());
-        }
+        validStateInternal($, true);
     }
 
     function withdraw(uint128 amount) external virtual {
@@ -184,17 +182,21 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
         $.internalErc20.burnFrom(msg.sender, amount);
         $.externalErc20.safeTransfer(msg.sender, amount);
 
-        if (!validStateInternal($)) {
-            revert TossExchangeInvalidState($.externalErc20.balanceOf(address(this)), $.internalErc20.totalSupply());
-        }
+        validStateInternal($, true);
     }
 
     function validState() external view returns (bool valid) {
         TossExchangeBaseStorage storage $ = _getTossExchangeBaseStorage();
-        return validStateInternal($);
+        return validStateInternal($, false);
     }
 
-    function validStateInternal(TossExchangeBaseStorage memory $) private view returns (bool valid) {
-        return $.externalErc20.balanceOf(address(this)) >= $.internalErc20.totalSupply();
+    function validStateInternal(TossExchangeBaseStorage memory $, bool revertWhenInvalid) private view returns (bool valid) {
+        uint256 balance = $.externalErc20.balanceOf(address(this));
+        uint256 totalSupply = $.internalErc20.totalSupply();
+        bool state = balance >= totalSupply;
+        if (!state && revertWhenInvalid) {
+            revert TossExchangeInvalidState(balance, totalSupply);
+        }
+        return state;
     }
 }

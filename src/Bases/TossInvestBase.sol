@@ -54,9 +54,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         string symbol;
     }
 
-    uint256 private constant PLATFORM_CUT_PRECISION = 10_000;
     uint256 private constant GAS_EXTRA_RETURN = 100_000;
     uint256 private constant GAS_EXTRA_MINT = 500_000;
+    uint16 public constant CUT_PRECISION = 10_000;
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -118,7 +118,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (platformAddress_ == address(0)) {
             revert TossAddressIsZero("platformAddress");
         }
-        if (platformCut_ > PLATFORM_CUT_PRECISION) {
+        if (platformCut_ > CUT_PRECISION) {
             revert TossCutOutOfRange(platformCut_);
         }
 
@@ -155,7 +155,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function setErc721Implementation(TossErc721MarketV1 newImplementation) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (!IERC165(address(newImplementation)).supportsInterface(type(IERC721).interfaceId)) {
+        if (!newImplementation.supportsInterface(type(IERC721).interfaceId)) {
             revert TossInvestInvalidErc721Implementation(newImplementation);
         }
         _getTossInvestBaseStorage().erc721Implementation = newImplementation;
@@ -178,30 +178,27 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function countUniqueAddresses(address[] memory addresses) private pure returns (uint256) {
-        address[] memory uniqueAddresses = new address[](addresses.length);
+        uint256 addressesLength = addresses.length;
+        address[] memory uniqueAddresses = new address[](addressesLength);
         uint256 uniqueCount = 0;
 
-        for (uint256 i; i < addresses.length;) {
-            if (!isAddressInArray(addresses[i], uniqueAddresses, uniqueCount)) {
-                uniqueAddresses[uniqueCount] = addresses[i];
-                ++uniqueCount;
+        for (uint256 i; i < addressesLength; i++) {
+            address current = addresses[i];
+            if (isAddressInArray(current, uniqueAddresses, uniqueCount)) {
+                continue;
             }
 
-            unchecked {
-                ++i;
-            }
+            uniqueAddresses[uniqueCount] = current;
+            ++uniqueCount;
         }
 
         return uniqueCount;
     }
 
-    function isAddressInArray(address addr, address[] memory arr, uint256 count) private pure returns (bool) {
-        for (uint256 i; i < count;) {
-            if (arr[i] == addr) {
+    function isAddressInArray(address addr, address[] memory uniqueAddresses, uint256 count) private pure returns (bool) {
+        for (uint256 i; i < count; i++) {
+            if (uniqueAddresses[i] == addr) {
                 return true;
-            }
-            unchecked {
-                ++i;
             }
         }
         return false;
@@ -450,7 +447,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             erc721.grantRole(erc721.DEFAULT_ADMIN_ROLE(), $.tossProjectAddress);
             erc721.grantRole(erc721.UPGRADER_ROLE(), $.tossProjectAddress);
             uint256 total = projectInfo.price * length;
-            uint256 platformAmount = total * $.platformCut / PLATFORM_CUT_PRECISION;
+            uint256 platformAmount = total * $.platformCut / CUT_PRECISION;
             projectInfo.mintedAt = uint64(block.timestamp);
             emit ProjectErc721Created(projectId, projectInfo.erc721Address, address($.erc721Implementation));
 
