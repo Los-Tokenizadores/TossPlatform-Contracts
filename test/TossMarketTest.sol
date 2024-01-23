@@ -134,12 +134,8 @@ contract TossMarketTest is BaseTest {
         erc20.transfer(alice, price);
 
         vm.startPrank(alice);
-        SigUtils.Permit memory permit = SigUtils.Permit({ owner: alice, spender: address(market), value: price * 20, nonce: erc20.nonces(owner), deadline: 1 days });
-        SigUtils sigUtils = new SigUtils(erc20.DOMAIN_SEPARATOR());
-        bytes32 digest = sigUtils.getTypedDataHash(permit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
-
-        market.buyWithPermit(address(erc721), 0, price, permit.value, permit.deadline, v, r, s);
+        SigUtils.Permit memory permit = SigUtils.signPermit(alice, alicePrivateKey, address(market), price * 20, 1 days, erc20);
+        market.buyWithPermit(address(erc721), 0, price, permit.value, permit.deadline, permit.v, permit.r, permit.s);
         assertEq(erc721.balanceOf(alice), 1);
     }
 

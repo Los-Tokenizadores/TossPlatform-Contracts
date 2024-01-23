@@ -71,25 +71,17 @@ contract TossExchangeTest is BaseTest {
     function test_depositAndWithdrawPermit(uint128 amount) public {
         amount = uint128(bound(amount, depositMinAmount, mintAmount));
 
-        SigUtils.Permit memory permit = SigUtils.Permit({ owner: owner, spender: address(exchange), value: amount, nonce: externalErc20.nonces(owner), deadline: 1 days });
-        SigUtils sigUtils = new SigUtils(externalErc20.DOMAIN_SEPARATOR());
-        bytes32 digest = sigUtils.getTypedDataHash(permit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
-
-        exchange.depositWithPermit(amount, permit.value, permit.deadline, v, r, s);
+        SigUtils.Permit memory permit = SigUtils.signPermit(owner, ownerPrivateKey, address(exchange), amount, 1 days, externalErc20);
+        exchange.depositWithPermit(amount, permit.value, permit.deadline, permit.v, permit.r, permit.s);
         assert(exchange.validState());
 
         assertEq(internalErc20.balanceOf(owner), uint256(amount), "internal owner balance");
         assertEq(externalErc20.balanceOf(address(exchange)), amount, "external exchange balance");
         assertEq(externalErc20.balanceOf(owner), mintAmount - amount, "external owner balance");
 
-        permit = SigUtils.Permit({ owner: owner, spender: address(exchange), value: amount, nonce: internalErc20.nonces(owner), deadline: 1 days });
-        sigUtils = new SigUtils(internalErc20.DOMAIN_SEPARATOR());
-        digest = sigUtils.getTypedDataHash(permit);
-        (v, r, s) = vm.sign(ownerPrivateKey, digest);
-
         uint256 internalAmount = internalErc20.balanceOf(owner);
-        exchange.withdrawWithPermit(uint128(internalAmount), permit.value, permit.deadline, v, r, s);
+        permit = SigUtils.signPermit(owner, ownerPrivateKey, address(exchange), internalAmount, 1 days, internalErc20);
+        exchange.withdrawWithPermit(uint128(internalAmount), permit.value, permit.deadline, permit.v, permit.r, permit.s);
         assert(exchange.validState());
 
         assertEq(internalErc20.balanceOf(owner), 0, "internal owner balance");

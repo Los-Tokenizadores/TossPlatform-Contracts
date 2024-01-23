@@ -48,12 +48,10 @@ contract TossExchangeTierTest is BaseTest {
 
         exchange.setTierLimit(1, amount);
         exchange.setUserTier(owner, 1);
-        SigUtils.Permit memory permit = SigUtils.Permit({ owner: owner, spender: address(exchange), value: amount, nonce: externalErc20.nonces(owner), deadline: 1 days });
-        SigUtils sigUtils = new SigUtils(externalErc20.DOMAIN_SEPARATOR());
-        bytes32 digest = sigUtils.getTypedDataHash(permit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
 
-        exchange.depositWithPermit(amount, permit.value, permit.deadline, v, r, s);
+        SigUtils.Permit memory permit = SigUtils.signPermit(owner, ownerPrivateKey, address(exchange), amount, 1 days, externalErc20);
+        exchange.depositWithPermit(amount, permit.value, permit.deadline, permit.v, permit.r, permit.s);
+
         assertEq(internalErc20.balanceOf(owner), uint256(amount), "internal owner balance");
         assertEq(externalErc20.balanceOf(address(exchange)), amount, "external exchange balance");
         assertEq(externalErc20.balanceOf(owner), mintAmount - amount, "external owner balance");

@@ -54,8 +54,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         string symbol;
     }
 
-    uint256 private constant GAS_EXTRA_RETURN = 100_000;
-    uint256 private constant GAS_EXTRA_MINT = 500_000;
+    uint256 private constant GAS_EXTRA_RETURN = 50_000;
+    uint256 private constant GAS_EXTRA_MINT = 100_000;
     uint16 public constant CUT_PRECISION = 10_000;
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant PROJECT_ROLE = keccak256("PROJECT_ROLE");
@@ -77,6 +77,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossInvestProjectIsNotConfirmed();
     error TossInvestProjectNotStarted();
     error TossInvestProjectNotFinished();
+    error TossInvestProjectAlreadyFinished();
     error TossInvestProjectIsFinished();
     error TossInvestProjectFullInvested();
     error TossInvestNotProjectOwner(uint256 projectId);
@@ -228,14 +229,10 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossAddressIsZero("erc721");
         }
 
-        for (uint256 i; i < $.projects.length;) {
+        for (uint256 i; i < $.projects.length; i++) {
             if ($.projects[i].erc721Address == erc721Address) {
                 (info, invested, inversors) = getProjectInternal(i);
                 return (i, info, invested, inversors);
-            }
-
-            unchecked {
-                ++i;
             }
         }
 
@@ -354,6 +351,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (msg.sender != projectInfo.projectWallet) {
             revert TossInvestNotProjectOwner(projectId);
         }
+        if (projectInfo.finishAt <= block.timestamp) {
+            revert TossInvestProjectAlreadyFinished();
+        }
 
         projectInfo.confirmed = true;
 
@@ -370,6 +370,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function investInternal(uint256 projectId, uint16 amount) private nonReentrant whenNotPaused isInWhitelist(msg.sender) {
+        if (amount == 0) {
+            revert TossValueIsZero("amount");
+        }
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         if (projectId >= $.projects.length) {
             revert TossInvestProjectNotExist(projectId);
@@ -411,18 +414,18 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
 
         address[] storage investors = $.projectInvestors[projectId];
-        if (investors.length < projectInfo.maxAmount && block.timestamp < projectInfo.finishAt) {
+        uint256 investorsLength = investors.length;
+        if (investorsLength < projectInfo.maxAmount && block.timestamp < projectInfo.finishAt) {
             revert TossInvestProjectNotFinished();
         }
 
-        uint256 length = investors.length;
-        if (projectInfo.targetAmount <= length) {
+        if (projectInfo.targetAmount <= investorsLength) {
             finishMintErc721(projectId, projectInfo, investors);
         } else {
             finishReturnInvestment(projectInfo, investors);
         }
 
-        if (projectInfo.lastIndex == length) {
+        if (projectInfo.lastIndex == investorsLength) {
             emit ProjectFinished(projectId);
         }
     }
@@ -458,14 +461,11 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
 
         uint32 i = lastIndex;
-        for (; i < length;) {
-            erc721.safeMint(investors[i], i);
-            unchecked {
-                ++i;
-            }
+        for (; i < length; i++) {
             if (gasleft() < GAS_EXTRA_MINT) {
                 break;
             }
+            erc721.safeMint(investors[i], i);
         }
         projectInfo.lastIndex = i;
     }
@@ -482,7 +482,10 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint32 i = lastIndex;
         address lastInvestor = investors[i];
         uint256 acumulated = 0;
-        for (; i < length;) {
+        for (; i < length; i++) {
+            if (gasleft() < GAS_EXTRA_RETURN) {
+                break;
+            }
             if (lastInvestor == investors[i]) {
                 ++acumulated;
             } else {
@@ -490,14 +493,10 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
                 lastInvestor = investors[i];
                 acumulated = 1;
             }
-            unchecked {
-                ++i;
-            }
-            if (gasleft() < GAS_EXTRA_RETURN) {
-                break;
-            }
         }
         projectInfo.lastIndex = i;
-        $.erc20.safeTransfer(lastInvestor, acumulated * price);
+        if (acumulated > 0) {
+            $.erc20.safeTransfer(lastInvestor, acumulated * price);
+        }
     }
 }

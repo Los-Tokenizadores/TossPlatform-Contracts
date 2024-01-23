@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import "forge-std/console2.sol";
 import { Test } from "forge-std/Test.sol";
 import { SigUtils } from "./utils/SigUtils.sol";
 import "./DeployWithProxyUtil.sol";

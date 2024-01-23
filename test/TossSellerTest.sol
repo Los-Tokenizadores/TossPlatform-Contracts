@@ -126,12 +126,8 @@ contract TossSellerTest is BaseTest {
         genes[0] = 0;
         erc721.addGenes(genes);
 
-        SigUtils.Permit memory permit = SigUtils.Permit({ owner: owner, spender: address(seller), value: price * 20, nonce: erc20.nonces(owner), deadline: 1 days });
-        SigUtils sigUtils = new SigUtils(erc20.DOMAIN_SEPARATOR());
-        bytes32 digest = sigUtils.getTypedDataHash(permit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
-
-        seller.buyErc721WithPermit(erc721, 1, permit.value, permit.deadline, v, r, s);
+        SigUtils.Permit memory permit = SigUtils.signPermit(owner, ownerPrivateKey, address(seller), price * 20, 1 days, erc20);
+        seller.buyErc721WithPermit(erc721, 1, permit.value, permit.deadline, permit.v, permit.r, permit.s);
     }
 
     function test_setErc721Sell() public {
@@ -199,12 +195,8 @@ contract TossSellerTest is BaseTest {
     function test_convertToOffchainPermit(uint256 amount) public {
         amount = bound(amount, seller.getConvertToOffchainMinAmount(), mintAmount);
 
-        SigUtils.Permit memory permit = SigUtils.Permit({ owner: owner, spender: address(seller), value: amount * 20, nonce: erc20.nonces(owner), deadline: 1 days });
-        SigUtils sigUtils = new SigUtils(erc20.DOMAIN_SEPARATOR());
-        bytes32 digest = sigUtils.getTypedDataHash(permit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
-
-        seller.convertToOffchainWithPermit(amount, permit.value, permit.deadline, v, r, s);
+        SigUtils.Permit memory permit = SigUtils.signPermit(owner, ownerPrivateKey, address(seller), amount * 20, 1 days, erc20);
+        seller.convertToOffchainWithPermit(amount, permit.value, permit.deadline, permit.v, permit.r, permit.s);
         assertEq(erc20.balanceOf(owner), mintAmount - amount);
     }
 
