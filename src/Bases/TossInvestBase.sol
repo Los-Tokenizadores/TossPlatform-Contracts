@@ -420,7 +420,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
 
         if (projectInfo.targetAmount <= investorsLength) {
-            finishMintErc721(projectId, projectInfo, investors);
+            finishMintErc721(projectId, projectInfo, investors, $);
         } else {
             finishReturnInvestment(projectInfo, investors);
         }
@@ -430,35 +430,21 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
     }
 
-    function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] memory investors) private {
-        TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
+    function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] memory investors, TossInvestBaseStorage storage $) private {
         uint32 lastIndex = projectInfo.lastIndex;
         uint256 length = investors.length;
         if (length <= lastIndex) {
             revert TossInvestAlreadyAllErc721Minted();
         }
 
-        TossErc721MarketV1 erc721;
         if (projectInfo.erc721Address == address(0)) {
-            TossUpgradeableProxy proxy =
-                new TossUpgradeableProxy(address($.erc721Implementation), abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol)));
-            projectInfo.erc721Address = address(proxy);
-            erc721 = TossErc721MarketV1(address(proxy));
-            if (bytes($.erc721BaseUri).length > 0) {
-                erc721.setBaseUri(string.concat($.erc721BaseUri, Strings.toString(projectId), "/"));
-            }
-            erc721.grantRole(erc721.DEFAULT_ADMIN_ROLE(), $.tossProjectAddress);
-            erc721.grantRole(erc721.UPGRADER_ROLE(), $.tossProjectAddress);
             uint256 total = projectInfo.price * length;
             uint256 platformAmount = total * $.platformCut / CUT_PRECISION;
-            projectInfo.mintedAt = uint64(block.timestamp);
-            emit ProjectErc721Created(projectId, projectInfo.erc721Address, address($.erc721Implementation));
-
             $.erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
             $.erc20.safeTransfer($.platformAddress, platformAmount);
-        } else {
-            erc721 = TossErc721MarketV1(projectInfo.erc721Address);
         }
+
+        TossErc721MarketV1 erc721 = getProjectErc721(projectId, projectInfo, $);
 
         uint32 i = lastIndex;
         for (; i < length; i++) {
@@ -498,5 +484,28 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (acumulated > 0) {
             $.erc20.safeTransfer(lastInvestor, acumulated * price);
         }
+    }
+
+    function getProjectErc721(uint256 projectId, ProjectInfo storage projectInfo, TossInvestBaseStorage storage $) private returns (TossErc721MarketV1) {
+        if (projectInfo.erc721Address != address(0)) {
+            return TossErc721MarketV1(projectInfo.erc721Address);
+        }
+
+        TossUpgradeableProxy proxy =
+            new TossUpgradeableProxy(address($.erc721Implementation), abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol)));
+        projectInfo.erc721Address = address(proxy);
+        projectInfo.mintedAt = uint64(block.timestamp);
+        emit ProjectErc721Created(projectId, projectInfo.erc721Address, address($.erc721Implementation));
+
+        TossErc721MarketV1 erc721 = TossErc721MarketV1(address(proxy));
+
+        if (bytes($.erc721BaseUri).length > 0) {
+            try erc721.setBaseUri(string.concat($.erc721BaseUri, Strings.toString(projectId), "/")) { } catch { }
+        }
+
+        erc721.grantRole(erc721.DEFAULT_ADMIN_ROLE(), $.tossProjectAddress);
+        erc721.grantRole(erc721.UPGRADER_ROLE(), $.tossProjectAddress);
+
+        return erc721;
     }
 }
