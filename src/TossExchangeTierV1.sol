@@ -24,7 +24,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
     error TossExchangeTierYearLimitReach();
     error TossExchangeTierYearIsTheSame();
     error TossExchangeTierTier0CantChange();
-    error TossExchangeTierInvalidTier(uint8 tier);
+    error TossExchangeTierOutOfRange(uint8 tier, uint8 maxTier);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -61,7 +61,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
             revert TossExchangeTierTier0CantChange();
         }
         if (tier >= TIER_MAX_LENGTH) {
-            revert TossExchangeTierInvalidTier(tier);
+            revert TossExchangeTierOutOfRange(tier, TIER_MAX_LENGTH);
         }
 
         tiers[tier] = limit;
