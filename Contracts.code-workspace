@@ -13,6 +13,6 @@
 		},
 		"solidity.formatter": "forge",
 		"solidity.defaultCompiler": "remote",
-		"solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
+		"solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
 	}
 }

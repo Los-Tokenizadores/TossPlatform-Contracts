@@ -7,3 +7,4 @@ out/
 
 .vs/
 lcov.info
+Toss.Contracts/obj/*

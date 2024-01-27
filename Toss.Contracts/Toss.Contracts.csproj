@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="../../library.props" />
+  
+  <PropertyGroup>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="Flatten\TossErc20V1.sol" />
+    <None Remove="Flatten\TossErc721GeneUniqueDevV1.sol" />
+    <None Remove="Flatten\TossErc721GeneUniqueV1.sol" />
+    <None Remove="Flatten\TossErc721GeneV1.sol" />
+    <None Remove="Flatten\TossErc721MarketV1.sol" />
+    <None Remove="Flatten\TossExchangeTierV1.sol" />
+    <None Remove="Flatten\TossExchangeV1.sol" />
+    <None Remove="Flatten\TossInvestV1.sol" />
+    <None Remove="Flatten\TossMarketV1.sol" />
+    <None Remove="Flatten\TossSellerV1.sol" />
+    <None Remove="Flatten\TossUpgradeableProxy.sol" />
+    <None Remove="Flatten\TossWhitelistV1.sol" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="Flatten\TossErc20V1.sol" />
+    <EmbeddedResource Include="Flatten\TossErc721GeneUniqueDevV1.sol" />
+    <EmbeddedResource Include="Flatten\TossErc721GeneUniqueV1.sol" />
+    <EmbeddedResource Include="Flatten\TossErc721GeneV1.sol" />
+    <EmbeddedResource Include="Flatten\TossErc721MarketV1.sol" />
+    <EmbeddedResource Include="Flatten\TossExchangeTierV1.sol" />
+    <EmbeddedResource Include="Flatten\TossExchangeV1.sol" />
+    <EmbeddedResource Include="Flatten\TossInvestV1.sol" />
+    <EmbeddedResource Include="Flatten\TossMarketV1.sol" />
+    <EmbeddedResource Include="Flatten\TossSellerV1.sol" />
+    <EmbeddedResource Include="Flatten\TossUpgradeableProxy.sol" />
+    <EmbeddedResource Include="Flatten\TossWhitelistV1.sol" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Nethereum.Web3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--<ProjectReference Include="..\Nethereum\src\Nethereum.Web3\Nethereum.Web3.csproj" />-->
+    <ProjectReference Include="..\..\NethereumAuthenticationClient\NethereumAuthenticationClient.csproj" />
+    <ProjectReference Include="..\..\Nethereum.CustomError.Generator\Nethereum.CustomError.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

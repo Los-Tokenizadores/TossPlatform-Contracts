@@ -3,5 +3,5 @@
     "namespace": "Toss.Contracts",
     "lang": 0,
     "autoCodeGen": true,
-    "projectPath": "../TossPlatform/TossLibraries/Toss.Contracts"
+    "projectPath": "./Toss.Contracts"
 }

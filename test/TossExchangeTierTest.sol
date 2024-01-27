@@ -122,17 +122,18 @@ contract TossExchangeTierTest is BaseTest {
         exchange.setYear(year);
     }
 
-    function test_setTierLimit(uint8 tier, uint128 limit) public {
+    function test_setTierLimit(uint8 tier, uint8 tierExceded, uint128 limit) public {
         uint8 tierMax = exchange.TIER_MAX_LENGTH();
         tier = uint8(bound(tier, 1, tierMax - 1));
+        tierExceded = uint8(bound(tierExceded, tierMax, type(uint8).max));
         exchange.setTierLimit(tier, limit);
         assertEq(exchange.tiers(tier), limit);
 
         vm.expectRevert(TossExchangeTierV1.TossExchangeTierTier0CantChange.selector);
         exchange.setTierLimit(0, limit);
 
-        vm.expectRevert(abi.encodeWithSelector(TossExchangeTierV1.TossExchangeTierInvalidTier.selector, tierMax));
-        exchange.setTierLimit(tierMax, limit);
+        vm.expectRevert(abi.encodeWithSelector(TossExchangeTierV1.TossExchangeTierOutOfRange.selector, tierExceded, tierMax));
+        exchange.setTierLimit(tierExceded, limit);
 
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, exchange.TIER_ROLE()));
