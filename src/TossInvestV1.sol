@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.20;
 
-import "./Bases/TossInvestBase.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { TossInvestBase } from "./Bases/TossInvestBase.sol";
+import { TossErc721MarketV1 } from "./TossErc721MarketV1.sol";
 
 contract TossInvestV1 is TossInvestBase {
     /// @custom:oz-upgrades-unsafe-allow constructor

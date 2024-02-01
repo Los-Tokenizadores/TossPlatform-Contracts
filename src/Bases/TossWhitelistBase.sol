@@ -1,24 +1,39 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "./TossUUPSUpgradeable.sol";
-import "../Interfaces/ITossWhitelist.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
+import { ITossWhitelist } from "../Interfaces/ITossWhitelist.sol";
 
 abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable, TossUUPSUpgradeable {
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistBase
+    struct TossWhitelistBaseStorage {
+        mapping(address => bool) whitelist;
+    }
 
-    mapping(address => bool) private whitelist;
+    // keccak256(abi.encode(uint256(keccak256("tossplatform.storage.TossWhitelistBase")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant TossWhitelistBaseStorageLocation = 0xcebc1a3b8ad63e53791efc9ab8cbf968aecbbb9586b3861b648d859ddf849800;
+
+    function _getTossWhitelistBaseStorage() internal pure returns (TossWhitelistBaseStorage storage $) {
+        assembly {
+            $.slot := TossWhitelistBaseStorageLocation
+        }
+    }
+
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function __TossWhitelistBase_init() public initializer {
+    function __TossWhitelistBase_init() internal onlyInitializing {
         __AccessControl_init();
         __TossUUPSUpgradeable_init();
+        __TossWhitelistBase_init_unchained();
+    }
 
+    function __TossWhitelistBase_init_unchained() internal onlyInitializing {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
@@ -26,17 +41,10 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
 
     function set(address address_, bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        whitelist[address_] = enabled;
+        _getTossWhitelistBaseStorage().whitelist[address_] = enabled;
     }
 
-    function isInWhitelist(address address_) external view override returns (bool) {
-        return whitelist[address_];
+    function isInWhitelist(address address_) external view override returns (bool value) {
+        return _getTossWhitelistBaseStorage().whitelist[address_];
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }

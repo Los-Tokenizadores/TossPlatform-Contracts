@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.20;
 
-import "../TossErc721GeneUniqueV1.sol";
+import { TossErc721GeneUniqueV1 } from "../TossErc721GeneUniqueV1.sol";
 
 contract TossErc721GeneUniqueDevV1 is TossErc721GeneUniqueV1 {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -13,7 +13,7 @@ contract TossErc721GeneUniqueDevV1 is TossErc721GeneUniqueV1 {
         __TossErc721GeneUniqueV1_init(name_, symbol_);
     }
 
-    function adminTransfer(address to, uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function adminTransfer(address to, uint256 tokenId) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE)  {
         address from = ownerOf(tokenId);
         _transfer(from, to, tokenId);
     }

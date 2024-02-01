@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.20;
 
-import "./Bases/TossExchangeBase.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { TossErc20Base } from "./Bases/TossErc20Base.sol";
+import { TossExchangeBase } from "./Bases/TossExchangeBase.sol";
 
 contract TossExchangeV1 is TossExchangeBase {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -9,7 +11,7 @@ contract TossExchangeV1 is TossExchangeBase {
         _disableInitializers();
     }
 
-    function __TossExchangeV1_init(IERC20 externalErc20_, uint256 externalMinAmount_, TossErc20Base internalErc20_, uint256 internalMinAmount_, uint64 rate_) public initializer {
-        __TossExchangeBase_init(externalErc20_, externalMinAmount_, internalErc20_, internalMinAmount_, rate_);
+    function __TossExchangeV1_init(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_) public initializer {
+        __TossExchangeBase_init(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
     }
 }

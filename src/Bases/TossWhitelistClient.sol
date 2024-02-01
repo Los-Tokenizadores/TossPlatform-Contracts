@@ -1,24 +1,40 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
-import "../Interfaces/ITossWhitelist.sol";
+import { ITossWhitelist } from "../Interfaces/ITossWhitelist.sol";
 
 abstract contract TossWhitelistClient {
-    error NotInWhitelist();
+    /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
+    struct TossWhitelistClientStorage {
+        address whitelistAddress;
+    }
 
-    address internal whitelistAddress;
+    // keccak256(abi.encode(uint256(keccak256("tossplatform.storage.TossWhitelistClient")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant TossWhitelistClientStorageLocation = 0xe32c7d464d01bf4699c6877240dec52b29adf1b2f9e414a502cf561c22d22d00;
+
+    error TossWhitelistNotInWhitelist(address address_);
+
+    function _getTossWhitelistClientStorage() private pure returns (TossWhitelistClientStorage storage $) {
+        assembly {
+            $.slot := TossWhitelistClientStorageLocation
+        }
+    }
 
     modifier isInWhitelist(address user) {
-        if (user != address(0) && whitelistAddress != address(0) && !ITossWhitelist(whitelistAddress).isInWhitelist(user)) {
-            revert NotInWhitelist();
+        TossWhitelistClientStorage storage $ = _getTossWhitelistClientStorage();
+        if (user != address(0) && $.whitelistAddress != address(0) && !ITossWhitelist($.whitelistAddress).isInWhitelist(user)) {
+            revert TossWhitelistNotInWhitelist(user);
         }
         _;
     }
 
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
+    function getWhitelist() external view returns (address whitelistAddress) {
+        return _getTossWhitelistClientStorage().whitelistAddress;
+    }
+
+    function setWhitelist(address newAddress) external virtual;
+
+    function _setWhitelist(address newAddress) internal {
+        _getTossWhitelistClientStorage().whitelistAddress = newAddress;
+    }
 }
