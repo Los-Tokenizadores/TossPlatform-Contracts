@@ -3455,11 +3455,6 @@ abstract contract TossErc721MarketBase is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossErc721MarketBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __ERC721_init(name_, symbol_);
         __ERC721Pausable_init();
@@ -3743,11 +3738,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossInvestNotProjectOwner(uint256 projectId);
     error TossInvestAlreadyAllInvestmentReturned();
     error TossInvestAlreadyAllErc721Minted();
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
 
     function __TossInvestBase_init(
         IERC20 erc20_,

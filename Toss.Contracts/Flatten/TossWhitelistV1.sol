@@ -1373,11 +1373,6 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossWhitelistBase_init() internal onlyInitializing {
         __AccessControl_init();
         __TossUUPSUpgradeable_init();

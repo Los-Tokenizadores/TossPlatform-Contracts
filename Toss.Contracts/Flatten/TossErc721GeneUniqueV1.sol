@@ -3163,11 +3163,6 @@ abstract contract TossErc721MarketBase is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossErc721MarketBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __ERC721_init(name_, symbol_);
         __ERC721Pausable_init();
@@ -3266,11 +3261,6 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
     event Created(address indexed account, uint256 indexed tokenId, uint256 indexed gene);
 
     error TossErc721GeneNotEnoughGenes(uint256 totalGenes, uint8 amount);
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
 
     function __TossErc721GeneBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __TossErc721MarketBase_init(name_, symbol_);

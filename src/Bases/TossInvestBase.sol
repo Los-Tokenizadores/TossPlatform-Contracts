@@ -84,11 +84,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossInvestAlreadyAllInvestmentReturned();
     error TossInvestAlreadyAllErc721Minted();
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossInvestBase_init(
         IERC20 erc20_,
         TossErc721MarketV1 erc721Implementation_,

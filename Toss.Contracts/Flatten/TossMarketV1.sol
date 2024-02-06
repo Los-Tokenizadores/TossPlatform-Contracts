@@ -2159,11 +2159,6 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     error TossMarketErc721NotOnSell(address erc721, uint256 tokenId);
     error TossMarketSellPriceChange(uint128 realPrice, uint128 userPrice);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();

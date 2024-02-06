@@ -1995,11 +1995,6 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossSellConvertOffchainAmountLessThanMin(uint256 amount, uint256 min);
     error TossSellConvertErc20AmountLessThanMin(uint32 amount, uint32 min);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossSellerBase_init(IERC20 erc20_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();

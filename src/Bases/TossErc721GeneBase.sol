@@ -27,11 +27,6 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
 
     error TossErc721GeneNotEnoughGenes(uint256 totalGenes, uint8 amount);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossErc721GeneBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __TossErc721MarketBase_init(name_, symbol_);
         __TossErc721GeneBase_init_unchained();

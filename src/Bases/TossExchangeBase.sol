@@ -43,11 +43,6 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
     error TossExchangeExternalAndInternalErc20HaveDifferentDecimalAmount();
     error TossExchangeInvalidState(uint256 externalAmount, uint256 internalAmount);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossExchangeBase_init(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();

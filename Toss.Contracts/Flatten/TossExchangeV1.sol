@@ -3540,11 +3540,6 @@ abstract contract TossErc20Base is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function __TossErc20Base_init(string memory name_, string memory symbol_, uint256 amount_) internal onlyInitializing {
         __ERC20_init(name_, symbol_);
         __ERC20Burnable_init();
@@ -3862,11 +3857,6 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
     error TossExchangeExternalAndInternalErc20AreEqual();
     error TossExchangeExternalAndInternalErc20HaveDifferentDecimalAmount();
     error TossExchangeInvalidState(uint256 externalAmount, uint256 internalAmount);
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
 
     function __TossExchangeBase_init(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_) internal onlyInitializing {
         __Pausable_init();
