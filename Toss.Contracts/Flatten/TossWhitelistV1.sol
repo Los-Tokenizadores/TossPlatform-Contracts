@@ -1,117 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity =0.8.20 ^0.8.20;
 
-
-
-
-
-// OpenZeppelin Contracts (last updated v5.0.0) (access/AccessControl.sol)
-
-
-
-
-// OpenZeppelin Contracts (last updated v5.0.0) (access/IAccessControl.sol)
-
-
-
-/**
- * @dev External interface of AccessControl declared to support ERC165 detection.
- */
-interface IAccessControl {
-    /**
-     * @dev The `account` is missing a role.
-     */
-    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);
-
-    /**
-     * @dev The caller of a function is not the expected one.
-     *
-     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.
-     */
-    error AccessControlBadConfirmation();
-
-    /**
-     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
-     *
-     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
-     * {RoleAdminChanged} not being emitted signaling this.
-     */
-    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
-
-    /**
-     * @dev Emitted when `account` is granted `role`.
-     *
-     * `sender` is the account that originated the contract call, an admin role
-     * bearer except when using {AccessControl-_setupRole}.
-     */
-    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
-
-    /**
-     * @dev Emitted when `account` is revoked `role`.
-     *
-     * `sender` is the account that originated the contract call:
-     *   - if using `revokeRole`, it is the admin role bearer
-     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
-     */
-    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
-
-    /**
-     * @dev Returns `true` if `account` has been granted `role`.
-     */
-    function hasRole(bytes32 role, address account) external view returns (bool);
-
-    /**
-     * @dev Returns the admin role that controls `role`. See {grantRole} and
-     * {revokeRole}.
-     *
-     * To change a role's admin, use {AccessControl-_setRoleAdmin}.
-     */
-    function getRoleAdmin(bytes32 role) external view returns (bytes32);
-
-    /**
-     * @dev Grants `role` to `account`.
-     *
-     * If `account` had not been already granted `role`, emits a {RoleGranted}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must have ``role``'s admin role.
-     */
-    function grantRole(bytes32 role, address account) external;
-
-    /**
-     * @dev Revokes `role` from `account`.
-     *
-     * If `account` had been granted `role`, emits a {RoleRevoked} event.
-     *
-     * Requirements:
-     *
-     * - the caller must have ``role``'s admin role.
-     */
-    function revokeRole(bytes32 role, address account) external;
-
-    /**
-     * @dev Revokes `role` from the calling account.
-     *
-     * Roles are often managed via {grantRole} and {revokeRole}: this function's
-     * purpose is to provide a mechanism for accounts to lose their privileges
-     * if they are compromised (such as when a trusted device is misplaced).
-     *
-     * If the calling account had been granted `role`, emits a {RoleRevoked}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must be `callerConfirmation`.
-     */
-    function renounceRole(bytes32 role, address callerConfirmation) external;
-}
-
-
-// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)
-
-
+// lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/utils/Initializable.sol)
 
@@ -341,6 +231,485 @@ abstract contract Initializable {
     }
 }
 
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/access/IAccessControl.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (access/IAccessControl.sol)
+
+
+
+/**
+ * @dev External interface of AccessControl declared to support ERC165 detection.
+ */
+interface IAccessControl {
+    /**
+     * @dev The `account` is missing a role.
+     */
+    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);
+
+    /**
+     * @dev The caller of a function is not the expected one.
+     *
+     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.
+     */
+    error AccessControlBadConfirmation();
+
+    /**
+     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
+     *
+     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
+     * {RoleAdminChanged} not being emitted signaling this.
+     */
+    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
+
+    /**
+     * @dev Emitted when `account` is granted `role`.
+     *
+     * `sender` is the account that originated the contract call, an admin role
+     * bearer except when using {AccessControl-_setupRole}.
+     */
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /**
+     * @dev Emitted when `account` is revoked `role`.
+     *
+     * `sender` is the account that originated the contract call:
+     *   - if using `revokeRole`, it is the admin role bearer
+     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
+     */
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /**
+     * @dev Returns `true` if `account` has been granted `role`.
+     */
+    function hasRole(bytes32 role, address account) external view returns (bool);
+
+    /**
+     * @dev Returns the admin role that controls `role`. See {grantRole} and
+     * {revokeRole}.
+     *
+     * To change a role's admin, use {AccessControl-_setRoleAdmin}.
+     */
+    function getRoleAdmin(bytes32 role) external view returns (bytes32);
+
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     */
+    function grantRole(bytes32 role, address account) external;
+
+    /**
+     * @dev Revokes `role` from `account`.
+     *
+     * If `account` had been granted `role`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     */
+    function revokeRole(bytes32 role, address account) external;
+
+    /**
+     * @dev Revokes `role` from the calling account.
+     *
+     * Roles are often managed via {grantRole} and {revokeRole}: this function's
+     * purpose is to provide a mechanism for accounts to lose their privileges
+     * if they are compromised (such as when a trusted device is misplaced).
+     *
+     * If the calling account had been granted `role`, emits a {RoleRevoked}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must be `callerConfirmation`.
+     */
+    function renounceRole(bytes32 role, address callerConfirmation) external;
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC1822.sol)
+
+
+
+/**
+ * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified
+ * proxy whose upgrades are fully controlled by the current implementation.
+ */
+interface IERC1822Proxiable {
+    /**
+     * @dev Returns the storage slot that the proxiable contract assumes is being used to store the implementation
+     * address.
+     *
+     * IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks
+     * bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this
+     * function revert if invoked through a proxy.
+     */
+    function proxiableUUID() external view returns (bytes32);
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (proxy/beacon/IBeacon.sol)
+
+
+
+/**
+ * @dev This is the interface that {BeaconProxy} expects of its beacon.
+ */
+interface IBeacon {
+    /**
+     * @dev Must return an address that can be used as a delegate call target.
+     *
+     * {UpgradeableBeacon} will check that this address is a contract.
+     */
+    function implementation() external view returns (address);
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/Address.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)
+
+
+
+/**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev The ETH balance of the account is not enough to perform the operation.
+     */
+    error AddressInsufficientBalance(address account);
+
+    /**
+     * @dev There's no code at `target` (it is not a contract).
+     */
+    error AddressEmptyCode(address target);
+
+    /**
+     * @dev A call to an address target failed. The target may have reverted.
+     */
+    error FailedInnerCall();
+
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.8.20/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        if (address(this).balance < amount) {
+            revert AddressInsufficientBalance(address(this));
+        }
+
+        (bool success, ) = recipient.call{value: amount}("");
+        if (!success) {
+            revert FailedInnerCall();
+        }
+    }
+
+    /**
+     * @dev Performs a Solidity function call using a low level `call`. A
+     * plain `call` is an unsafe replacement for a function call: use this
+     * function instead.
+     *
+     * If `target` reverts with a revert reason or custom error, it is bubbled
+     * up by this function (like regular Solidity function calls). However, if
+     * the call reverted with no returned reason, this function reverts with a
+     * {FailedInnerCall} error.
+     *
+     * Returns the raw returned data. To convert to the expected return value,
+     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     *
+     * Requirements:
+     *
+     * - `target` must be a contract.
+     * - calling `target` with `data` must not revert.
+     */
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, 0);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but also transferring `value` wei to `target`.
+     *
+     * Requirements:
+     *
+     * - the calling contract must have an ETH balance of at least `value`.
+     * - the called Solidity function must be `payable`.
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+        if (address(this).balance < value) {
+            revert AddressInsufficientBalance(address(this));
+        }
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
+        return verifyCallResultFromTarget(target, success, returndata);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a static call.
+     */
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+        (bool success, bytes memory returndata) = target.staticcall(data);
+        return verifyCallResultFromTarget(target, success, returndata);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a delegate call.
+     */
+    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        (bool success, bytes memory returndata) = target.delegatecall(data);
+        return verifyCallResultFromTarget(target, success, returndata);
+    }
+
+    /**
+     * @dev Tool to verify that a low level call to smart-contract was successful, and reverts if the target
+     * was not a contract or bubbling up the revert reason (falling back to {FailedInnerCall}) in case of an
+     * unsuccessful call.
+     */
+    function verifyCallResultFromTarget(
+        address target,
+        bool success,
+        bytes memory returndata
+    ) internal view returns (bytes memory) {
+        if (!success) {
+            _revert(returndata);
+        } else {
+            // only check if target is a contract if the call was successful and the return data is empty
+            // otherwise we already know that it was a contract
+            if (returndata.length == 0 && target.code.length == 0) {
+                revert AddressEmptyCode(target);
+            }
+            return returndata;
+        }
+    }
+
+    /**
+     * @dev Tool to verify that a low level call was successful, and reverts if it wasn't, either by bubbling the
+     * revert reason or with a default {FailedInnerCall} error.
+     */
+    function verifyCallResult(bool success, bytes memory returndata) internal pure returns (bytes memory) {
+        if (!success) {
+            _revert(returndata);
+        } else {
+            return returndata;
+        }
+    }
+
+    /**
+     * @dev Reverts with returndata if present. Otherwise reverts with {FailedInnerCall}.
+     */
+    function _revert(bytes memory returndata) private pure {
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+            /// @solidity memory-safe-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
+            }
+        } else {
+            revert FailedInnerCall();
+        }
+    }
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/StorageSlot.sol)
+// This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
+
+
+
+/**
+ * @dev Library for reading and writing primitive types to specific storage slots.
+ *
+ * Storage slots are often used to avoid storage conflict when dealing with upgradeable contracts.
+ * This library helps with reading and writing to such slots without the need for inline assembly.
+ *
+ * The functions in this library return Slot structs that contain a `value` member that can be used to read or write.
+ *
+ * Example usage to set ERC1967 implementation slot:
+ * ```solidity
+ * contract ERC1967 {
+ *     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+ *
+ *     function _getImplementation() internal view returns (address) {
+ *         return StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
+ *     }
+ *
+ *     function _setImplementation(address newImplementation) internal {
+ *         require(newImplementation.code.length > 0);
+ *         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
+ *     }
+ * }
+ * ```
+ */
+library StorageSlot {
+    struct AddressSlot {
+        address value;
+    }
+
+    struct BooleanSlot {
+        bool value;
+    }
+
+    struct Bytes32Slot {
+        bytes32 value;
+    }
+
+    struct Uint256Slot {
+        uint256 value;
+    }
+
+    struct StringSlot {
+        string value;
+    }
+
+    struct BytesSlot {
+        bytes value;
+    }
+
+    /**
+     * @dev Returns an `AddressSlot` with member `value` located at `slot`.
+     */
+    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
+     */
+    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
+     */
+    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
+     */
+    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `StringSlot` with member `value` located at `slot`.
+     */
+    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
+     */
+    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := store.slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BytesSlot` with member `value` located at `slot`.
+     */
+    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
+     */
+    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := store.slot
+        }
+    }
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/IERC165.sol)
+
+
+
+/**
+ * @dev Interface of the ERC165 standard, as defined in the
+ * https://eips.ethereum.org/EIPS/eip-165[EIP].
+ *
+ * Implementers can declare support of contract interfaces, which can then be
+ * queried by others ({ERC165Checker}).
+ *
+ * For an implementation, see {ERC165}.
+ */
+interface IERC165 {
+    /**
+     * @dev Returns true if this contract implements the interface defined by
+     * `interfaceId`. See the corresponding
+     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]
+     * to learn more about how these ids are created.
+     *
+     * This function call must use less than 30 000 gas.
+     */
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+}
+
+// src/Interfaces/ITossWhitelist.sol
+
+
+
+interface ITossWhitelist {
+    function isInWhitelist(address user) external view returns (bool);
+}
+
+// lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)
+
+
+
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -371,36 +740,12 @@ abstract contract ContextUpgradeable is Initializable {
     }
 }
 
+// lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/ERC165.sol)
 
 
 
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/IERC165.sol)
-
-
-
-/**
- * @dev Interface of the ERC165 standard, as defined in the
- * https://eips.ethereum.org/EIPS/eip-165[EIP].
- *
- * Implementers can declare support of contract interfaces, which can then be
- * queried by others ({ERC165Checker}).
- *
- * For an implementation, see {ERC165}.
- */
-interface IERC165 {
-    /**
-     * @dev Returns true if this contract implements the interface defined by
-     * `interfaceId`. See the corresponding
-     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]
-     * to learn more about how these ids are created.
-     *
-     * This function call must use less than 30 000 gas.
-     */
-    function supportsInterface(bytes4 interfaceId) external view returns (bool);
-}
 
 
 
@@ -429,6 +774,210 @@ abstract contract ERC165Upgradeable is Initializable, IERC165 {
         return interfaceId == type(IERC165).interfaceId;
     }
 }
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Utils.sol)
+
+
+
+
+
+
+
+/**
+ * @dev This abstract contract provides getters and event emitting update functions for
+ * https://eips.ethereum.org/EIPS/eip-1967[EIP1967] slots.
+ */
+library ERC1967Utils {
+    // We re-declare ERC-1967 events here because they can't be used directly from IERC1967.
+    // This will be fixed in Solidity 0.8.21. At that point we should remove these events.
+    /**
+     * @dev Emitted when the implementation is upgraded.
+     */
+    event Upgraded(address indexed implementation);
+
+    /**
+     * @dev Emitted when the admin account has changed.
+     */
+    event AdminChanged(address previousAdmin, address newAdmin);
+
+    /**
+     * @dev Emitted when the beacon is changed.
+     */
+    event BeaconUpgraded(address indexed beacon);
+
+    /**
+     * @dev Storage slot with the address of the current implementation.
+     * This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1.
+     */
+    // solhint-disable-next-line private-vars-leading-underscore
+    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    /**
+     * @dev The `implementation` of the proxy is invalid.
+     */
+    error ERC1967InvalidImplementation(address implementation);
+
+    /**
+     * @dev The `admin` of the proxy is invalid.
+     */
+    error ERC1967InvalidAdmin(address admin);
+
+    /**
+     * @dev The `beacon` of the proxy is invalid.
+     */
+    error ERC1967InvalidBeacon(address beacon);
+
+    /**
+     * @dev An upgrade function sees `msg.value > 0` that may be lost.
+     */
+    error ERC1967NonPayable();
+
+    /**
+     * @dev Returns the current implementation address.
+     */
+    function getImplementation() internal view returns (address) {
+        return StorageSlot.getAddressSlot(IMPLEMENTATION_SLOT).value;
+    }
+
+    /**
+     * @dev Stores a new address in the EIP1967 implementation slot.
+     */
+    function _setImplementation(address newImplementation) private {
+        if (newImplementation.code.length == 0) {
+            revert ERC1967InvalidImplementation(newImplementation);
+        }
+        StorageSlot.getAddressSlot(IMPLEMENTATION_SLOT).value = newImplementation;
+    }
+
+    /**
+     * @dev Performs implementation upgrade with additional setup call if data is nonempty.
+     * This function is payable only if the setup call is performed, otherwise `msg.value` is rejected
+     * to avoid stuck value in the contract.
+     *
+     * Emits an {IERC1967-Upgraded} event.
+     */
+    function upgradeToAndCall(address newImplementation, bytes memory data) internal {
+        _setImplementation(newImplementation);
+        emit Upgraded(newImplementation);
+
+        if (data.length > 0) {
+            Address.functionDelegateCall(newImplementation, data);
+        } else {
+            _checkNonPayable();
+        }
+    }
+
+    /**
+     * @dev Storage slot with the admin of the contract.
+     * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
+     */
+    // solhint-disable-next-line private-vars-leading-underscore
+    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+
+    /**
+     * @dev Returns the current admin.
+     *
+     * TIP: To get this value clients can read directly from the storage slot shown below (specified by EIP1967) using
+     * the https://eth.wiki/json-rpc/API#eth_getstorageat[`eth_getStorageAt`] RPC call.
+     * `0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103`
+     */
+    function getAdmin() internal view returns (address) {
+        return StorageSlot.getAddressSlot(ADMIN_SLOT).value;
+    }
+
+    /**
+     * @dev Stores a new address in the EIP1967 admin slot.
+     */
+    function _setAdmin(address newAdmin) private {
+        if (newAdmin == address(0)) {
+            revert ERC1967InvalidAdmin(address(0));
+        }
+        StorageSlot.getAddressSlot(ADMIN_SLOT).value = newAdmin;
+    }
+
+    /**
+     * @dev Changes the admin of the proxy.
+     *
+     * Emits an {IERC1967-AdminChanged} event.
+     */
+    function changeAdmin(address newAdmin) internal {
+        emit AdminChanged(getAdmin(), newAdmin);
+        _setAdmin(newAdmin);
+    }
+
+    /**
+     * @dev The storage slot of the UpgradeableBeacon contract which defines the implementation for this proxy.
+     * This is the keccak-256 hash of "eip1967.proxy.beacon" subtracted by 1.
+     */
+    // solhint-disable-next-line private-vars-leading-underscore
+    bytes32 internal constant BEACON_SLOT = 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
+
+    /**
+     * @dev Returns the current beacon.
+     */
+    function getBeacon() internal view returns (address) {
+        return StorageSlot.getAddressSlot(BEACON_SLOT).value;
+    }
+
+    /**
+     * @dev Stores a new beacon in the EIP1967 beacon slot.
+     */
+    function _setBeacon(address newBeacon) private {
+        if (newBeacon.code.length == 0) {
+            revert ERC1967InvalidBeacon(newBeacon);
+        }
+
+        StorageSlot.getAddressSlot(BEACON_SLOT).value = newBeacon;
+
+        address beaconImplementation = IBeacon(newBeacon).implementation();
+        if (beaconImplementation.code.length == 0) {
+            revert ERC1967InvalidImplementation(beaconImplementation);
+        }
+    }
+
+    /**
+     * @dev Change the beacon and trigger a setup call if data is nonempty.
+     * This function is payable only if the setup call is performed, otherwise `msg.value` is rejected
+     * to avoid stuck value in the contract.
+     *
+     * Emits an {IERC1967-BeaconUpgraded} event.
+     *
+     * CAUTION: Invoking this function has no effect on an instance of {BeaconProxy} since v5, since
+     * it uses an immutable beacon without looking at the value of the ERC-1967 beacon slot for
+     * efficiency.
+     */
+    function upgradeBeaconToAndCall(address newBeacon, bytes memory data) internal {
+        _setBeacon(newBeacon);
+        emit BeaconUpgraded(newBeacon);
+
+        if (data.length > 0) {
+            Address.functionDelegateCall(IBeacon(newBeacon).implementation(), data);
+        } else {
+            _checkNonPayable();
+        }
+    }
+
+    /**
+     * @dev Reverts if `msg.value` is not zero. It can be used to avoid `msg.value` stuck in the contract
+     * if an upgrade doesn't perform an initialization call.
+     */
+    function _checkNonPayable() private {
+        if (msg.value > 0) {
+            revert ERC1967NonPayable();
+        }
+    }
+}
+
+// lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (access/AccessControl.sol)
+
+
+
+
+
 
 
 
@@ -656,538 +1205,13 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
     }
 }
 
-
-
-
+// lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/utils/UUPSUpgradeable.sol)
 
 
 
 
-// OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC1822.sol)
-
-
-
-/**
- * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified
- * proxy whose upgrades are fully controlled by the current implementation.
- */
-interface IERC1822Proxiable {
-    /**
-     * @dev Returns the storage slot that the proxiable contract assumes is being used to store the implementation
-     * address.
-     *
-     * IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks
-     * bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this
-     * function revert if invoked through a proxy.
-     */
-    function proxiableUUID() external view returns (bytes32);
-}
-
-
-// OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Utils.sol)
-
-
-
-
-// OpenZeppelin Contracts (last updated v5.0.0) (proxy/beacon/IBeacon.sol)
-
-
-
-/**
- * @dev This is the interface that {BeaconProxy} expects of its beacon.
- */
-interface IBeacon {
-    /**
-     * @dev Must return an address that can be used as a delegate call target.
-     *
-     * {UpgradeableBeacon} will check that this address is a contract.
-     */
-    function implementation() external view returns (address);
-}
-
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)
-
-
-
-/**
- * @dev Collection of functions related to the address type
- */
-library Address {
-    /**
-     * @dev The ETH balance of the account is not enough to perform the operation.
-     */
-    error AddressInsufficientBalance(address account);
-
-    /**
-     * @dev There's no code at `target` (it is not a contract).
-     */
-    error AddressEmptyCode(address target);
-
-    /**
-     * @dev A call to an address target failed. The target may have reverted.
-     */
-    error FailedInnerCall();
-
-    /**
-     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
-     * `recipient`, forwarding all available gas and reverting on errors.
-     *
-     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
-     * of certain opcodes, possibly making contracts go over the 2300 gas limit
-     * imposed by `transfer`, making them unable to receive funds via
-     * `transfer`. {sendValue} removes this limitation.
-     *
-     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].
-     *
-     * IMPORTANT: because control is transferred to `recipient`, care must be
-     * taken to not create reentrancy vulnerabilities. Consider using
-     * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.8.20/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
-     */
-    function sendValue(address payable recipient, uint256 amount) internal {
-        if (address(this).balance < amount) {
-            revert AddressInsufficientBalance(address(this));
-        }
-
-        (bool success, ) = recipient.call{value: amount}("");
-        if (!success) {
-            revert FailedInnerCall();
-        }
-    }
-
-    /**
-     * @dev Performs a Solidity function call using a low level `call`. A
-     * plain `call` is an unsafe replacement for a function call: use this
-     * function instead.
-     *
-     * If `target` reverts with a revert reason or custom error, it is bubbled
-     * up by this function (like regular Solidity function calls). However, if
-     * the call reverted with no returned reason, this function reverts with a
-     * {FailedInnerCall} error.
-     *
-     * Returns the raw returned data. To convert to the expected return value,
-     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
-     *
-     * Requirements:
-     *
-     * - `target` must be a contract.
-     * - calling `target` with `data` must not revert.
-     */
-    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, 0);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but also transferring `value` wei to `target`.
-     *
-     * Requirements:
-     *
-     * - the calling contract must have an ETH balance of at least `value`.
-     * - the called Solidity function must be `payable`.
-     */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
-        if (address(this).balance < value) {
-            revert AddressInsufficientBalance(address(this));
-        }
-        (bool success, bytes memory returndata) = target.call{value: value}(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a static call.
-     */
-    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.staticcall(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a delegate call.
-     */
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.delegatecall(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    /**
-     * @dev Tool to verify that a low level call to smart-contract was successful, and reverts if the target
-     * was not a contract or bubbling up the revert reason (falling back to {FailedInnerCall}) in case of an
-     * unsuccessful call.
-     */
-    function verifyCallResultFromTarget(
-        address target,
-        bool success,
-        bytes memory returndata
-    ) internal view returns (bytes memory) {
-        if (!success) {
-            _revert(returndata);
-        } else {
-            // only check if target is a contract if the call was successful and the return data is empty
-            // otherwise we already know that it was a contract
-            if (returndata.length == 0 && target.code.length == 0) {
-                revert AddressEmptyCode(target);
-            }
-            return returndata;
-        }
-    }
-
-    /**
-     * @dev Tool to verify that a low level call was successful, and reverts if it wasn't, either by bubbling the
-     * revert reason or with a default {FailedInnerCall} error.
-     */
-    function verifyCallResult(bool success, bytes memory returndata) internal pure returns (bytes memory) {
-        if (!success) {
-            _revert(returndata);
-        } else {
-            return returndata;
-        }
-    }
-
-    /**
-     * @dev Reverts with returndata if present. Otherwise reverts with {FailedInnerCall}.
-     */
-    function _revert(bytes memory returndata) private pure {
-        // Look for revert reason and bubble it up if present
-        if (returndata.length > 0) {
-            // The easiest way to bubble the revert reason is using memory via assembly
-            /// @solidity memory-safe-assembly
-            assembly {
-                let returndata_size := mload(returndata)
-                revert(add(32, returndata), returndata_size)
-            }
-        } else {
-            revert FailedInnerCall();
-        }
-    }
-}
-
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/StorageSlot.sol)
-// This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
-
-
-
-/**
- * @dev Library for reading and writing primitive types to specific storage slots.
- *
- * Storage slots are often used to avoid storage conflict when dealing with upgradeable contracts.
- * This library helps with reading and writing to such slots without the need for inline assembly.
- *
- * The functions in this library return Slot structs that contain a `value` member that can be used to read or write.
- *
- * Example usage to set ERC1967 implementation slot:
- * ```solidity
- * contract ERC1967 {
- *     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
- *
- *     function _getImplementation() internal view returns (address) {
- *         return StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
- *     }
- *
- *     function _setImplementation(address newImplementation) internal {
- *         require(newImplementation.code.length > 0);
- *         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
- *     }
- * }
- * ```
- */
-library StorageSlot {
-    struct AddressSlot {
-        address value;
-    }
-
-    struct BooleanSlot {
-        bool value;
-    }
-
-    struct Bytes32Slot {
-        bytes32 value;
-    }
-
-    struct Uint256Slot {
-        uint256 value;
-    }
-
-    struct StringSlot {
-        string value;
-    }
-
-    struct BytesSlot {
-        bytes value;
-    }
-
-    /**
-     * @dev Returns an `AddressSlot` with member `value` located at `slot`.
-     */
-    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
-     */
-    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
-     */
-    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
-     */
-    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `StringSlot` with member `value` located at `slot`.
-     */
-    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
-     */
-    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := store.slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BytesSlot` with member `value` located at `slot`.
-     */
-    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
-     */
-    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := store.slot
-        }
-    }
-}
-
-
-/**
- * @dev This abstract contract provides getters and event emitting update functions for
- * https://eips.ethereum.org/EIPS/eip-1967[EIP1967] slots.
- */
-library ERC1967Utils {
-    // We re-declare ERC-1967 events here because they can't be used directly from IERC1967.
-    // This will be fixed in Solidity 0.8.21. At that point we should remove these events.
-    /**
-     * @dev Emitted when the implementation is upgraded.
-     */
-    event Upgraded(address indexed implementation);
-
-    /**
-     * @dev Emitted when the admin account has changed.
-     */
-    event AdminChanged(address previousAdmin, address newAdmin);
-
-    /**
-     * @dev Emitted when the beacon is changed.
-     */
-    event BeaconUpgraded(address indexed beacon);
-
-    /**
-     * @dev Storage slot with the address of the current implementation.
-     * This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1.
-     */
-    // solhint-disable-next-line private-vars-leading-underscore
-    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-
-    /**
-     * @dev The `implementation` of the proxy is invalid.
-     */
-    error ERC1967InvalidImplementation(address implementation);
-
-    /**
-     * @dev The `admin` of the proxy is invalid.
-     */
-    error ERC1967InvalidAdmin(address admin);
-
-    /**
-     * @dev The `beacon` of the proxy is invalid.
-     */
-    error ERC1967InvalidBeacon(address beacon);
-
-    /**
-     * @dev An upgrade function sees `msg.value > 0` that may be lost.
-     */
-    error ERC1967NonPayable();
-
-    /**
-     * @dev Returns the current implementation address.
-     */
-    function getImplementation() internal view returns (address) {
-        return StorageSlot.getAddressSlot(IMPLEMENTATION_SLOT).value;
-    }
-
-    /**
-     * @dev Stores a new address in the EIP1967 implementation slot.
-     */
-    function _setImplementation(address newImplementation) private {
-        if (newImplementation.code.length == 0) {
-            revert ERC1967InvalidImplementation(newImplementation);
-        }
-        StorageSlot.getAddressSlot(IMPLEMENTATION_SLOT).value = newImplementation;
-    }
-
-    /**
-     * @dev Performs implementation upgrade with additional setup call if data is nonempty.
-     * This function is payable only if the setup call is performed, otherwise `msg.value` is rejected
-     * to avoid stuck value in the contract.
-     *
-     * Emits an {IERC1967-Upgraded} event.
-     */
-    function upgradeToAndCall(address newImplementation, bytes memory data) internal {
-        _setImplementation(newImplementation);
-        emit Upgraded(newImplementation);
-
-        if (data.length > 0) {
-            Address.functionDelegateCall(newImplementation, data);
-        } else {
-            _checkNonPayable();
-        }
-    }
-
-    /**
-     * @dev Storage slot with the admin of the contract.
-     * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
-     */
-    // solhint-disable-next-line private-vars-leading-underscore
-    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
-
-    /**
-     * @dev Returns the current admin.
-     *
-     * TIP: To get this value clients can read directly from the storage slot shown below (specified by EIP1967) using
-     * the https://eth.wiki/json-rpc/API#eth_getstorageat[`eth_getStorageAt`] RPC call.
-     * `0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103`
-     */
-    function getAdmin() internal view returns (address) {
-        return StorageSlot.getAddressSlot(ADMIN_SLOT).value;
-    }
-
-    /**
-     * @dev Stores a new address in the EIP1967 admin slot.
-     */
-    function _setAdmin(address newAdmin) private {
-        if (newAdmin == address(0)) {
-            revert ERC1967InvalidAdmin(address(0));
-        }
-        StorageSlot.getAddressSlot(ADMIN_SLOT).value = newAdmin;
-    }
-
-    /**
-     * @dev Changes the admin of the proxy.
-     *
-     * Emits an {IERC1967-AdminChanged} event.
-     */
-    function changeAdmin(address newAdmin) internal {
-        emit AdminChanged(getAdmin(), newAdmin);
-        _setAdmin(newAdmin);
-    }
-
-    /**
-     * @dev The storage slot of the UpgradeableBeacon contract which defines the implementation for this proxy.
-     * This is the keccak-256 hash of "eip1967.proxy.beacon" subtracted by 1.
-     */
-    // solhint-disable-next-line private-vars-leading-underscore
-    bytes32 internal constant BEACON_SLOT = 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
-
-    /**
-     * @dev Returns the current beacon.
-     */
-    function getBeacon() internal view returns (address) {
-        return StorageSlot.getAddressSlot(BEACON_SLOT).value;
-    }
-
-    /**
-     * @dev Stores a new beacon in the EIP1967 beacon slot.
-     */
-    function _setBeacon(address newBeacon) private {
-        if (newBeacon.code.length == 0) {
-            revert ERC1967InvalidBeacon(newBeacon);
-        }
-
-        StorageSlot.getAddressSlot(BEACON_SLOT).value = newBeacon;
-
-        address beaconImplementation = IBeacon(newBeacon).implementation();
-        if (beaconImplementation.code.length == 0) {
-            revert ERC1967InvalidImplementation(beaconImplementation);
-        }
-    }
-
-    /**
-     * @dev Change the beacon and trigger a setup call if data is nonempty.
-     * This function is payable only if the setup call is performed, otherwise `msg.value` is rejected
-     * to avoid stuck value in the contract.
-     *
-     * Emits an {IERC1967-BeaconUpgraded} event.
-     *
-     * CAUTION: Invoking this function has no effect on an instance of {BeaconProxy} since v5, since
-     * it uses an immutable beacon without looking at the value of the ERC-1967 beacon slot for
-     * efficiency.
-     */
-    function upgradeBeaconToAndCall(address newBeacon, bytes memory data) internal {
-        _setBeacon(newBeacon);
-        emit BeaconUpgraded(newBeacon);
-
-        if (data.length > 0) {
-            Address.functionDelegateCall(IBeacon(newBeacon).implementation(), data);
-        } else {
-            _checkNonPayable();
-        }
-    }
-
-    /**
-     * @dev Reverts if `msg.value` is not zero. It can be used to avoid `msg.value` stuck in the contract
-     * if an upgrade doesn't perform an initialization call.
-     */
-    function _checkNonPayable() private {
-        if (msg.value > 0) {
-            revert ERC1967NonPayable();
-        }
-    }
-}
 
 
 
@@ -1336,6 +1360,11 @@ abstract contract UUPSUpgradeable is Initializable, IERC1822Proxiable {
     }
 }
 
+// src/Bases/TossUUPSUpgradeable.sol
+
+
+
+
 
 
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
@@ -1348,12 +1377,12 @@ abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     }
 }
 
+// src/Bases/TossWhitelistBase.sol
 
 
 
-interface ITossWhitelist {
-    function isInWhitelist(address user) external view returns (bool);
-}
+
+
 
 
 abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable, TossUUPSUpgradeable {
@@ -1394,6 +1423,11 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
         return _getTossWhitelistBaseStorage().whitelist[address_];
     }
 }
+
+// src/TossWhitelistV1.sol
+
+
+
 
 
 contract TossWhitelistV1 is TossWhitelistBase {

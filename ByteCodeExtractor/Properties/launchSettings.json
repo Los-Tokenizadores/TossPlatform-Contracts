@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ByteCodeExtractor": {
+      "commandName": "Project",
+      "commandLineArgs": "paris"
+    }
+  }
+}

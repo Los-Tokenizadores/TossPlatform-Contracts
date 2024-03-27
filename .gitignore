@@ -8,3 +8,8 @@ out/
 .vs/
 lcov.info
 Toss.Contracts/obj/*
+ByteCodeExtractor/obj/
+ByteCodeExtractor/bin/
+ByteCodeExtractor/ByteCodeExtractor
+ByteCodeExtractor/ByteCodeExtractor.pdb
+*.user

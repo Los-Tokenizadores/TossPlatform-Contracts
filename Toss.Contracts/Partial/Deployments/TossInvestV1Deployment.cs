@@ -7,7 +7,6 @@ public partial class TossInvestV1Deployment : IContractDefinition {
 	public static int Version => 1;
 	public static int ClientVersion => 1;
 	public static string ContractName => "TossInvestV1";
-	public static string CompileVersion => SolidityCompilerVersions.V0_8_20;
 	public static string SourceCode => sourceCode ??= IContractDefinition.LoadSourceCode(ContractName);
 	private static string sourceCode;
 }

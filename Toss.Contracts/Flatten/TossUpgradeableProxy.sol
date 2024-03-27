@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity =0.8.20 ^0.8.20;
 
-
-// OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Proxy.sol)
-
-
-
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/Proxy.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/Proxy.sol)
 
@@ -76,11 +72,7 @@ abstract contract Proxy {
     }
 }
 
-
-// OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Utils.sol)
-
-
-
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/beacon/IBeacon.sol)
 
@@ -98,6 +90,7 @@ interface IBeacon {
     function implementation() external view returns (address);
 }
 
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/Address.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)
 
@@ -258,6 +251,7 @@ library Address {
     }
 }
 
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/StorageSlot.sol)
 // This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
@@ -393,6 +387,15 @@ library StorageSlot {
         }
     }
 }
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Utils.sol)
+
+
+
+
+
 
 
 /**
@@ -580,6 +583,14 @@ library ERC1967Utils {
     }
 }
 
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Proxy.sol)
+
+
+
+
+
 
 /**
  * @dev This contract implements an upgradeable proxy. It is upgradeable because calls are delegated to an
@@ -613,6 +624,11 @@ contract ERC1967Proxy is Proxy {
         return ERC1967Utils.getImplementation();
     }
 }
+
+// src/TossUpgradeableProxy.sol
+
+
+
 
 
 contract TossUpgradeableProxy is ERC1967Proxy {
