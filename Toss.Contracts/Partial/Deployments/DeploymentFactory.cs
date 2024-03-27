@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Toss.Contracts.Interfaces;
 
-namespace Toss.Contracts.Partial.Deployments;
+namespace Toss.Contracts.Deployments;
 public record ByteCodeVersion(string EvmVersion, string CompilerVersion, bool Optimizer, int OptimizedRuns, string Bytecode);
 public static class DeploymentFactory {
 	private static readonly Dictionary<string, Dictionary<string, ByteCodeVersion>> byteCodeVersionsByEvmAndContract = [];
