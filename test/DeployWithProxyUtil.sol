@@ -98,11 +98,10 @@ library DeployWithProxyUtil {
         IERC20 erc20,
         TossErc721MarketV1 erc721Implementation,
         address platformAddress,
-        uint16 platformCut,
         string memory erc721baseUri
     ) internal returns (TossInvestV1) {
         TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-            address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, platformCut, erc721baseUri))
+            address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, erc721baseUri))
         );
 
         return TossInvestV1(address(proxy));

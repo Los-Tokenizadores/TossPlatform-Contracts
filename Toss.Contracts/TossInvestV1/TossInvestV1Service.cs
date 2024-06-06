@@ -124,25 +124,23 @@ namespace Toss.Contracts.TossInvestV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(tossinvestv1InitFunction, cancellationToken);
         }
 
-        public Task<string> Tossinvestv1InitRequestAsync(string erc20, string erc721implementation, string platformAddress, ushort platformCut, string erc721baseUri)
+        public Task<string> Tossinvestv1InitRequestAsync(string erc20, string erc721implementation, string platformAddress, string erc721baseUri)
         {
             var tossinvestv1InitFunction = new Tossinvestv1InitFunction();
                 tossinvestv1InitFunction.Erc20 = erc20;
                 tossinvestv1InitFunction.Erc721implementation = erc721implementation;
                 tossinvestv1InitFunction.PlatformAddress = platformAddress;
-                tossinvestv1InitFunction.PlatformCut = platformCut;
                 tossinvestv1InitFunction.Erc721baseUri = erc721baseUri;
             
              return ContractHandler.SendRequestAsync(tossinvestv1InitFunction);
         }
 
-        public Task<TransactionReceipt> Tossinvestv1InitRequestAndWaitForReceiptAsync(string erc20, string erc721implementation, string platformAddress, ushort platformCut, string erc721baseUri, CancellationTokenSource cancellationToken = null)
+        public Task<TransactionReceipt> Tossinvestv1InitRequestAndWaitForReceiptAsync(string erc20, string erc721implementation, string platformAddress, string erc721baseUri, CancellationTokenSource cancellationToken = null)
         {
             var tossinvestv1InitFunction = new Tossinvestv1InitFunction();
                 tossinvestv1InitFunction.Erc20 = erc20;
                 tossinvestv1InitFunction.Erc721implementation = erc721implementation;
                 tossinvestv1InitFunction.PlatformAddress = platformAddress;
-                tossinvestv1InitFunction.PlatformCut = platformCut;
                 tossinvestv1InitFunction.Erc721baseUri = erc721baseUri;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(tossinvestv1InitFunction, cancellationToken);
@@ -158,7 +156,7 @@ namespace Toss.Contracts.TossInvestV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(addProjectFunction, cancellationToken);
         }
 
-        public Task<string> AddProjectRequestAsync(string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet)
+        public Task<string> AddProjectRequestAsync(string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet, ushort platformCut)
         {
             var addProjectFunction = new AddProjectFunction();
                 addProjectFunction.Name = name;
@@ -169,11 +167,12 @@ namespace Toss.Contracts.TossInvestV1
                 addProjectFunction.StartAt = startAt;
                 addProjectFunction.FinishAt = finishAt;
                 addProjectFunction.ProjectWallet = projectWallet;
+                addProjectFunction.PlatformCut = platformCut;
             
              return ContractHandler.SendRequestAsync(addProjectFunction);
         }
 
-        public Task<TransactionReceipt> AddProjectRequestAndWaitForReceiptAsync(string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet, CancellationTokenSource cancellationToken = null)
+        public Task<TransactionReceipt> AddProjectRequestAndWaitForReceiptAsync(string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet, ushort platformCut, CancellationTokenSource cancellationToken = null)
         {
             var addProjectFunction = new AddProjectFunction();
                 addProjectFunction.Name = name;
@@ -184,6 +183,7 @@ namespace Toss.Contracts.TossInvestV1
                 addProjectFunction.StartAt = startAt;
                 addProjectFunction.FinishAt = finishAt;
                 addProjectFunction.ProjectWallet = projectWallet;
+                addProjectFunction.PlatformCut = platformCut;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(addProjectFunction, cancellationToken);
         }
@@ -198,7 +198,7 @@ namespace Toss.Contracts.TossInvestV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(changeProjectFunction, cancellationToken);
         }
 
-        public Task<string> ChangeProjectRequestAsync(BigInteger projectId, string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet)
+        public Task<string> ChangeProjectRequestAsync(BigInteger projectId, string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet, ushort platformCut)
         {
             var changeProjectFunction = new ChangeProjectFunction();
                 changeProjectFunction.ProjectId = projectId;
@@ -210,11 +210,12 @@ namespace Toss.Contracts.TossInvestV1
                 changeProjectFunction.StartAt = startAt;
                 changeProjectFunction.FinishAt = finishAt;
                 changeProjectFunction.ProjectWallet = projectWallet;
+                changeProjectFunction.PlatformCut = platformCut;
             
              return ContractHandler.SendRequestAsync(changeProjectFunction);
         }
 
-        public Task<TransactionReceipt> ChangeProjectRequestAndWaitForReceiptAsync(BigInteger projectId, string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet, CancellationTokenSource cancellationToken = null)
+        public Task<TransactionReceipt> ChangeProjectRequestAndWaitForReceiptAsync(BigInteger projectId, string name, string symbol, uint targetAmount, uint maxAmount, BigInteger price, ulong startAt, ulong finishAt, string projectWallet, ushort platformCut, CancellationTokenSource cancellationToken = null)
         {
             var changeProjectFunction = new ChangeProjectFunction();
                 changeProjectFunction.ProjectId = projectId;
@@ -226,6 +227,7 @@ namespace Toss.Contracts.TossInvestV1
                 changeProjectFunction.StartAt = startAt;
                 changeProjectFunction.FinishAt = finishAt;
                 changeProjectFunction.ProjectWallet = projectWallet;
+                changeProjectFunction.PlatformCut = platformCut;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(changeProjectFunction, cancellationToken);
         }

@@ -23,7 +23,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         TossErc721MarketV1 erc721Implementation;
         address tossProjectAddress;
         address platformAddress;
-        uint16 platformCut;
         ProjectInfo[] projects;
         mapping(uint256 => address[]) projectInvestors;
     }
@@ -50,6 +49,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         address projectWallet;
         bool confirmed;
         address erc721Address;
+        uint16 platformCut;
         string name;
         string symbol;
     }
@@ -88,21 +88,19 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         IERC20 erc20_,
         TossErc721MarketV1 erc721Implementation_,
         address platformAddress_,
-        uint16 platformCut_,
         string memory erc721baseUri_
     ) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
-        __TossInvestBase_init_unchained(erc20_, erc721Implementation_, platformAddress_, platformCut_, erc721baseUri_);
+        __TossInvestBase_init_unchained(erc20_, erc721Implementation_, platformAddress_, erc721baseUri_);
     }
 
     function __TossInvestBase_init_unchained(
         IERC20 erc20_,
         TossErc721MarketV1 erc721Implementation_,
         address platformAddress_,
-        uint16 platformCut_,
         string memory erc721baseUri_
     ) internal onlyInitializing {
         if (address(erc20_) == address(0)) {
@@ -113,9 +111,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         }
         if (platformAddress_ == address(0)) {
             revert TossAddressIsZero("platformAddress");
-        }
-        if (platformCut_ > CUT_PRECISION) {
-            revert TossCutOutOfRange(platformCut_);
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -129,7 +124,6 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         $.erc721Implementation = erc721Implementation_;
         $.erc721BaseUri = erc721baseUri_;
         $.platformAddress = platformAddress_;
-        $.platformCut = platformCut_;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) { }
@@ -242,7 +236,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint128 price,
         uint64 startAt,
         uint64 finishAt,
-        address projectWallet
+        address projectWallet,
+        uint16 platformCut
     ) external whenNotPaused onlyRole(PROJECT_ROLE) {
         if (targetAmount == 0) {
             revert TossValueIsZero("target amount");
@@ -262,6 +257,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (projectWallet == address(0)) {
             revert TossAddressIsZero("project wallet");
         }
+        if (platformCut > CUT_PRECISION) {
+            revert TossCutOutOfRange(platformCut);
+        }
 
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         uint256 projectId = $.projects.length;
@@ -278,7 +276,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
                 erc721Address: address(0),
                 lastIndex: 0,
                 projectWallet: projectWallet,
-                confirmed: false
+                confirmed: false,
+                platformCut: platformCut
             })
         );
 
@@ -294,7 +293,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         uint128 price,
         uint64 startAt,
         uint64 finishAt,
-        address projectWallet
+        address projectWallet,
+        uint16 platformCut
     ) external whenNotPaused onlyRole(PROJECT_ROLE) {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         if (projectId >= $.projects.length) {
@@ -323,6 +323,10 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (projectWallet == address(0)) {
             revert TossAddressIsZero("project wallet");
         }
+        if (platformCut > CUT_PRECISION) {
+            revert TossCutOutOfRange(platformCut);
+        }
+
         projectInfo.name = name;
         projectInfo.symbol = symbol;
         projectInfo.targetAmount = targetAmount;
@@ -331,6 +335,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         projectInfo.startAt = startAt;
         projectInfo.finishAt = finishAt;
         projectInfo.projectWallet = projectWallet;
+        projectInfo.platformCut = platformCut;
     }
 
     function confirm(uint256 projectId) external whenNotPaused {
@@ -434,7 +439,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
         if (projectInfo.erc721Address == address(0)) {
             uint256 total = projectInfo.price * length;
-            uint256 platformAmount = total * $.platformCut / CUT_PRECISION;
+            uint256 platformAmount = total * projectInfo.platformCut / CUT_PRECISION;
             $.erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
             $.erc20.safeTransfer($.platformAddress, platformAmount);
         }

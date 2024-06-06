@@ -31,9 +31,11 @@ namespace Toss.Contracts.TossInvestV1.ContractDefinition
         public virtual bool Confirmed { get; set; }
         [Parameter("address", "erc721Address", 10)]
         public virtual string Erc721Address { get; set; }
-        [Parameter("string", "name", 11)]
+        [Parameter("uint16", "platformCut", 11)]
+        public virtual ushort PlatformCut { get; set; }
+        [Parameter("string", "name", 12)]
         public virtual string Name { get; set; }
-        [Parameter("string", "symbol", 12)]
+        [Parameter("string", "symbol", 13)]
         public virtual string Symbol { get; set; }
     }
 }
