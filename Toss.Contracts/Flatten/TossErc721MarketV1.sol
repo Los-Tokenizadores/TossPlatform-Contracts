@@ -1353,15 +1353,11 @@ library SignedMath {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
 
 // src/Interfaces/TossErrors.sol
-
-
 
 error TossAddressIsZero(string parameter);
 error TossCutOutOfRange(uint16 value);
@@ -1650,10 +1646,6 @@ interface IERC721 is IERC165 {
 }
 
 // src/Bases/TossWhitelistClient.sol
-
-
-
-
 
 abstract contract TossWhitelistClient {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
@@ -1995,11 +1987,6 @@ library Strings {
 
 // src/Interfaces/ITossMarket.sol
 
-
-
-
-
-
 interface ITossMarket is IERC721Receiver, IERC165 {
     function createSellOffer(uint256 tokenId, uint128 price, address owner) external;
 }
@@ -2197,6 +2184,14 @@ library ERC1967Utils {
             revert ERC1967NonPayable();
         }
     }
+}
+
+// src/Interfaces/ITossErc721Market.sol
+
+interface ITossErc721Market {
+    function createSellOffer(uint256 tokenId, uint128 price) external;
+    function getMarket() external view returns (address marketAddress);
+    function setMarket(ITossMarket market) external;
 }
 
 // lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol
@@ -2590,11 +2585,6 @@ abstract contract UUPSUpgradeable is Initializable, IERC1822Proxiable {
 }
 
 // src/Bases/TossUUPSUpgradeable.sol
-
-
-
-
-
 
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
@@ -3168,18 +3158,8 @@ abstract contract ERC721PausableUpgradeable is Initializable, ERC721Upgradeable,
 
 // src/Bases/TossErc721MarketBase.sol
 
-
-
-
-
-
-
-
-
-
-
-
 abstract contract TossErc721MarketBase is
+    ITossErc721Market,
     TossWhitelistClient,
     ERC721Upgradeable,
     ERC721PausableUpgradeable,
@@ -3259,7 +3239,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return interfaceId == type(ITossErc721Market).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function createSellOffer(uint256 tokenId, uint128 price) external nonReentrant whenNotPaused {
@@ -3276,7 +3256,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function setMarket(ITossMarket market) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
+        if (address(market) != address(0) && (address(market).code.length == 0 || !market.supportsInterface(type(ITossMarket).interfaceId))) {
             revert TossUnsupportedInterface("ITossMarket");
         }
         _getTossErc721MarketBaseStorage().market = market;
@@ -3284,10 +3264,6 @@ abstract contract TossErc721MarketBase is
 }
 
 // src/TossErc721MarketV1.sol
-
-
-
-
 
 contract TossErc721MarketV1 is TossErc721MarketBase {
     event Created(address indexed account, uint256 indexed tokenId);

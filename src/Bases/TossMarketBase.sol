@@ -11,7 +11,13 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossMarket } from "../Interfaces/ITossMarket.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
+import { ITossErc721Market } from "../Interfaces/ITossErc721Market.sol";
 import "../Interfaces/TossErrors.sol";
+
+struct Royalty {
+    uint16 cut;
+    address destination;
+}
 
 abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossMarketBase
@@ -19,7 +25,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         address erc20BankAddress;
         IERC20 erc20;
         uint16 marketCut;
-        mapping(address => mapping(uint256 => SellOffer)) erc721Markets;
+        mapping(address => Erc721Market) erc721Markets;
     }
 
     // keccak256(abi.encode(uint256(keccak256("tossplatform.storage.TossMarketBase")) - 1)) & ~bytes32(uint256(0xff))
@@ -34,11 +40,17 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     using SafeERC20 for IERC20;
 
     uint16 public constant CUT_PRECISION = 10_000;
+    uint8 public constant MAX_ROYALTY_LENGTH = 10;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant EXTRACT_ROLE = keccak256("EXTRACT_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ERC721_SELLER_ROLE = keccak256("ERC721_SELLER_ROLE");
+
+    struct Erc721Market {
+        bool active;
+        Royalty[] royalties;
+        mapping(uint256 => SellOffer) offers;
+    }
 
     struct SellOffer {
         uint128 price;
@@ -52,20 +64,27 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     error TossMarketNotOwnerOfErc721(address sender, address owner);
     error TossMarketIsOwnerOfErc721(address sender);
+    error TossMarketErc721NotActive(address erc721);
+    error TossMarketErc721AlreadyActive(address erc721);
     error TossMarketErc721NotOnSell(address erc721, uint256 tokenId);
     error TossMarketSellPriceChange(uint128 realPrice, uint128 userPrice);
+    error TossMarketRoyaltyCutOutOfRange(uint16 value, address destination);
+    error TossMarketRoyaltyLengthOutOfRange(uint8 max, uint256 amount);
 
-    function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_) internal onlyInitializing {
+    function __TossMarketBase_init(IERC20 erc20_, uint16 marketCut_, address bankAddress_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
         __TossUUPSUpgradeable_init();
-        __TossMarketBase_init_unchained(erc20_, marketCut_);
+        __TossMarketBase_init_unchained(erc20_, marketCut_, bankAddress_);
     }
 
-    function __TossMarketBase_init_unchained(IERC20 erc20_, uint16 marketCut_) internal onlyInitializing {
+    function __TossMarketBase_init_unchained(IERC20 erc20_, uint16 marketCut_, address bankAddress_) internal onlyInitializing {
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
+        }
+        if (address(bankAddress_) == address(0)) {
+            revert TossAddressIsZero("bank");
         }
         if (marketCut_ > CUT_PRECISION) {
             revert TossCutOutOfRange(marketCut_);
@@ -74,10 +93,9 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(EXTRACT_ROLE, msg.sender);
 
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
-        $.erc20BankAddress = msg.sender;
+        $.erc20BankAddress = bankAddress_;
         $.erc20 = erc20_;
         $.marketCut = marketCut_;
     }
@@ -108,7 +126,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         return _getTossMarketBaseStorage().erc20;
     }
 
-    function getErc20BankAddress() external view onlyRole(EXTRACT_ROLE) returns (address bankAddress) {
+    function getErc20BankAddress() external view returns (address bankAddress) {
         return _getTossMarketBaseStorage().erc20BankAddress;
     }
 
@@ -117,11 +135,6 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
             revert TossAddressIsZero("bank");
         }
         _getTossMarketBaseStorage().erc20BankAddress = newAddress;
-    }
-
-    function withdrawBalance(uint256 amount) external nonReentrant onlyRole(EXTRACT_ROLE) {
-        TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
-        $.erc20.safeTransfer($.erc20BankAddress, amount);
     }
 
     function getMarketCut() external view returns (uint16 cut) {
@@ -135,14 +148,86 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         _getTossMarketBaseStorage().marketCut = cut;
     }
 
+    function addErc721Market(address erc721Address, Royalty[] memory royalties) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (erc721Address == address(0)) {
+            revert TossAddressIsZero("erc721");
+        }
+
+        uint256 royaltyLength = royalties.length;
+        if (royaltyLength > MAX_ROYALTY_LENGTH) {
+            revert TossMarketRoyaltyLengthOutOfRange(MAX_ROYALTY_LENGTH, royaltyLength);
+        }
+
+        if (erc721Address.code.length > 0 && !IERC721(erc721Address).supportsInterface(type(ITossErc721Market).interfaceId)) {
+            revert TossUnsupportedInterface("ITossErc721Market");
+        }
+
+        TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
+        Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
+        if (erc721Market.active) {
+            revert TossMarketErc721AlreadyActive(erc721Address);
+        }
+
+        uint16 totalCut;
+        for (uint256 i = 0; i < royaltyLength; i++) {
+            address destination = royalties[i].destination;
+            if (destination == address(0)) {
+                revert TossAddressIsZero("Royalty Destination");
+            }
+            uint16 cut = royalties[i].cut;
+            if (cut == 0 || cut > CUT_PRECISION) {
+                revert TossMarketRoyaltyCutOutOfRange(cut, destination);
+            }
+            totalCut += cut;
+        }
+
+        totalCut += $.marketCut;
+        if (totalCut > CUT_PRECISION) {
+            revert TossCutOutOfRange(totalCut);
+        }
+
+        erc721Market.active = true;
+        for (uint256 i = 0; i < royaltyLength; i++) {
+            erc721Market.royalties.push(royalties[i]);
+        }
+        _grantRole(ERC721_SELLER_ROLE, erc721Address);
+    }
+
+    function removeErc721Market(address erc721Address) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
+        Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
+        if (!erc721Market.active) {
+            revert TossMarketErc721NotActive(erc721Address);
+        }
+
+        erc721Market.active = false;
+        for (uint256 i = erc721Market.royalties.length; i > 0; --i) {
+            erc721Market.royalties.pop();
+        }
+        _revokeRole(ERC721_SELLER_ROLE, erc721Address);
+    }
+
+    function getErc721Market(address erc721Address) external view returns (bool active, Royalty[] memory royalties) {
+        TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
+        Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
+        active = erc721Market.active;
+        royalties = erc721Market.royalties;
+    }
+
     function createSellOffer(
         uint256 tokenId,
         uint128 price,
         address owner
     ) external virtual override nonReentrant whenNotPaused isInWhitelist(owner) onlyRole(ERC721_SELLER_ROLE) {
+        TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
         address erc721Address = msg.sender;
+        Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
+        if (!erc721Market.active) {
+            revert TossMarketErc721NotActive(erc721Address);
+        }
+
         uint128 startedAt = uint128(block.timestamp);
-        _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId] = SellOffer({ price: price, startedAt: startedAt, owner: owner });
+        erc721Market.offers[tokenId] = SellOffer({ price: price, startedAt: startedAt, owner: owner });
 
         emit SellOfferCreated(owner, erc721Address, tokenId, startedAt, price);
 
@@ -160,10 +245,13 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     function buyInternal(address erc721Address, uint256 tokenId, uint128 buyPrice) private nonReentrant whenNotPaused isInWhitelist(msg.sender) {
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
-        SellOffer memory sellOffer = $.erc721Markets[erc721Address][tokenId];
+        Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
+        if (!erc721Market.active) {
+            revert TossMarketErc721NotActive(erc721Address);
+        }
 
-        uint128 startedAt = sellOffer.startedAt;
-        if (!onSell(startedAt)) {
+        SellOffer memory sellOffer = erc721Market.offers[tokenId];
+        if (!onSell(sellOffer.startedAt)) {
             revert TossMarketErc721NotOnSell(erc721Address, tokenId);
         }
 
@@ -177,13 +265,32 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
             revert TossMarketSellPriceChange(price, buyPrice);
         }
 
-        delete $.erc721Markets[erc721Address][tokenId];
+        delete erc721Market.offers[tokenId];
 
-        emit SellOfferSold(owner, erc721Address, tokenId, startedAt, price, msg.sender);
+        emit SellOfferSold(owner, erc721Address, tokenId, sellOffer.startedAt, price, msg.sender);
 
-        $.erc20.safeTransferFrom(msg.sender, address(this), price);
-        $.erc20.safeTransfer(owner, priceMinusCut($.marketCut, price));
+        splitAndTransfer($, erc721Market, price, owner);
+
         IERC721(erc721Address).safeTransferFrom(address(this), msg.sender, tokenId);
+    }
+
+    function splitAndTransfer(TossMarketBaseStorage storage $, Erc721Market storage erc721Market, uint128 price, address owner) private {
+        uint128 marketAmount = (price * $.marketCut / CUT_PRECISION);
+        uint128 ownerAmount = price - marketAmount;
+
+        uint256 royaltyLength = erc721Market.royalties.length;
+        uint128[] memory royaltyAmounts = new uint128[](royaltyLength);
+        for (uint256 i = 0; i < royaltyLength; i++) {
+            royaltyAmounts[i] = (price * erc721Market.royalties[i].cut / CUT_PRECISION);
+            ownerAmount -= royaltyAmounts[i];
+        }
+
+        $.erc20.safeTransferFrom(msg.sender, owner, ownerAmount);
+        $.erc20.safeTransferFrom(msg.sender, $.erc20BankAddress, marketAmount);
+
+        for (uint256 i = 0; i < royaltyLength; i++) {
+            $.erc20.safeTransferFrom(msg.sender, erc721Market.royalties[i].destination, royaltyAmounts[i]);
+        }
     }
 
     function cancel(address erc721Address, uint256 tokenId) external whenNotPaused {
@@ -196,7 +303,8 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     function cancelSellOffer(address erc721Address, uint256 tokenId, bool validateOwner) internal nonReentrant {
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
-        SellOffer memory sellOffer = $.erc721Markets[erc721Address][tokenId];
+        Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
+        SellOffer memory sellOffer = erc721Market.offers[tokenId];
         uint128 startedAt = sellOffer.startedAt;
         if (!onSell(startedAt)) {
             revert TossMarketErc721NotOnSell(erc721Address, tokenId);
@@ -207,7 +315,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
             revert TossMarketNotOwnerOfErc721(msg.sender, owner);
         }
 
-        delete $.erc721Markets[erc721Address][tokenId];
+        delete erc721Market.offers[tokenId];
 
         emit SellOfferCancelled(owner, erc721Address, tokenId, startedAt);
 
@@ -215,7 +323,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function get(address erc721Address, uint256 tokenId) external view returns (address owner, uint128 price, uint128 startedAt) {
-        SellOffer memory sellOffer = _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId];
+        SellOffer memory sellOffer = _getTossMarketBaseStorage().erc721Markets[erc721Address].offers[tokenId];
         startedAt = sellOffer.startedAt;
         if (!onSell(startedAt)) {
             revert TossMarketErc721NotOnSell(erc721Address, tokenId);
@@ -225,7 +333,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
     }
 
     function getPrice(address erc721Address, uint256 tokenId) external view returns (uint256 price) {
-        SellOffer memory sellOffer = _getTossMarketBaseStorage().erc721Markets[erc721Address][tokenId];
+        SellOffer memory sellOffer = _getTossMarketBaseStorage().erc721Markets[erc721Address].offers[tokenId];
         if (!onSell(sellOffer.startedAt)) {
             revert TossMarketErc721NotOnSell(erc721Address, tokenId);
         }
@@ -234,9 +342,5 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     function onSell(uint128 startedAt) internal pure returns (bool) {
         return startedAt >= 1;
-    }
-
-    function priceMinusCut(uint16 marketCut_, uint256 price) internal pure returns (uint256) {
-        return price - (price * marketCut_ / CUT_PRECISION);
     }
 }

@@ -14,7 +14,7 @@ using Toss.Contracts.TossSellerV1.ContractDefinition;
 
 namespace Toss.Contracts.TossSellerV1
 {
-    public partial class TossSellerV1Service
+    public partial class TossSellerV1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossSellerV1Deployment tossSellerV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossSellerV1
             return new TossSellerV1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossSellerV1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossSellerV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossSellerV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<byte[]> ConvertRoleQueryAsync(ConvertRoleFunction convertRoleFunction, BlockParameter blockParameter = null)
@@ -909,6 +897,107 @@ namespace Toss.Contracts.TossSellerV1
                 withdrawBalanceFunction.Amount = amount;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(withdrawBalanceFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(ConvertRoleFunction),
+                typeof(CutPrecisionFunction),
+                typeof(DefaultAdminRoleFunction),
+                typeof(PauserRoleFunction),
+                typeof(SellMaxLimitFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(Tosssellerv1InitFunction),
+                typeof(BuyErc721Function),
+                typeof(BuyErc721WithPermitFunction),
+                typeof(ConvertToErc20Function),
+                typeof(ConvertToOffchainFunction),
+                typeof(ConvertToOffchainWithPermitFunction),
+                typeof(GetConvertToErc20CutFunction),
+                typeof(GetConvertToErc20MinAmountFunction),
+                typeof(GetConvertToErc20RateFunction),
+                typeof(GetConvertToOffchainCutFunction),
+                typeof(GetConvertToOffchainMinAmountFunction),
+                typeof(GetConvertToOffchainRateFunction),
+                typeof(GetErc20Function),
+                typeof(GetErc20BankAddressFunction),
+                typeof(GetErc721SellsFunction),
+                typeof(GetImplementationFunction),
+                typeof(GetRoleAdminFunction),
+                typeof(GetWhitelistFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(PauseFunction),
+                typeof(PausedFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SetConvertToErc20CutFunction),
+                typeof(SetConvertToErc20MinAmountFunction),
+                typeof(SetConvertToErc20RateFunction),
+                typeof(SetConvertToOffchainCutFunction),
+                typeof(SetConvertToOffchainMinAmountFunction),
+                typeof(SetConvertToOffchainRateFunction),
+                typeof(SetErc20BankAddressFunction),
+                typeof(SetErc721SellFunction),
+                typeof(SetWhitelistFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(UnpauseFunction),
+                typeof(UpgradeToAndCallFunction),
+                typeof(WithdrawBalanceFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(ConvertToErc20EventDTO),
+                typeof(ConvertToOffchainEventDTO),
+                typeof(InitializedEventDTO),
+                typeof(PausedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(UnpausedEventDTO),
+                typeof(UpgradedEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(AddressInsufficientBalanceError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(EnforcedPauseError),
+                typeof(ExpectedPauseError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(ReentrancyGuardReentrantCallError),
+                typeof(SafeERC20FailedOperationError),
+                typeof(TossAddressIsZeroError),
+                typeof(TossCutOutOfRangeError),
+                typeof(TossSellConvertErc20AmountLessThanMinError),
+                typeof(TossSellConvertOffchainAmountLessThanMinError),
+                typeof(TossSellerBuyAmountGreatherThanMaxError),
+                typeof(TossSellerBuyMaxAmountExceededError),
+                typeof(TossSellerNotOnSellError),
+                typeof(TossUnsupportedInterfaceError),
+                typeof(TossValueIsLessThanOneEtherError),
+                typeof(TossValueIsZeroError),
+                typeof(TossWhitelistNotInWhitelistError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

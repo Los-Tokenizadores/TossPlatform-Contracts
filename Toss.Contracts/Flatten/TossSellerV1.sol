@@ -871,15 +871,11 @@ interface IERC165 {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
 
 // src/Interfaces/TossErrors.sol
-
-
 
 error TossAddressIsZero(string parameter);
 error TossCutOutOfRange(uint16 value);
@@ -1032,10 +1028,6 @@ abstract contract ReentrancyGuardUpgradeable is Initializable {
 
 // src/Bases/TossWhitelistClient.sol
 
-
-
-
-
 abstract contract TossWhitelistClient {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
     struct TossWhitelistClientStorage {
@@ -1073,10 +1065,6 @@ abstract contract TossWhitelistClient {
 }
 
 // src/Interfaces/ITossSellErc721.sol
-
-
-
-
 
 interface ITossSellErc721 is IERC165 {
     function sellErc721(address _owner, uint8 _amount) external;
@@ -1966,11 +1954,6 @@ abstract contract UUPSUpgradeable is Initializable, IERC1822Proxiable {
 
 // src/Bases/TossUUPSUpgradeable.sol
 
-
-
-
-
-
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
         __UUPSUpgradeable_init();
@@ -1982,17 +1965,6 @@ abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
 }
 
 // src/Bases/TossSellerBase.sol
-
-
-
-
-
-
-
-
-
-
-
 
 abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossSellerBase
@@ -2144,7 +2116,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (address(erc721) == address(0)) {
             revert TossAddressIsZero("erc721");
         }
-        if (!erc721.supportsInterface(type(ITossSellErc721).interfaceId)) {
+        if (address(erc721).code.length == 0 || !erc721.supportsInterface(type(ITossSellErc721).interfaceId)) {
             revert TossUnsupportedInterface("ITossSellErc721");
         }
         if (maxAmount == 0) {
@@ -2263,11 +2235,6 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
 }
 
 // src/TossSellerV1.sol
-
-
-
-
-
 
 contract TossSellerV1 is TossSellerBase {
     /// @custom:oz-upgrades-unsafe-allow constructor

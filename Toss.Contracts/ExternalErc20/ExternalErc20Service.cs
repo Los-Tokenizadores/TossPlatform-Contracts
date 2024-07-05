@@ -14,7 +14,7 @@ using Toss.Contracts.ExternalErc20.ContractDefinition;
 
 namespace Toss.Contracts.ExternalErc20
 {
-    public partial class ExternalErc20Service
+    public partial class ExternalErc20Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, ExternalErc20Deployment externalErc20Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.ExternalErc20
             return new ExternalErc20Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public ExternalErc20Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public ExternalErc20Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public ExternalErc20Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<byte[]> DomainSeparatorQueryAsync(DomainSeparatorFunction domainSeparatorFunction, BlockParameter blockParameter = null)
@@ -278,6 +266,57 @@ namespace Toss.Contracts.ExternalErc20
                 transferFromFunction.Value = value;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(transferFromFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(DomainSeparatorFunction),
+                typeof(AllowanceFunction),
+                typeof(ApproveFunction),
+                typeof(BalanceOfFunction),
+                typeof(DecimalsFunction),
+                typeof(Eip712DomainFunction),
+                typeof(NameFunction),
+                typeof(NoncesFunction),
+                typeof(PermitFunction),
+                typeof(SymbolFunction),
+                typeof(TotalSupplyFunction),
+                typeof(TransferFunction),
+                typeof(TransferFromFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(ApprovalEventDTO),
+                typeof(EIP712DomainChangedEventDTO),
+                typeof(TransferEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(ECDSAInvalidSignatureError),
+                typeof(ECDSAInvalidSignatureLengthError),
+                typeof(ECDSAInvalidSignatureSError),
+                typeof(ERC20InsufficientAllowanceError),
+                typeof(ERC20InsufficientBalanceError),
+                typeof(ERC20InvalidApproverError),
+                typeof(ERC20InvalidReceiverError),
+                typeof(ERC20InvalidSenderError),
+                typeof(ERC20InvalidSpenderError),
+                typeof(ERC2612ExpiredSignatureError),
+                typeof(ERC2612InvalidSignerError),
+                typeof(InvalidAccountNonceError),
+                typeof(InvalidShortStringError),
+                typeof(StringTooLongError)
+            };
         }
     }
 }

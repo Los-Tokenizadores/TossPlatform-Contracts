@@ -14,7 +14,7 @@ using Toss.Contracts.TossMarketV1.ContractDefinition;
 
 namespace Toss.Contracts.TossMarketV1
 {
-    public partial class TossMarketV1Service
+    public partial class TossMarketV1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossMarketV1Deployment tossMarketV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossMarketV1
             return new TossMarketV1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossMarketV1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossMarketV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossMarketV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<ushort> CutPrecisionQueryAsync(CutPrecisionFunction cutPrecisionFunction, BlockParameter blockParameter = null)
@@ -81,15 +69,15 @@ namespace Toss.Contracts.TossMarketV1
             return ContractHandler.QueryAsync<Erc721SellerRoleFunction, byte[]>(null, blockParameter);
         }
 
-        public Task<byte[]> ExtractRoleQueryAsync(ExtractRoleFunction extractRoleFunction, BlockParameter blockParameter = null)
+        public Task<byte> MaxRoyaltyLengthQueryAsync(MaxRoyaltyLengthFunction maxRoyaltyLengthFunction, BlockParameter blockParameter = null)
         {
-            return ContractHandler.QueryAsync<ExtractRoleFunction, byte[]>(extractRoleFunction, blockParameter);
+            return ContractHandler.QueryAsync<MaxRoyaltyLengthFunction, byte>(maxRoyaltyLengthFunction, blockParameter);
         }
 
         
-        public Task<byte[]> ExtractRoleQueryAsync(BlockParameter blockParameter = null)
+        public Task<byte> MaxRoyaltyLengthQueryAsync(BlockParameter blockParameter = null)
         {
-            return ContractHandler.QueryAsync<ExtractRoleFunction, byte[]>(null, blockParameter);
+            return ContractHandler.QueryAsync<MaxRoyaltyLengthFunction, byte>(null, blockParameter);
         }
 
         public Task<byte[]> PauserRoleQueryAsync(PauserRoleFunction pauserRoleFunction, BlockParameter blockParameter = null)
@@ -135,22 +123,52 @@ namespace Toss.Contracts.TossMarketV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(tossmarketv1InitFunction, cancellationToken);
         }
 
-        public Task<string> Tossmarketv1InitRequestAsync(string erc20, ushort marketcut)
+        public Task<string> Tossmarketv1InitRequestAsync(string erc20, ushort marketcut, string bankaddress)
         {
             var tossmarketv1InitFunction = new Tossmarketv1InitFunction();
                 tossmarketv1InitFunction.Erc20 = erc20;
                 tossmarketv1InitFunction.Marketcut = marketcut;
+                tossmarketv1InitFunction.Bankaddress = bankaddress;
             
              return ContractHandler.SendRequestAsync(tossmarketv1InitFunction);
         }
 
-        public Task<TransactionReceipt> Tossmarketv1InitRequestAndWaitForReceiptAsync(string erc20, ushort marketcut, CancellationTokenSource cancellationToken = null)
+        public Task<TransactionReceipt> Tossmarketv1InitRequestAndWaitForReceiptAsync(string erc20, ushort marketcut, string bankaddress, CancellationTokenSource cancellationToken = null)
         {
             var tossmarketv1InitFunction = new Tossmarketv1InitFunction();
                 tossmarketv1InitFunction.Erc20 = erc20;
                 tossmarketv1InitFunction.Marketcut = marketcut;
+                tossmarketv1InitFunction.Bankaddress = bankaddress;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(tossmarketv1InitFunction, cancellationToken);
+        }
+
+        public Task<string> AddErc721MarketRequestAsync(AddErc721MarketFunction addErc721MarketFunction)
+        {
+             return ContractHandler.SendRequestAsync(addErc721MarketFunction);
+        }
+
+        public Task<TransactionReceipt> AddErc721MarketRequestAndWaitForReceiptAsync(AddErc721MarketFunction addErc721MarketFunction, CancellationTokenSource cancellationToken = null)
+        {
+             return ContractHandler.SendRequestAndWaitForReceiptAsync(addErc721MarketFunction, cancellationToken);
+        }
+
+        public Task<string> AddErc721MarketRequestAsync(string erc721Address, List<Royalty> royalties)
+        {
+            var addErc721MarketFunction = new AddErc721MarketFunction();
+                addErc721MarketFunction.Erc721Address = erc721Address;
+                addErc721MarketFunction.Royalties = royalties;
+            
+             return ContractHandler.SendRequestAsync(addErc721MarketFunction);
+        }
+
+        public Task<TransactionReceipt> AddErc721MarketRequestAndWaitForReceiptAsync(string erc721Address, List<Royalty> royalties, CancellationTokenSource cancellationToken = null)
+        {
+            var addErc721MarketFunction = new AddErc721MarketFunction();
+                addErc721MarketFunction.Erc721Address = erc721Address;
+                addErc721MarketFunction.Royalties = royalties;
+            
+             return ContractHandler.SendRequestAndWaitForReceiptAsync(addErc721MarketFunction, cancellationToken);
         }
 
         public Task<string> BuyRequestAsync(BuyFunction buyFunction)
@@ -345,6 +363,19 @@ namespace Toss.Contracts.TossMarketV1
             return ContractHandler.QueryAsync<GetErc20BankAddressFunction, string>(null, blockParameter);
         }
 
+        public Task<GetErc721MarketOutputDTO> GetErc721MarketQueryAsync(GetErc721MarketFunction getErc721MarketFunction, BlockParameter blockParameter = null)
+        {
+            return ContractHandler.QueryDeserializingToObjectAsync<GetErc721MarketFunction, GetErc721MarketOutputDTO>(getErc721MarketFunction, blockParameter);
+        }
+
+        public Task<GetErc721MarketOutputDTO> GetErc721MarketQueryAsync(string erc721Address, BlockParameter blockParameter = null)
+        {
+            var getErc721MarketFunction = new GetErc721MarketFunction();
+                getErc721MarketFunction.Erc721Address = erc721Address;
+            
+            return ContractHandler.QueryDeserializingToObjectAsync<GetErc721MarketFunction, GetErc721MarketOutputDTO>(getErc721MarketFunction, blockParameter);
+        }
+
         public Task<string> GetImplementationQueryAsync(GetImplementationFunction getImplementationFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<GetImplementationFunction, string>(getImplementationFunction, blockParameter);
@@ -507,6 +538,32 @@ namespace Toss.Contracts.TossMarketV1
         public Task<byte[]> ProxiableUUIDQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<ProxiableUUIDFunction, byte[]>(null, blockParameter);
+        }
+
+        public Task<string> RemoveErc721MarketRequestAsync(RemoveErc721MarketFunction removeErc721MarketFunction)
+        {
+             return ContractHandler.SendRequestAsync(removeErc721MarketFunction);
+        }
+
+        public Task<TransactionReceipt> RemoveErc721MarketRequestAndWaitForReceiptAsync(RemoveErc721MarketFunction removeErc721MarketFunction, CancellationTokenSource cancellationToken = null)
+        {
+             return ContractHandler.SendRequestAndWaitForReceiptAsync(removeErc721MarketFunction, cancellationToken);
+        }
+
+        public Task<string> RemoveErc721MarketRequestAsync(string erc721Address)
+        {
+            var removeErc721MarketFunction = new RemoveErc721MarketFunction();
+                removeErc721MarketFunction.Erc721Address = erc721Address;
+            
+             return ContractHandler.SendRequestAsync(removeErc721MarketFunction);
+        }
+
+        public Task<TransactionReceipt> RemoveErc721MarketRequestAndWaitForReceiptAsync(string erc721Address, CancellationTokenSource cancellationToken = null)
+        {
+            var removeErc721MarketFunction = new RemoveErc721MarketFunction();
+                removeErc721MarketFunction.Erc721Address = erc721Address;
+            
+             return ContractHandler.SendRequestAndWaitForReceiptAsync(removeErc721MarketFunction, cancellationToken);
         }
 
         public Task<string> RenounceRoleRequestAsync(RenounceRoleFunction renounceRoleFunction)
@@ -705,30 +762,100 @@ namespace Toss.Contracts.TossMarketV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(upgradeToAndCallFunction, cancellationToken);
         }
 
-        public Task<string> WithdrawBalanceRequestAsync(WithdrawBalanceFunction withdrawBalanceFunction)
+        public override List<Type> GetAllFunctionTypes()
         {
-             return ContractHandler.SendRequestAsync(withdrawBalanceFunction);
+            return new List<Type>
+            {
+                typeof(CutPrecisionFunction),
+                typeof(DefaultAdminRoleFunction),
+                typeof(Erc721SellerRoleFunction),
+                typeof(MaxRoyaltyLengthFunction),
+                typeof(PauserRoleFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(Tossmarketv1InitFunction),
+                typeof(AddErc721MarketFunction),
+                typeof(BuyFunction),
+                typeof(BuyWithPermitFunction),
+                typeof(CancelFunction),
+                typeof(CancelWhenPausedFunction),
+                typeof(CreateSellOfferFunction),
+                typeof(GetFunction),
+                typeof(GetErc20Function),
+                typeof(GetErc20BankAddressFunction),
+                typeof(GetErc721MarketFunction),
+                typeof(GetImplementationFunction),
+                typeof(GetMarketCutFunction),
+                typeof(GetPriceFunction),
+                typeof(GetRoleAdminFunction),
+                typeof(GetWhitelistFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(OnERC721ReceivedFunction),
+                typeof(PauseFunction),
+                typeof(PausedFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RemoveErc721MarketFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SetErc20BankAddressFunction),
+                typeof(SetMarketCutFunction),
+                typeof(SetWhitelistFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(UnpauseFunction),
+                typeof(UpgradeToAndCallFunction)
+            };
         }
 
-        public Task<TransactionReceipt> WithdrawBalanceRequestAndWaitForReceiptAsync(WithdrawBalanceFunction withdrawBalanceFunction, CancellationTokenSource cancellationToken = null)
+        public override List<Type> GetAllEventTypes()
         {
-             return ContractHandler.SendRequestAndWaitForReceiptAsync(withdrawBalanceFunction, cancellationToken);
+            return new List<Type>
+            {
+                typeof(InitializedEventDTO),
+                typeof(PausedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(SellOfferCancelledEventDTO),
+                typeof(SellOfferCreatedEventDTO),
+                typeof(SellOfferSoldEventDTO),
+                typeof(UnpausedEventDTO),
+                typeof(UpgradedEventDTO)
+            };
         }
 
-        public Task<string> WithdrawBalanceRequestAsync(BigInteger amount)
+        public override List<Type> GetAllErrorTypes()
         {
-            var withdrawBalanceFunction = new WithdrawBalanceFunction();
-                withdrawBalanceFunction.Amount = amount;
-            
-             return ContractHandler.SendRequestAsync(withdrawBalanceFunction);
-        }
-
-        public Task<TransactionReceipt> WithdrawBalanceRequestAndWaitForReceiptAsync(BigInteger amount, CancellationTokenSource cancellationToken = null)
-        {
-            var withdrawBalanceFunction = new WithdrawBalanceFunction();
-                withdrawBalanceFunction.Amount = amount;
-            
-             return ContractHandler.SendRequestAndWaitForReceiptAsync(withdrawBalanceFunction, cancellationToken);
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(AddressInsufficientBalanceError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(EnforcedPauseError),
+                typeof(ExpectedPauseError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(ReentrancyGuardReentrantCallError),
+                typeof(SafeERC20FailedOperationError),
+                typeof(TossAddressIsZeroError),
+                typeof(TossCutOutOfRangeError),
+                typeof(TossMarketErc721AlreadyActiveError),
+                typeof(TossMarketErc721NotActiveError),
+                typeof(TossMarketErc721NotOnSellError),
+                typeof(TossMarketIsOwnerOfErc721Error),
+                typeof(TossMarketNotOwnerOfErc721Error),
+                typeof(TossMarketRoyaltyCutOutOfRangeError),
+                typeof(TossMarketRoyaltyLengthOutOfRangeError),
+                typeof(TossMarketSellPriceChangeError),
+                typeof(TossUnsupportedInterfaceError),
+                typeof(TossWhitelistNotInWhitelistError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

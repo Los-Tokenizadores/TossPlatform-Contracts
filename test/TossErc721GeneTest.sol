@@ -14,7 +14,7 @@ contract TossErc721GeneTest is BaseTest {
         erc721 = DeployWithProxyUtil.tossErc721GeneV1(name, symbol);
     }
 
-    function test_initializationNameAndSymbol() public {
+    function test_initializationNameAndSymbol() public view {
         assertEq(erc721.name(), name);
         assertEq(erc721.symbol(), symbol);
     }
@@ -29,7 +29,7 @@ contract TossErc721GeneTest is BaseTest {
         erc721.upgradeToAndCall(address(erc721Init), "");
     }
 
-    function test_supportInterface() public {
+    function test_supportInterface() public view {
         assertTrue(erc721.supportsInterface(type(IERC721).interfaceId));
     }
 

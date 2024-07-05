@@ -14,7 +14,7 @@ using Toss.Contracts.TossUpgradeableProxy.ContractDefinition;
 
 namespace Toss.Contracts.TossUpgradeableProxy
 {
-    public partial class TossUpgradeableProxyService
+    public partial class TossUpgradeableProxyService: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossUpgradeableProxyDeployment tossUpgradeableProxyDeployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,22 +32,35 @@ namespace Toss.Contracts.TossUpgradeableProxy
             return new TossUpgradeableProxyService(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossUpgradeableProxyService(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossUpgradeableProxyService(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
-        public TossUpgradeableProxyService(Nethereum.Web3.IWeb3 web3, string contractAddress)
+        public override List<Type> GetAllFunctionTypes()
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
+            return new List<Type>
+            {
+
+            };
         }
 
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(UpgradedEventDTO)
+            };
+        }
 
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AddressEmptyCodeError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(FailedInnerCallError)
+            };
+        }
     }
 }

@@ -14,7 +14,7 @@ using Toss.Contracts.TossExchangeTierV1.ContractDefinition;
 
 namespace Toss.Contracts.TossExchangeTierV1
 {
-    public partial class TossExchangeTierV1Service
+    public partial class TossExchangeTierV1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossExchangeTierV1Deployment tossExchangeTierV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossExchangeTierV1
             return new TossExchangeTierV1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossExchangeTierV1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossExchangeTierV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossExchangeTierV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<byte[]> DefaultAdminRoleQueryAsync(DefaultAdminRoleFunction defaultAdminRoleFunction, BlockParameter blockParameter = null)
@@ -788,6 +776,103 @@ namespace Toss.Contracts.TossExchangeTierV1
                 withdrawWithPermitFunction.S = s;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(withdrawWithPermitFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(DefaultAdminRoleFunction),
+                typeof(PauserRoleFunction),
+                typeof(TierMaxLengthFunction),
+                typeof(TierRoleFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(YearRoleFunction),
+                typeof(Tossexchangetierv1InitFunction),
+                typeof(CurrentYearFunction),
+                typeof(DepositFunction),
+                typeof(DepositWithPermitFunction),
+                typeof(GetDepositMinAmountFunction),
+                typeof(GetExternalErc20Function),
+                typeof(GetImplementationFunction),
+                typeof(GetInternalErc20Function),
+                typeof(GetRoleAdminFunction),
+                typeof(GetUserBalanceFunction),
+                typeof(GetUserTierFunction),
+                typeof(GetWhitelistFunction),
+                typeof(GetWithdrawMinAmountFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(PauseFunction),
+                typeof(PausedFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SetDepositMinAmountFunction),
+                typeof(SetTierLimitFunction),
+                typeof(SetUserTierFunction),
+                typeof(SetWhitelistFunction),
+                typeof(SetWithdrawMinAmountFunction),
+                typeof(SetYearFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(TiersFunction),
+                typeof(UnpauseFunction),
+                typeof(UpgradeToAndCallFunction),
+                typeof(ValidStateFunction),
+                typeof(WithdrawFunction),
+                typeof(WithdrawWithPermitFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(DepositedEventDTO),
+                typeof(InitializedEventDTO),
+                typeof(PausedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(UnpausedEventDTO),
+                typeof(UpgradedEventDTO),
+                typeof(WithdrawnEventDTO),
+                typeof(YearChangedEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(AddressInsufficientBalanceError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(EnforcedPauseError),
+                typeof(ExpectedPauseError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(ReentrancyGuardReentrantCallError),
+                typeof(SafeERC20FailedOperationError),
+                typeof(TossAddressIsZeroError),
+                typeof(TossExchangeAmounIsLessThanMinError),
+                typeof(TossExchangeExternalAndInternalErc20AreEqualError),
+                typeof(TossExchangeExternalAndInternalErc20HaveDifferentDecimalAmountError),
+                typeof(TossExchangeInvalidStateError),
+                typeof(TossExchangeTierOutOfRangeError),
+                typeof(TossExchangeTierTier0CantChangeError),
+                typeof(TossExchangeTierYearIsTheSameError),
+                typeof(TossExchangeTierYearLimitReachError),
+                typeof(TossValueIsZeroError),
+                typeof(TossWhitelistNotInWhitelistError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

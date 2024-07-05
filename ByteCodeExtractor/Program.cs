@@ -5,7 +5,7 @@ string bytecodePath = $"Toss.Contracts/ByteCode/{args[0]}";
 bytecodePath = $"../../../../{bytecodePath}";
 #endif
 
-string[] dir = Directory.GetDirectories(bytecodePath, "*", SearchOption.AllDirectories);
+string[] dir = Directory.GetDirectories(bytecodePath, "*", SearchOption.TopDirectoryOnly);
 foreach (string dirName in dir) {
 	string name = dirName.Replace('\\', '/');
 	if (name.Contains($"{bytecodePath}/Toss")
@@ -22,24 +22,27 @@ JsonSerializerOptions jsonOptions = new() {
 	PropertyNameCaseInsensitive = true,
 };
 
-dir = Directory.GetFiles(bytecodePath, "*.json", SearchOption.AllDirectories);
+dir = Directory.GetFiles(bytecodePath, "Toss*.json", SearchOption.AllDirectories);
 
 foreach (string fileName in dir) {
 	string name = fileName.Replace('\\', '/');
-	Abi? abi = JsonSerializer.Deserialize<Abi>(File.Open(name, FileMode.Open), jsonOptions);
+	FileStream inputStream = File.Open(name, FileMode.Open);
+	Abi? abi = JsonSerializer.Deserialize<Abi>(inputStream, jsonOptions);
 	if (abi is null) {
 		Console.WriteLine($"Abi is null for File: {name}");
+		inputStream.Dispose();
 		continue;
 	}
-	FileStream file = File.Create($"{bytecodePath}/{Path.GetFileNameWithoutExtension(name)}.json");
-	JsonSerializer.Serialize(file, new ByteCodeVersion(
+	inputStream.Dispose();
+	FileStream outputStream = File.Create($"{bytecodePath}/{Path.GetFileNameWithoutExtension(name)}.json");
+	JsonSerializer.Serialize(outputStream, new ByteCodeVersion(
 		abi.Metadata.Settings.EvmVersion,
 		$"v{abi.Metadata.Compiler.Version}",
 		abi.Metadata.Settings.Optimizer.Enabled,
 		abi.Metadata.Settings.Optimizer.Runs,
 		abi.Bytecode.Object[2..])
 	);
-	file.Close();
+	outputStream.Dispose();
 	string parentDir = Directory.GetParent(name)!.FullName;
 	Directory.Delete(parentDir, true);
 }

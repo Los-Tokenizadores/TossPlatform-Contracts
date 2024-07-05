@@ -14,7 +14,7 @@ using Toss.Contracts.TossWhitelistV1.ContractDefinition;
 
 namespace Toss.Contracts.TossWhitelistV1
 {
-    public partial class TossWhitelistV1Service
+    public partial class TossWhitelistV1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossWhitelistV1Deployment tossWhitelistV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossWhitelistV1
             return new TossWhitelistV1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossWhitelistV1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossWhitelistV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossWhitelistV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<byte[]> DefaultAdminRoleQueryAsync(DefaultAdminRoleFunction defaultAdminRoleFunction, BlockParameter blockParameter = null)
@@ -318,6 +306,57 @@ namespace Toss.Contracts.TossWhitelistV1
                 upgradeToAndCallFunction.Data = data;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(upgradeToAndCallFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(DefaultAdminRoleFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(Tosswhitelistv1InitFunction),
+                typeof(GetImplementationFunction),
+                typeof(GetRoleAdminFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(IsInWhitelistFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SetFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(UpgradeToAndCallFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(InitializedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(UpgradedEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

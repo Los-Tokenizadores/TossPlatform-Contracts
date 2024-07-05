@@ -10,7 +10,7 @@ contract TossMarketV1 is TossMarketBase {
         _disableInitializers();
     }
 
-    function __TossMarketV1_init(IERC20 erc20_, uint16 marketCut_) public initializer {
-        __TossMarketBase_init(erc20_, marketCut_);
+    function __TossMarketV1_init(IERC20 erc20_, uint16 marketCut_, address bankAddress_) public initializer {
+        __TossMarketBase_init(erc20_, marketCut_, bankAddress_);
     }
 }

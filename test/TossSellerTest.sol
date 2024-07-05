@@ -29,7 +29,7 @@ contract TossSellerTest is BaseTest {
         seller.upgradeToAndCall(address(sellerInit), "");
     }
 
-    function test_initialization() public {
+    function test_initialization() public view {
         assertEq(address(seller.getErc20()), address(erc20));
     }
 

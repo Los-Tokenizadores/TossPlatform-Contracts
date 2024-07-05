@@ -1597,15 +1597,11 @@ library SignedMath {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
 
 // src/Interfaces/TossErrors.sol
-
-
 
 error TossAddressIsZero(string parameter);
 error TossCutOutOfRange(uint16 value);
@@ -1894,10 +1890,6 @@ interface IERC721 is IERC165 {
 }
 
 // src/Bases/TossWhitelistClient.sol
-
-
-
-
 
 abstract contract TossWhitelistClient {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
@@ -2239,11 +2231,6 @@ library Strings {
 
 // src/Interfaces/ITossMarket.sol
 
-
-
-
-
-
 interface ITossMarket is IERC721Receiver, IERC165 {
     function createSellOffer(uint256 tokenId, uint128 price, address owner) external;
 }
@@ -2561,6 +2548,14 @@ library SafeERC20 {
         (bool success, bytes memory returndata) = address(token).call(data);
         return success && (returndata.length == 0 || abi.decode(returndata, (bool))) && address(token).code.length > 0;
     }
+}
+
+// src/Interfaces/ITossErc721Market.sol
+
+interface ITossErc721Market {
+    function createSellOffer(uint256 tokenId, uint128 price) external;
+    function getMarket() external view returns (address marketAddress);
+    function setMarket(ITossMarket market) external;
 }
 
 // lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol
@@ -2997,20 +2992,11 @@ abstract contract UUPSUpgradeable is Initializable, IERC1822Proxiable {
 
 // src/TossUpgradeableProxy.sol
 
-
-
-
-
 contract TossUpgradeableProxy is ERC1967Proxy {
     constructor(address _logic, bytes memory _data) payable ERC1967Proxy(_logic, _data) { }
 }
 
 // src/Bases/TossUUPSUpgradeable.sol
-
-
-
-
-
 
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
@@ -3584,18 +3570,8 @@ abstract contract ERC721PausableUpgradeable is Initializable, ERC721Upgradeable,
 
 // src/Bases/TossErc721MarketBase.sol
 
-
-
-
-
-
-
-
-
-
-
-
 abstract contract TossErc721MarketBase is
+    ITossErc721Market,
     TossWhitelistClient,
     ERC721Upgradeable,
     ERC721PausableUpgradeable,
@@ -3675,7 +3651,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return interfaceId == type(ITossErc721Market).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function createSellOffer(uint256 tokenId, uint128 price) external nonReentrant whenNotPaused {
@@ -3692,7 +3668,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function setMarket(ITossMarket market) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
+        if (address(market) != address(0) && (address(market).code.length == 0 || !market.supportsInterface(type(ITossMarket).interfaceId))) {
             revert TossUnsupportedInterface("ITossMarket");
         }
         _getTossErc721MarketBaseStorage().market = market;
@@ -3700,10 +3676,6 @@ abstract contract TossErc721MarketBase is
 }
 
 // src/TossErc721MarketV1.sol
-
-
-
-
 
 contract TossErc721MarketV1 is TossErc721MarketBase {
     event Created(address indexed account, uint256 indexed tokenId);
@@ -3725,22 +3697,6 @@ contract TossErc721MarketV1 is TossErc721MarketBase {
 }
 
 // src/Bases/TossInvestBase.sol
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossInvestBase
@@ -3811,12 +3767,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossInvestAlreadyAllInvestmentReturned();
     error TossInvestAlreadyAllErc721Minted();
 
-    function __TossInvestBase_init(
-        IERC20 erc20_,
-        TossErc721MarketV1 erc721Implementation_,
-        address platformAddress_,
-        string memory erc721baseUri_
-    ) internal onlyInitializing {
+    function __TossInvestBase_init(IERC20 erc20_, TossErc721MarketV1 erc721Implementation_, address platformAddress_, string memory erc721baseUri_) internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -3872,7 +3823,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function setErc721Implementation(TossErc721MarketV1 newImplementation) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (!newImplementation.supportsInterface(type(IERC721).interfaceId)) {
+        if (address(newImplementation).code.length == 0 || !newImplementation.supportsInterface(type(IERC721).interfaceId)) {
             revert TossInvestInvalidErc721Implementation(newImplementation);
         }
         _getTossInvestBaseStorage().erc721Implementation = newImplementation;
@@ -3944,8 +3895,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (erc721Address == address(0)) {
             revert TossAddressIsZero("erc721");
         }
-
-        for (uint256 i; i < $.projects.length; i++) {
+        uint256 length = $.projects.length;
+        for (uint256 i; i < length; i++) {
             if ($.projects[i].erc721Address == erc721Address) {
                 (info, invested, inversors) = getProjectInternal(i);
                 return (i, info, invested, inversors);
@@ -4111,7 +4062,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (projectInfo.startAt > block.timestamp) {
             revert TossInvestProjectNotStarted();
         }
-        if (block.timestamp > projectInfo.finishAt) {
+        if (block.timestamp > projectInfo.finishAt || projectInfo.lastIndex > 0) {
             revert TossInvestProjectIsFinished();
         }
 
@@ -4239,24 +4190,13 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
 // src/TossInvestV1.sol
 
-
-
-
-
-
-
 contract TossInvestV1 is TossInvestBase {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function __TossInvestV1_init(
-        IERC20 erc20_,
-        TossErc721MarketV1 erc721Implementation_,
-        address platformAddress,
-        string memory erc721baseUri
-    ) public initializer {
+    function __TossInvestV1_init(IERC20 erc20_, TossErc721MarketV1 erc721Implementation_, address platformAddress, string memory erc721baseUri) public initializer {
         __TossInvestBase_init(erc20_, erc721Implementation_, platformAddress, erc721baseUri);
     }
 }

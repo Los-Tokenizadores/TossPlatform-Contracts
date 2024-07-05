@@ -14,9 +14,9 @@ import { ITossMarket } from "../src/Interfaces/ITossMarket.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 abstract contract BaseTest is Test {
-    uint256 internal constant ownerPrivateKey = 0x1;
-    uint256 internal constant alicePrivateKey = 0x2;
-    uint256 internal constant bobPrivateKey = 0x3;
+    uint256 internal constant ownerPrivateKey = 0x11111;
+    uint256 internal constant alicePrivateKey = 0x22222;
+    uint256 internal constant bobPrivateKey = 0x333333;
 
     address internal owner = vm.addr(ownerPrivateKey);
     address internal alice = vm.addr(alicePrivateKey);

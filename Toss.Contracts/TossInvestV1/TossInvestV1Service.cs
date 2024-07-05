@@ -14,7 +14,7 @@ using Toss.Contracts.TossInvestV1.ContractDefinition;
 
 namespace Toss.Contracts.TossInvestV1
 {
-    public partial class TossInvestV1Service
+    public partial class TossInvestV1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossInvestV1Deployment tossInvestV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossInvestV1
             return new TossInvestV1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossInvestV1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossInvestV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossInvestV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<ushort> CutPrecisionQueryAsync(CutPrecisionFunction cutPrecisionFunction, BlockParameter blockParameter = null)
@@ -750,6 +738,110 @@ namespace Toss.Contracts.TossInvestV1
                 upgradeToAndCallFunction.Data = data;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(upgradeToAndCallFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(CutPrecisionFunction),
+                typeof(DefaultAdminRoleFunction),
+                typeof(PauserRoleFunction),
+                typeof(ProjectRoleFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(Tossinvestv1InitFunction),
+                typeof(AddProjectFunction),
+                typeof(ChangeProjectFunction),
+                typeof(ConfirmFunction),
+                typeof(FinishFunction),
+                typeof(GetErc20Function),
+                typeof(GetErc721BaseUriFunction),
+                typeof(GetErc721ImplementationFunction),
+                typeof(GetImplementationFunction),
+                typeof(GetProjectFunction),
+                typeof(GetProjectByErc721AddressFunction),
+                typeof(GetProjectInvestorFunction),
+                typeof(GetRoleAdminFunction),
+                typeof(GetWhitelistFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(InvestFunction),
+                typeof(InvestWithPermitFunction),
+                typeof(PauseFunction),
+                typeof(PausedFunction),
+                typeof(ProjectAmountFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SetErc721BaseUriFunction),
+                typeof(SetErc721ImplementationFunction),
+                typeof(SetWhitelistFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(UnpauseFunction),
+                typeof(UpgradeToAndCallFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(InitializedEventDTO),
+                typeof(PausedEventDTO),
+                typeof(ProjectAddedEventDTO),
+                typeof(ProjectConfirmedEventDTO),
+                typeof(ProjectErc721CreatedEventDTO),
+                typeof(ProjectFinishedEventDTO),
+                typeof(ProjectInvestedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(UnpausedEventDTO),
+                typeof(UpgradedEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(AddressInsufficientBalanceError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(EnforcedPauseError),
+                typeof(ExpectedPauseError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(ReentrancyGuardReentrantCallError),
+                typeof(SafeERC20FailedOperationError),
+                typeof(TossAddressIsZeroError),
+                typeof(TossCutOutOfRangeError),
+                typeof(TossInvestAlreadyAllErc721MintedError),
+                typeof(TossInvestAlreadyAllInvestmentReturnedError),
+                typeof(TossInvestInvalidErc721ImplementationError),
+                typeof(TossInvestNotProjectOwnerError),
+                typeof(TossInvestProjectAlreadyFinishedError),
+                typeof(TossInvestProjectFullInvestedError),
+                typeof(TossInvestProjectIsConfirmedError),
+                typeof(TossInvestProjectIsFinishedError),
+                typeof(TossInvestProjectIsNotConfirmedError),
+                typeof(TossInvestProjectNotExistError),
+                typeof(TossInvestProjectNotFinishedError),
+                typeof(TossInvestProjectNotFoundByErc721Error),
+                typeof(TossInvestProjectNotStartedError),
+                typeof(TossInvestProjectStartAtGreaterThanFinishAtError),
+                typeof(TossInvestProjectStartAtLessThanCurrentDateError),
+                typeof(TossInvestProjectTargetIsGreaterThanMaxError),
+                typeof(TossValueIsZeroError),
+                typeof(TossWhitelistNotInWhitelistError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

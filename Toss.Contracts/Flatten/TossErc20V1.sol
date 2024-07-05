@@ -1702,8 +1702,6 @@ library SignedMath {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
@@ -1841,10 +1839,6 @@ interface IERC20Metadata is IERC20 {
 }
 
 // src/Bases/TossWhitelistClient.sol
-
-
-
-
 
 abstract contract TossWhitelistClient {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
@@ -3474,11 +3468,6 @@ abstract contract ERC20PausableUpgradeable is Initializable, ERC20Upgradeable, P
 
 // src/Bases/TossUUPSUpgradeable.sol
 
-
-
-
-
-
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
         __UUPSUpgradeable_init();
@@ -3581,16 +3570,6 @@ abstract contract ERC20PermitUpgradeable is Initializable, ERC20Upgradeable, IER
 
 // src/Bases/TossErc20Base.sol
 
-
-
-
-
-
-
-
-
-
-
 abstract contract TossErc20Base is
     TossWhitelistClient,
     ERC20Upgradeable,
@@ -3647,10 +3626,6 @@ abstract contract TossErc20Base is
 }
 
 // src/TossErc20V1.sol
-
-
-
-
 
 contract TossErc20V1 is TossErc20Base {
     /// @custom:oz-upgrades-unsafe-allow constructor

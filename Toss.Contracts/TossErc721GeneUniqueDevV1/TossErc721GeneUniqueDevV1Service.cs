@@ -14,7 +14,7 @@ using Toss.Contracts.TossErc721GeneUniqueDevV1.ContractDefinition;
 
 namespace Toss.Contracts.TossErc721GeneUniqueDevV1
 {
-    public partial class TossErc721GeneUniqueDevV1Service
+    public partial class TossErc721GeneUniqueDevV1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossErc721GeneUniqueDevV1Deployment tossErc721GeneUniqueDevV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossErc721GeneUniqueDevV1
             return new TossErc721GeneUniqueDevV1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossErc721GeneUniqueDevV1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossErc721GeneUniqueDevV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossErc721GeneUniqueDevV1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<byte[]> DefaultAdminRoleQueryAsync(DefaultAdminRoleFunction defaultAdminRoleFunction, BlockParameter blockParameter = null)
@@ -883,6 +871,107 @@ namespace Toss.Contracts.TossErc721GeneUniqueDevV1
                 upgradeToAndCallFunction.Data = data;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(upgradeToAndCallFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(DefaultAdminRoleFunction),
+                typeof(MinterRoleFunction),
+                typeof(PauserRoleFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(Tosserc721geneuniquedevv1InitFunction),
+                typeof(Tosserc721geneuniquev1InitFunction),
+                typeof(AddGenesFunction),
+                typeof(AdminTransferFunction),
+                typeof(ApproveFunction),
+                typeof(BalanceOfFunction),
+                typeof(CreateSellOfferFunction),
+                typeof(GetApprovedFunction),
+                typeof(GetBaseUriFunction),
+                typeof(GetErc721GeneFunction),
+                typeof(GetImplementationFunction),
+                typeof(GetMarketFunction),
+                typeof(GetRangeGeneFunction),
+                typeof(GetRangeGeneLengthFunction),
+                typeof(GetRoleAdminFunction),
+                typeof(GetWhitelistFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(IsApprovedForAllFunction),
+                typeof(NameFunction),
+                typeof(OwnerOfFunction),
+                typeof(PauseFunction),
+                typeof(PausedFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SafeTransferFromFunction),
+                typeof(SafeTransferFrom1Function),
+                typeof(SellErc721Function),
+                typeof(SetApprovalForAllFunction),
+                typeof(SetBaseUriFunction),
+                typeof(SetMarketFunction),
+                typeof(SetWhitelistFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(SymbolFunction),
+                typeof(TokenURIFunction),
+                typeof(TransferFromFunction),
+                typeof(UnpauseFunction),
+                typeof(UpgradeToAndCallFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(ApprovalEventDTO),
+                typeof(ApprovalForAllEventDTO),
+                typeof(CreatedEventDTO),
+                typeof(InitializedEventDTO),
+                typeof(PausedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(TransferEventDTO),
+                typeof(UnpausedEventDTO),
+                typeof(UpgradedEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(ERC721IncorrectOwnerError),
+                typeof(ERC721InsufficientApprovalError),
+                typeof(ERC721InvalidApproverError),
+                typeof(ERC721InvalidOperatorError),
+                typeof(ERC721InvalidOwnerError),
+                typeof(ERC721InvalidReceiverError),
+                typeof(ERC721InvalidSenderError),
+                typeof(ERC721NonexistentTokenError),
+                typeof(EnforcedPauseError),
+                typeof(ExpectedPauseError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(ReentrancyGuardReentrantCallError),
+                typeof(TossErc721GeneNotEnoughGenesError),
+                typeof(TossErc721MarketNotSetError),
+                typeof(TossUnsupportedInterfaceError),
+                typeof(TossWhitelistNotInWhitelistError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

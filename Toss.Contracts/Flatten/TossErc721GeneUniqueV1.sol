@@ -1353,15 +1353,11 @@ library SignedMath {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
 
 // src/Interfaces/TossErrors.sol
-
-
 
 error TossAddressIsZero(string parameter);
 error TossCutOutOfRange(uint16 value);
@@ -1651,10 +1647,6 @@ interface IERC721 is IERC165 {
 
 // src/Bases/TossWhitelistClient.sol
 
-
-
-
-
 abstract contract TossWhitelistClient {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
     struct TossWhitelistClientStorage {
@@ -1692,10 +1684,6 @@ abstract contract TossWhitelistClient {
 }
 
 // src/Interfaces/ITossSellErc721.sol
-
-
-
-
 
 interface ITossSellErc721 is IERC165 {
     function sellErc721(address _owner, uint8 _amount) external;
@@ -2005,11 +1993,6 @@ library Strings {
 
 // src/Interfaces/ITossMarket.sol
 
-
-
-
-
-
 interface ITossMarket is IERC721Receiver, IERC165 {
     function createSellOffer(uint256 tokenId, uint128 price, address owner) external;
 }
@@ -2207,6 +2190,14 @@ library ERC1967Utils {
             revert ERC1967NonPayable();
         }
     }
+}
+
+// src/Interfaces/ITossErc721Market.sol
+
+interface ITossErc721Market {
+    function createSellOffer(uint256 tokenId, uint128 price) external;
+    function getMarket() external view returns (address marketAddress);
+    function setMarket(ITossMarket market) external;
 }
 
 // lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol
@@ -2600,11 +2591,6 @@ abstract contract UUPSUpgradeable is Initializable, IERC1822Proxiable {
 }
 
 // src/Bases/TossUUPSUpgradeable.sol
-
-
-
-
-
 
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
@@ -3178,18 +3164,8 @@ abstract contract ERC721PausableUpgradeable is Initializable, ERC721Upgradeable,
 
 // src/Bases/TossErc721MarketBase.sol
 
-
-
-
-
-
-
-
-
-
-
-
 abstract contract TossErc721MarketBase is
+    ITossErc721Market,
     TossWhitelistClient,
     ERC721Upgradeable,
     ERC721PausableUpgradeable,
@@ -3269,7 +3245,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return interfaceId == type(ITossErc721Market).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function createSellOffer(uint256 tokenId, uint128 price) external nonReentrant whenNotPaused {
@@ -3286,7 +3262,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function setMarket(ITossMarket market) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
+        if (address(market) != address(0) && (address(market).code.length == 0 || !market.supportsInterface(type(ITossMarket).interfaceId))) {
             revert TossUnsupportedInterface("ITossMarket");
         }
         _getTossErc721MarketBaseStorage().market = market;
@@ -3294,12 +3270,6 @@ abstract contract TossErc721MarketBase is
 }
 
 // src/Bases/TossErc721GeneBase.sol
-
-
-
-
-
-
 
 abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
     /// @custom:storage-location erc7201:tossplatform.storage.TossErc721GeneBase
@@ -3344,7 +3314,8 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
 
     function addGenes(uint256[] memory genes) external virtual onlyRole(MINTER_ROLE) {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        for (uint256 i; i < genes.length;) {
+        uint256 length = genes.length;
+        for (uint256 i; i < length;) {
             $.rangeOfGene.push(genes[i]);
             unchecked {
                 ++i;
@@ -3389,10 +3360,6 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
 
 // src/TossErc721GeneUniqueV1.sol
 
-
-
-
-
 contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
     uint256 private constant AVAILABLE = 0;
     uint256 private constant UNAVAILABLE = 1;
@@ -3409,8 +3376,8 @@ contract TossErc721GeneUniqueV1 is TossErc721GeneBase {
 
     function addGenes(uint256[] memory genes) external override onlyRole(MINTER_ROLE) {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-
-        for (uint256 i; i < genes.length;) {
+        uint256 length = genes.length;
+        for (uint256 i; i < length;) {
             uint256 gene = genes[i];
             if (uniqueGene[gene] == AVAILABLE) {
                 uniqueGene[gene] = UNAVAILABLE;

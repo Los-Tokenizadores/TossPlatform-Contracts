@@ -6,7 +6,7 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 contract Util is CommonBase {
     function test() public { }
-   
+
     function sign(uint256 privateKey, bytes32 digest) external pure returns (uint8 v, bytes32 r, bytes32 s) {
         return vm.sign(privateKey, digest);
     }

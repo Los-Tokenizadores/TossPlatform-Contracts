@@ -698,8 +698,6 @@ interface IERC165 {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
@@ -1362,11 +1360,6 @@ abstract contract UUPSUpgradeable is Initializable, IERC1822Proxiable {
 
 // src/Bases/TossUUPSUpgradeable.sol
 
-
-
-
-
-
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
         __UUPSUpgradeable_init();
@@ -1378,12 +1371,6 @@ abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
 }
 
 // src/Bases/TossWhitelistBase.sol
-
-
-
-
-
-
 
 abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistBase
@@ -1425,10 +1412,6 @@ abstract contract TossWhitelistBase is ITossWhitelist, AccessControlUpgradeable,
 }
 
 // src/TossWhitelistV1.sol
-
-
-
-
 
 contract TossWhitelistV1 is TossWhitelistBase {
     /// @custom:oz-upgrades-unsafe-allow constructor

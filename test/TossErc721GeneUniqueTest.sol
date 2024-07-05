@@ -13,7 +13,7 @@ contract TossErc721GeneUniqueTest is BaseTest {
         erc721 = DeployWithProxyUtil.tossErc721GeneUniqueV1(name, symbol);
     }
 
-    function test_initializationNameAndSymbol() public {
+    function test_initializationNameAndSymbol() public view {
         assertEq(erc721.name(), name);
         assertEq(erc721.symbol(), symbol);
     }

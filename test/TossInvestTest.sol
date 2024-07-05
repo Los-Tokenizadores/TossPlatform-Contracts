@@ -151,8 +151,8 @@ contract TossInvestTest is BaseTest {
         vm.expectRevert(abi.encodeWithSelector(TossAddressIsZero.selector, "project wallet"));
         invest.addProject(name, symbol, targetAmount, maxAmount, price, startAt, finishAt, address(0), platformCut);
 
-        vm.expectRevert(abi.encodeWithSelector(TossCutOutOfRange.selector, 10001));
-        invest.addProject(name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, 10001);
+        vm.expectRevert(abi.encodeWithSelector(TossCutOutOfRange.selector, 10_001));
+        invest.addProject(name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, 10_001);
 
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, invest.PROJECT_ROLE()));
@@ -232,13 +232,12 @@ contract TossInvestTest is BaseTest {
         vm.expectRevert(abi.encodeWithSelector(TossAddressIsZero.selector, "project wallet"));
         invest.changeProject(0, name, symbol, targetAmount, maxAmount, price, startAt, finishAt, address(0), platformCut);
 
-        vm.expectRevert(abi.encodeWithSelector(TossCutOutOfRange.selector, 20000));
-        invest.changeProject(0, name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, 20000);
+        vm.expectRevert(abi.encodeWithSelector(TossCutOutOfRange.selector, 20_000));
+        invest.changeProject(0, name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, 20_000);
 
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, invest.PROJECT_ROLE()));
         invest.changeProject(0, name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, platformCut);
-
 
         invest.confirm(0);
 
@@ -389,6 +388,29 @@ contract TossInvestTest is BaseTest {
         assertEq(invested, 0);
 
         vm.warp(uint256(finishAt) + 1);
+
+        vm.expectRevert(TossInvestBase.TossInvestProjectIsFinished.selector);
+        invest.invest(0, 1);
+    }
+
+    function test_investFinishedEarlyRevert() public {
+        uint128 price = 1 ether;
+        erc20.transfer(alice, price * 2);
+
+        invest.addProject("Project", "SBL", 1, 1, price, uint64(block.timestamp), uint64(block.timestamp + 10), bob, 1000);
+
+        vm.startPrank(bob);
+        invest.confirm(0);
+
+        vm.startPrank(alice);
+        erc20.approve(address(invest), 10 * price);
+        invest.invest(0, 1);
+
+        (, uint256 invested, uint256 inversors) = invest.getProject(0);
+        assertEq(inversors, 1);
+        assertEq(invested, 1);
+
+        invest.finish(0);
 
         vm.expectRevert(TossInvestBase.TossInvestProjectIsFinished.selector);
         invest.invest(0, 1);

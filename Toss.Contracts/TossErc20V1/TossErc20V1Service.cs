@@ -14,7 +14,7 @@ using Toss.Contracts.TossErc20V1.ContractDefinition;
 
 namespace Toss.Contracts.TossErc20V1
 {
-    public partial class TossErc20V1Service
+    public partial class TossErc20V1Service: ContractWeb3ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossErc20V1Deployment tossErc20V1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -32,20 +32,8 @@ namespace Toss.Contracts.TossErc20V1
             return new TossErc20V1Service(web3, receipt.ContractAddress);
         }
 
-        protected Nethereum.Web3.IWeb3 Web3{ get; }
-
-        public ContractHandler ContractHandler { get; }
-
-        public TossErc20V1Service(Nethereum.Web3.Web3 web3, string contractAddress)
+        public TossErc20V1Service(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
-        }
-
-        public TossErc20V1Service(Nethereum.Web3.IWeb3 web3, string contractAddress)
-        {
-            Web3 = web3;
-            ContractHandler = web3.Eth.GetContractHandler(contractAddress);
         }
 
         public Task<byte[]> DefaultAdminRoleQueryAsync(DefaultAdminRoleFunction defaultAdminRoleFunction, BlockParameter blockParameter = null)
@@ -710,6 +698,98 @@ namespace Toss.Contracts.TossErc20V1
                 upgradeToAndCallFunction.Data = data;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(upgradeToAndCallFunction, cancellationToken);
+        }
+
+        public override List<Type> GetAllFunctionTypes()
+        {
+            return new List<Type>
+            {
+                typeof(DefaultAdminRoleFunction),
+                typeof(DomainSeparatorFunction),
+                typeof(MinterRoleFunction),
+                typeof(PauserRoleFunction),
+                typeof(UpgraderRoleFunction),
+                typeof(UpgradeInterfaceVersionFunction),
+                typeof(Tosserc20v1InitFunction),
+                typeof(AllowanceFunction),
+                typeof(ApproveFunction),
+                typeof(BalanceOfFunction),
+                typeof(BurnFunction),
+                typeof(BurnFromFunction),
+                typeof(DecimalsFunction),
+                typeof(Eip712DomainFunction),
+                typeof(GetImplementationFunction),
+                typeof(GetRoleAdminFunction),
+                typeof(GetWhitelistFunction),
+                typeof(GrantRoleFunction),
+                typeof(HasRoleFunction),
+                typeof(MintFunction),
+                typeof(NameFunction),
+                typeof(NoncesFunction),
+                typeof(PauseFunction),
+                typeof(PausedFunction),
+                typeof(PermitFunction),
+                typeof(ProxiableUUIDFunction),
+                typeof(RenounceRoleFunction),
+                typeof(RevokeRoleFunction),
+                typeof(SetWhitelistFunction),
+                typeof(SupportsInterfaceFunction),
+                typeof(SymbolFunction),
+                typeof(TotalSupplyFunction),
+                typeof(TransferFunction),
+                typeof(TransferFromFunction),
+                typeof(UnpauseFunction),
+                typeof(UpgradeToAndCallFunction)
+            };
+        }
+
+        public override List<Type> GetAllEventTypes()
+        {
+            return new List<Type>
+            {
+                typeof(ApprovalEventDTO),
+                typeof(EIP712DomainChangedEventDTO),
+                typeof(InitializedEventDTO),
+                typeof(PausedEventDTO),
+                typeof(RoleAdminChangedEventDTO),
+                typeof(RoleGrantedEventDTO),
+                typeof(RoleRevokedEventDTO),
+                typeof(TransferEventDTO),
+                typeof(UnpausedEventDTO),
+                typeof(UpgradedEventDTO)
+            };
+        }
+
+        public override List<Type> GetAllErrorTypes()
+        {
+            return new List<Type>
+            {
+                typeof(AccessControlBadConfirmationError),
+                typeof(AccessControlUnauthorizedAccountError),
+                typeof(AddressEmptyCodeError),
+                typeof(ECDSAInvalidSignatureError),
+                typeof(ECDSAInvalidSignatureLengthError),
+                typeof(ECDSAInvalidSignatureSError),
+                typeof(ERC1967InvalidImplementationError),
+                typeof(ERC1967NonPayableError),
+                typeof(ERC20InsufficientAllowanceError),
+                typeof(ERC20InsufficientBalanceError),
+                typeof(ERC20InvalidApproverError),
+                typeof(ERC20InvalidReceiverError),
+                typeof(ERC20InvalidSenderError),
+                typeof(ERC20InvalidSpenderError),
+                typeof(ERC2612ExpiredSignatureError),
+                typeof(ERC2612InvalidSignerError),
+                typeof(EnforcedPauseError),
+                typeof(ExpectedPauseError),
+                typeof(FailedInnerCallError),
+                typeof(InvalidAccountNonceError),
+                typeof(InvalidInitializationError),
+                typeof(NotInitializingError),
+                typeof(TossWhitelistNotInWhitelistError),
+                typeof(UUPSUnauthorizedCallContextError),
+                typeof(UUPSUnsupportedProxiableUUIDError)
+            };
         }
     }
 }

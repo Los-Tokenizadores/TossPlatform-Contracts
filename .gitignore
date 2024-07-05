@@ -13,3 +13,4 @@ ByteCodeExtractor/bin/
 ByteCodeExtractor/ByteCodeExtractor
 ByteCodeExtractor/ByteCodeExtractor.pdb
 *.user
+.env

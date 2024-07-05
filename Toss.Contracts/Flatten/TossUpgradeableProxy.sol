@@ -627,10 +627,6 @@ contract ERC1967Proxy is Proxy {
 
 // src/TossUpgradeableProxy.sol
 
-
-
-
-
 contract TossUpgradeableProxy is ERC1967Proxy {
     constructor(address _logic, bytes memory _data) payable ERC1967Proxy(_logic, _data) { }
 }

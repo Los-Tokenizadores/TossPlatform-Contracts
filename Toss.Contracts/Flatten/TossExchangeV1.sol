@@ -1702,15 +1702,11 @@ library SignedMath {
 
 // src/Interfaces/ITossWhitelist.sol
 
-
-
 interface ITossWhitelist {
     function isInWhitelist(address user) external view returns (bool);
 }
 
 // src/Interfaces/TossErrors.sol
-
-
 
 error TossAddressIsZero(string parameter);
 error TossCutOutOfRange(uint16 value);
@@ -1958,10 +1954,6 @@ interface IERC20Metadata is IERC20 {
 }
 
 // src/Bases/TossWhitelistClient.sol
-
-
-
-
 
 abstract contract TossWhitelistClient {
     /// @custom:storage-location erc7201:tossplatform.storage.TossWhitelistClient
@@ -3711,11 +3703,6 @@ abstract contract ERC20PausableUpgradeable is Initializable, ERC20Upgradeable, P
 
 // src/Bases/TossUUPSUpgradeable.sol
 
-
-
-
-
-
 abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
     function __TossUUPSUpgradeable_init() internal onlyInitializing {
         __UUPSUpgradeable_init();
@@ -3818,16 +3805,6 @@ abstract contract ERC20PermitUpgradeable is Initializable, ERC20Upgradeable, IER
 
 // src/Bases/TossErc20Base.sol
 
-
-
-
-
-
-
-
-
-
-
 abstract contract TossErc20Base is
     TossWhitelistClient,
     ERC20Upgradeable,
@@ -3884,18 +3861,6 @@ abstract contract TossErc20Base is
 }
 
 // src/Bases/TossExchangeBase.sol
-
-
-
-
-
-
-
-
-
-
-
-
 
 abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossExchangeBase
@@ -4083,12 +4048,6 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
 }
 
 // src/TossExchangeV1.sol
-
-
-
-
-
-
 
 contract TossExchangeV1 is TossExchangeBase {
     /// @custom:oz-upgrades-unsafe-allow constructor

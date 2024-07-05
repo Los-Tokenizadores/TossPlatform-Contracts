@@ -48,7 +48,8 @@ abstract contract TossErc721GeneBase is ITossSellErc721, TossErc721MarketBase {
 
     function addGenes(uint256[] memory genes) external virtual onlyRole(MINTER_ROLE) {
         TossErc721GeneBaseStorage storage $ = _getTossErc721GeneBaseStorage();
-        for (uint256 i; i < genes.length;) {
+        uint256 length = genes.length;
+        for (uint256 i; i < length;) {
             $.rangeOfGene.push(genes[i]);
             unchecked {
                 ++i;

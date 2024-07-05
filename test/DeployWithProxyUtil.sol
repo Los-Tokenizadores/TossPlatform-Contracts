@@ -59,8 +59,8 @@ library DeployWithProxyUtil {
         return TossErc721MarketV1(address(proxy));
     }
 
-    function tossMarketV1(IERC20 erc20, uint16 marketCut) internal returns (TossMarketV1) {
-        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossMarketV1()), abi.encodeCall(TossMarketV1.__TossMarketV1_init, (erc20, marketCut)));
+    function tossMarketV1(IERC20 erc20, uint16 marketCut, address bankAddress) internal returns (TossMarketV1) {
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossMarketV1()), abi.encodeCall(TossMarketV1.__TossMarketV1_init, (erc20, marketCut, bankAddress)));
 
         return TossMarketV1(address(proxy));
     }
@@ -94,15 +94,9 @@ library DeployWithProxyUtil {
         return TossWhitelistV1(address(proxy));
     }
 
-    function tossInvestV1(
-        IERC20 erc20,
-        TossErc721MarketV1 erc721Implementation,
-        address platformAddress,
-        string memory erc721baseUri
-    ) internal returns (TossInvestV1) {
-        TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-            address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, erc721baseUri))
-        );
+    function tossInvestV1(IERC20 erc20, TossErc721MarketV1 erc721Implementation, address platformAddress, string memory erc721baseUri) internal returns (TossInvestV1) {
+        TossUpgradeableProxy proxy =
+            new TossUpgradeableProxy(address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, erc721baseUri)));
 
         return TossInvestV1(address(proxy));
     }

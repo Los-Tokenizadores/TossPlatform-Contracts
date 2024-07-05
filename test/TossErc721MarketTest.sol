@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "./BaseTest.sol";
+import { Royalty } from "../src/Bases/TossMarketBase.sol";
 
 contract TossErc721MarketTest is BaseTest {
     TossErc721MarketV1 erc721;
@@ -23,7 +24,7 @@ contract TossErc721MarketTest is BaseTest {
         erc721.upgradeToAndCall(address(erc721Init), "");
     }
 
-    function test_initializationNameAndSymbol() public {
+    function test_initializationNameAndSymbol() public view {
         assertEq(erc721.name(), name);
         assertEq(erc721.symbol(), symbol);
     }
@@ -49,7 +50,7 @@ contract TossErc721MarketTest is BaseTest {
 
     function test_setMarketWithMarket() public {
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", 10 ether);
-        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1);
+        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1, bob);
         erc721.setMarket(ITossMarket(market));
     }
 
@@ -114,16 +115,16 @@ contract TossErc721MarketTest is BaseTest {
 
     function test_createSellOffer() public {
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", 10 ether);
-        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1);
+        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1, bob);
         erc721.setMarket(ITossMarket(market));
-        market.grantRole(market.ERC721_SELLER_ROLE(), address(erc721));
+        market.addErc721Market(address(erc721), new Royalty[](0));
         erc721.safeMint(owner, 1);
         erc721.createSellOffer(1, 1 ether);
     }
 
     function test_createSellOfferWithoutRoleRevert() public {
         TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", 10 ether);
-        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1);
+        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1, bob);
         erc721.setMarket(ITossMarket(market));
         erc721.safeMint(owner, 1);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, address(erc721), market.ERC721_SELLER_ROLE()));

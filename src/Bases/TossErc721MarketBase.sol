@@ -8,9 +8,11 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossMarket } from "../Interfaces/ITossMarket.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
+import { ITossErc721Market } from "../Interfaces/ITossErc721Market.sol";
 import "../Interfaces/TossErrors.sol";
 
 abstract contract TossErc721MarketBase is
+    ITossErc721Market,
     TossWhitelistClient,
     ERC721Upgradeable,
     ERC721PausableUpgradeable,
@@ -90,7 +92,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return interfaceId == type(ITossErc721Market).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function createSellOffer(uint256 tokenId, uint128 price) external nonReentrant whenNotPaused {
@@ -107,7 +109,7 @@ abstract contract TossErc721MarketBase is
     }
 
     function setMarket(ITossMarket market) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (address(market) != address(0) && !market.supportsInterface(type(ITossMarket).interfaceId)) {
+        if (address(market) != address(0) && (address(market).code.length == 0 || !market.supportsInterface(type(ITossMarket).interfaceId))) {
             revert TossUnsupportedInterface("ITossMarket");
         }
         _getTossErc721MarketBaseStorage().market = market;

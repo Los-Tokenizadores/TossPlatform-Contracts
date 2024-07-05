@@ -160,7 +160,7 @@ abstract contract TossSellerBase is TossWhitelistClient, PausableUpgradeable, Ac
         if (address(erc721) == address(0)) {
             revert TossAddressIsZero("erc721");
         }
-        if (!erc721.supportsInterface(type(ITossSellErc721).interfaceId)) {
+        if (address(erc721).code.length == 0 || !erc721.supportsInterface(type(ITossSellErc721).interfaceId)) {
             revert TossUnsupportedInterface("ITossSellErc721");
         }
         if (maxAmount == 0) {
