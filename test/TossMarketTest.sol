@@ -47,7 +47,6 @@ contract TossMarketTest is BaseTest {
     }
 
     function test_createSellOfferNotActiveRevert() public {
-        market.grantRole(market.ERC721_SELLER_ROLE(), address(erc721));
         erc721.safeMint(owner, 0);
         vm.expectRevert(abi.encodeWithSelector(TossMarketBase.TossMarketErc721NotActive.selector, address(erc721)));
         erc721.createSellOffer(0, 1);
@@ -196,6 +195,35 @@ contract TossMarketTest is BaseTest {
 
         vm.expectRevert(abi.encodeWithSelector(TossMarketBase.TossMarketErc721NotOnSell.selector, address(erc721), 0));
         market.get(address(erc721), 0);
+    }
+
+    function test_createSellOfferWithoutErc721MarketRevert(uint128 price) public {
+        erc721.safeMint(owner, 0);
+
+        vm.expectRevert(abi.encodeWithSelector(TossMarketBase.TossMarketErc721NotActive.selector, address(erc721)));
+        erc721.createSellOffer(0, price);
+    }
+
+    function test_createSellOfferRemoveErc721MarketAndCancel(uint128 price) public {
+        market.addErc721Market(address(erc721), new Royalty[](0));
+        erc721.safeMint(owner, 0);
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidApprover.selector, alice));
+        erc721.createSellOffer(0, price);
+
+        vm.startPrank(owner);
+        erc721.createSellOffer(0, price);
+        (, uint128 marketPrice,) = market.get(address(erc721), 0);
+        assertEq(price, marketPrice);
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(TossMarketBase.TossMarketNotOwnerOfErc721.selector, alice, owner));
+        market.cancel(address(erc721), 0);
+
+        vm.startPrank(owner);
+        market.removeErc721Market(address(erc721));
+        market.cancel(address(erc721), 0);
     }
 
     function test_createSellOfferAndCancelPauseUnpause(uint128 price) public {

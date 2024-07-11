@@ -121,13 +121,4 @@ contract TossErc721MarketTest is BaseTest {
         erc721.safeMint(owner, 1);
         erc721.createSellOffer(1, 1 ether);
     }
-
-    function test_createSellOfferWithoutRoleRevert() public {
-        TossErc20V1 erc20 = DeployWithProxyUtil.tossErc20V1("Erc20 Test", "E20T", 10 ether);
-        TossMarketV1 market = DeployWithProxyUtil.tossMarketV1(IERC20(address(erc20)), 1, bob);
-        erc721.setMarket(ITossMarket(market));
-        erc721.safeMint(owner, 1);
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, address(erc721), market.ERC721_SELLER_ROLE()));
-        erc721.createSellOffer(1, 1 ether);
-    }
 }

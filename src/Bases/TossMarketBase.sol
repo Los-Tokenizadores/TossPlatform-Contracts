@@ -44,7 +44,6 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant ERC721_SELLER_ROLE = keccak256("ERC721_SELLER_ROLE");
 
     struct Erc721Market {
         bool active;
@@ -190,21 +189,20 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         for (uint256 i = 0; i < royaltyLength; i++) {
             erc721Market.royalties.push(royalties[i]);
         }
-        _grantRole(ERC721_SELLER_ROLE, erc721Address);
     }
 
     function removeErc721Market(address erc721Address) external onlyRole(DEFAULT_ADMIN_ROLE) {
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
         Erc721Market storage erc721Market = $.erc721Markets[erc721Address];
-        if (!erc721Market.active) {
+        uint256 royaltyLength = erc721Market.royalties.length;
+        if (!erc721Market.active && royaltyLength == 0) {
             revert TossMarketErc721NotActive(erc721Address);
         }
 
         erc721Market.active = false;
-        for (uint256 i = erc721Market.royalties.length; i > 0; --i) {
+        for (uint256 i = royaltyLength; i > 0; --i) {
             erc721Market.royalties.pop();
         }
-        _revokeRole(ERC721_SELLER_ROLE, erc721Address);
     }
 
     function getErc721Market(address erc721Address) external view returns (bool active, Royalty[] memory royalties) {
@@ -214,11 +212,7 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         royalties = erc721Market.royalties;
     }
 
-    function createSellOffer(
-        uint256 tokenId,
-        uint128 price,
-        address owner
-    ) external virtual override nonReentrant whenNotPaused isInWhitelist(owner) onlyRole(ERC721_SELLER_ROLE) {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) external virtual override nonReentrant whenNotPaused isInWhitelist(owner) {
         TossMarketBaseStorage storage $ = _getTossMarketBaseStorage();
         address erc721Address = msg.sender;
         Erc721Market storage erc721Market = $.erc721Markets[erc721Address];

@@ -58,17 +58,6 @@ namespace Toss.Contracts.TossMarketV1
             return ContractHandler.QueryAsync<DefaultAdminRoleFunction, byte[]>(null, blockParameter);
         }
 
-        public Task<byte[]> Erc721SellerRoleQueryAsync(Erc721SellerRoleFunction erc721SellerRoleFunction, BlockParameter blockParameter = null)
-        {
-            return ContractHandler.QueryAsync<Erc721SellerRoleFunction, byte[]>(erc721SellerRoleFunction, blockParameter);
-        }
-
-        
-        public Task<byte[]> Erc721SellerRoleQueryAsync(BlockParameter blockParameter = null)
-        {
-            return ContractHandler.QueryAsync<Erc721SellerRoleFunction, byte[]>(null, blockParameter);
-        }
-
         public Task<byte> MaxRoyaltyLengthQueryAsync(MaxRoyaltyLengthFunction maxRoyaltyLengthFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<MaxRoyaltyLengthFunction, byte>(maxRoyaltyLengthFunction, blockParameter);
@@ -768,7 +757,6 @@ namespace Toss.Contracts.TossMarketV1
             {
                 typeof(CutPrecisionFunction),
                 typeof(DefaultAdminRoleFunction),
-                typeof(Erc721SellerRoleFunction),
                 typeof(MaxRoyaltyLengthFunction),
                 typeof(PauserRoleFunction),
                 typeof(UpgraderRoleFunction),
