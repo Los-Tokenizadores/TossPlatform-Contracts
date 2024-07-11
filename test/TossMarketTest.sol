@@ -107,6 +107,27 @@ contract TossMarketTest is BaseTest {
         }
     }
 
+    function test_changeMarketCutExcededTotalMaxCutNotRevert() public {
+        market.setMarketCut(5000);
+
+        address erc721Address = address(erc721);
+        Royalty[] memory royalties6 = new Royalty[](6);
+        royalties6[0] = Royalty({ cut: 1, destination: bob });
+        royalties6[1] = Royalty({ cut: 10, destination: alice });
+        royalties6[2] = Royalty({ cut: 100, destination: bob });
+        royalties6[3] = Royalty({ cut: 1000, destination: bob });
+        royalties6[4] = Royalty({ cut: 3000, destination: owner });
+        royalties6[5] = Royalty({ cut: 5000, destination: bob });
+
+        vm.expectRevert(abi.encodeWithSelector(TossCutOutOfRange.selector, 5000 + 3000 + 1000 + 100 + 10 + 1 + 5000));
+        market.addErc721Market(erc721Address, royalties6);
+
+        market.setMarketCut(0);
+        market.addErc721Market(erc721Address, royalties6);
+
+        market.setMarketCut(5000);
+    }
+
     function test_addMarketRevertOnInvalidParameters() public {
         uint8 maxRoyalty = market.MAX_ROYALTY_LENGTH();
         vm.expectRevert(abi.encodeWithSelector(TossMarketBase.TossMarketRoyaltyLengthOutOfRange.selector, maxRoyalty, maxRoyalty + 1));
@@ -288,6 +309,25 @@ contract TossMarketTest is BaseTest {
         assertEq(erc20.balanceOf(royalty3), royaltyCut3);
         assertEq(erc20.balanceOf(alice), 0);
         assertEq(erc20.balanceOf(owner), ownerBalance + price - bankCut - royaltyCut1 - royaltyCut2 - royaltyCut3);
+    }
+
+    function test_createSellOfferAndBuyWithRoyaltiesAndCutExceded(uint128 price) public {
+        Royalty[] memory royalties = new Royalty[](1);
+        address royalty = makeAddr("royalty");
+        royalties[0] = Royalty({ cut: 5000, destination: royalty });
+        market.addErc721Market(address(erc721), royalties);
+        price = uint128(bound(price, 10_000, mintAmount));
+        market.setErc20BankAddress(bob);
+        erc721.safeMint(owner, 0);
+        erc721.createSellOffer(0, price);
+        erc20.transfer(alice, price);
+
+        market.setMarketCut(5001);
+
+        vm.startPrank(alice);
+        erc20.approve(address(market), price);
+        vm.expectRevert(abi.encodeWithSelector(TossCutOutOfRange.selector, 10_001));
+        market.buy(address(erc721), 0, price);
     }
 
     function test_createSellOfferAndBuy(uint128 price) public {

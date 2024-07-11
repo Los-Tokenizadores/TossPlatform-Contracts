@@ -278,12 +278,22 @@ abstract contract TossMarketBase is ITossMarket, TossWhitelistClient, PausableUp
         uint128 marketAmount = (price * $.marketCut / CUT_PRECISION);
         uint128 ownerAmount = price - marketAmount;
 
+        uint16 totalCut;
+        uint128 totalCutAmount;
         uint256 royaltyLength = erc721Market.royalties.length;
         uint128[] memory royaltyAmounts = new uint128[](royaltyLength);
         for (uint256 i = 0; i < royaltyLength; i++) {
-            royaltyAmounts[i] = (price * erc721Market.royalties[i].cut / CUT_PRECISION);
-            ownerAmount -= royaltyAmounts[i];
+            uint16 cut = erc721Market.royalties[i].cut;
+            totalCutAmount += royaltyAmounts[i] = (price * cut / CUT_PRECISION);
+            totalCut += cut;
         }
+
+        totalCut += $.marketCut;
+        if (totalCut > CUT_PRECISION) {
+            revert TossCutOutOfRange(totalCut);
+        }
+
+        ownerAmount -= totalCutAmount;
 
         $.erc20.safeTransferFrom(msg.sender, owner, ownerAmount);
         $.erc20.safeTransferFrom(msg.sender, $.erc20BankAddress, marketAmount);
