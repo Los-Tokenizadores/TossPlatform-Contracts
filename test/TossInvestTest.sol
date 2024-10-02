@@ -497,7 +497,7 @@ contract TossInvestTest is BaseTest {
         assertEq(erc20.balanceOf(projectWallet), totalAmount - platformCutAmount);
         assertEq(erc20.balanceOf(bank), platformCutAmount);
 
-        vm.expectRevert(TossInvestBase.TossInvestAlreadyAllErc721Minted.selector);
+        vm.expectRevert(TossInvestBase.TossInvestProcessFinished.selector);
         invest.finish(0);
 
         vm.expectRevert(abi.encodeWithSelector(TossAddressIsZero.selector, "erc721"));
@@ -621,7 +621,7 @@ contract TossInvestTest is BaseTest {
         assertEq(erc20.balanceOf(owner), ownerInitialBalance, "initial balance owner");
         assertEq(erc20.balanceOf(alice), aliceInitialBalance, "initial balance alice");
 
-        vm.expectRevert(TossInvestBase.TossInvestAlreadyAllInvestmentReturned.selector);
+        vm.expectRevert(TossInvestBase.TossInvestProcessFinished.selector);
         invest.finish(0);
     }
 

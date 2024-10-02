@@ -3764,8 +3764,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     error TossInvestProjectIsFinished();
     error TossInvestProjectFullInvested();
     error TossInvestNotProjectOwner(uint256 projectId);
-    error TossInvestAlreadyAllInvestmentReturned();
-    error TossInvestAlreadyAllErc721Minted();
+    error TossInvestProcessFinished();
 
     function __TossInvestBase_init(IERC20 erc20_, TossErc721MarketV1 erc721Implementation_, address platformAddress_, string memory erc721baseUri_) internal onlyInitializing {
         __Pausable_init();
@@ -4097,6 +4096,10 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             revert TossInvestProjectNotFinished();
         }
 
+        if (investorsLength <= projectInfo.lastIndex) {
+            revert TossInvestProcessFinished();
+        }
+
         if (projectInfo.targetAmount <= investorsLength) {
             finishMintErc721(projectId, projectInfo, investors, $);
         } else {
@@ -4109,14 +4112,9 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
     }
 
     function finishMintErc721(uint256 projectId, ProjectInfo storage projectInfo, address[] memory investors, TossInvestBaseStorage storage $) private {
-        uint32 lastIndex = projectInfo.lastIndex;
-        uint256 length = investors.length;
-        if (length <= lastIndex) {
-            revert TossInvestAlreadyAllErc721Minted();
-        }
-
+        uint256 investorsLength = investors.length;
         if (projectInfo.erc721Address == address(0)) {
-            uint256 total = projectInfo.price * length;
+            uint256 total = projectInfo.price * investorsLength;
             uint256 platformAmount = total * projectInfo.platformCut / CUT_PRECISION;
             $.erc20.safeTransfer(projectInfo.projectWallet, total - platformAmount);
             $.erc20.safeTransfer($.platformAddress, platformAmount);
@@ -4124,8 +4122,8 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
         TossErc721MarketV1 erc721 = getProjectErc721(projectId, projectInfo, $);
 
-        uint32 i = lastIndex;
-        for (; i < length; i++) {
+        uint32 i = projectInfo.lastIndex;
+        for (; i < investorsLength; i++) {
             if (gasleft() < GAS_EXTRA_MINT) {
                 break;
             }
@@ -4136,17 +4134,13 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
     function finishReturnInvestment(ProjectInfo storage projectInfo, address[] memory investors) private {
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
-        uint32 lastIndex = projectInfo.lastIndex;
-        uint256 length = investors.length;
-        if (length <= lastIndex) {
-            revert TossInvestAlreadyAllInvestmentReturned();
-        }
 
+        uint256 investorsLength = investors.length;
         uint256 price = projectInfo.price;
-        uint32 i = lastIndex;
+        uint32 i = projectInfo.lastIndex;
         address lastInvestor = investors[i];
         uint256 acumulated = 0;
-        for (; i < length; i++) {
+        for (; i < investorsLength; i++) {
             if (gasleft() < GAS_EXTRA_RETURN) {
                 break;
             }
@@ -4189,6 +4183,12 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 }
 
 // src/TossInvestV1.sol
+
+
+
+
+
+
 
 contract TossInvestV1 is TossInvestBase {
     /// @custom:oz-upgrades-unsafe-allow constructor
