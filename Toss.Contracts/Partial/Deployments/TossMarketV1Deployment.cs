@@ -4,6 +4,7 @@ using Toss.Contracts.Interfaces;
 namespace Toss.Contracts.TossMarketV1.ContractDefinition;
 public partial class TossMarketV1Deployment : IContractDefinition {
 	public static ContractTypes ContractType => ContractTypes.Market;
+	public static bool IsProxy => false;
 	public static int Version => 1;
 	public static int ClientVersion => 1;
 	public static string ContractName => "TossMarketV1";

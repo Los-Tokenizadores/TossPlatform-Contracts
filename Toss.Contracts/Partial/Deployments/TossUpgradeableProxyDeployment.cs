@@ -4,6 +4,7 @@ using Toss.Contracts.Interfaces;
 namespace Toss.Contracts.TossUpgradeableProxy.ContractDefinition;
 public partial class TossUpgradeableProxyDeployment : IContractDefinition {
 	public static ContractTypes ContractType => ContractTypes.Proxy;
+	public static bool IsProxy => true;
 	public static int Version => 1;
 	public static int ClientVersion => 1;
 	public static string ContractName => "TossUpgradeableProxy";

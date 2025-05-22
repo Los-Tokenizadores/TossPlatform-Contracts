@@ -8,6 +8,7 @@ public interface IContractDefinition {
 	static abstract string SourceCode { get; }
 	static abstract int Version { get; }
 	static abstract int ClientVersion { get; }
+	static abstract bool IsProxy { get; }
 
 	static string LoadSourceCode(string name) {
 		using Stream stream = typeof(IContractDefinition).Assembly.GetManifestResourceStream($"Toss.Contracts.Flatten.{name}.sol");
