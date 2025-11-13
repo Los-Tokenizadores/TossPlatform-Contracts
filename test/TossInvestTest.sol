@@ -82,17 +82,7 @@ contract TossInvestTest is BaseTest {
         assertEq(invest.getErc721BaseUri(), newUri);
     }
 
-    function test_addProject(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        address projectWallet,
-        uint16 cut
-    ) public {
+    function test_addProject(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, address projectWallet, uint16 cut) public {
         vm.assume(targetAmount > 0);
         vm.assume(maxAmount >= targetAmount);
         vm.assume(price > 0);
@@ -159,17 +149,7 @@ contract TossInvestTest is BaseTest {
         invest.addProject(name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, platformCut);
     }
 
-    function test_changeProject(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        address projectWallet,
-        uint16 cut
-    ) public {
+    function test_changeProject(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, address projectWallet, uint16 cut) public {
         vm.assume(targetAmount > 0);
         vm.assume(maxAmount >= targetAmount);
         vm.assume(price > 0);
@@ -251,17 +231,7 @@ contract TossInvestTest is BaseTest {
         invest.getProject(5);
     }
 
-    function test_addProjectAndConfirmRevert(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        address projectWallet,
-        uint16 cut
-    ) public {
+    function test_addProjectAndConfirmRevert(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, address projectWallet, uint16 cut) public {
         vm.assume(targetAmount > 0);
         vm.assume(maxAmount >= targetAmount);
         vm.assume(price > 0);
@@ -293,17 +263,7 @@ contract TossInvestTest is BaseTest {
         invest.confirm(0);
     }
 
-    function test_invest(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        address projectWallet,
-        uint16 cut
-    ) public {
+    function test_invest(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, address projectWallet, uint16 cut) public {
         targetAmount = uint32(bound(targetAmount, 1, 100_000));
         maxAmount = uint32(bound(maxAmount, targetAmount + 12, targetAmount + 10_000));
         price = uint128(bound(price, 1, mintAmount / 100));
@@ -340,17 +300,7 @@ contract TossInvestTest is BaseTest {
         assertEq(invested, amount + 2);
     }
 
-    function test_investRevert(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        address projectWallet,
-        uint16 cut
-    ) public {
+    function test_investRevert(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, address projectWallet, uint16 cut) public {
         targetAmount = uint32(bound(targetAmount, 1, 100_000));
         maxAmount = uint32(bound(maxAmount, targetAmount + 12, targetAmount + 10_000));
         price = uint128(bound(price, 1, mintAmount / 100));
@@ -509,17 +459,7 @@ contract TossInvestTest is BaseTest {
         assertEq(invest.getProjectInvestor(0, 0), owner);
     }
 
-    function test_finishMintErc721WithBaseUri(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        uint16 amount,
-        uint16 cut
-    ) public {
+    function test_finishMintErc721WithBaseUri(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, uint16 amount, uint16 cut) public {
         targetAmount = uint32(bound(targetAmount, 1, 1000));
         maxAmount = uint32(bound(maxAmount, targetAmount, targetAmount + 1000));
         amount = uint16(bound(amount, targetAmount, maxAmount));
@@ -559,17 +499,7 @@ contract TossInvestTest is BaseTest {
         assertEq(erc20.balanceOf(bank), platformCutAmount);
     }
 
-    function test_finishReturn(
-        string memory name,
-        string memory symbol,
-        uint32 targetAmount,
-        uint32 maxAmount,
-        uint128 price,
-        uint64 startAt,
-        uint64 finishAt,
-        uint16 amountOwner,
-        uint16 amountAlice
-    ) public {
+    function test_finishReturn(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, uint16 amountOwner, uint16 amountAlice) public {
         targetAmount = uint32(bound(targetAmount, 2, 1000));
         maxAmount = uint32(bound(maxAmount, targetAmount, targetAmount + 1000));
         amountOwner = uint16(bound(amountOwner, 1, ((targetAmount - 1) / 2) + 1));

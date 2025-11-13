@@ -14,7 +14,7 @@ using Toss.Contracts.TossWhitelistV1.ContractDefinition;
 
 namespace Toss.Contracts.TossWhitelistV1
 {
-    public partial class TossWhitelistV1Service: ContractWeb3ServiceBase
+    public partial class TossWhitelistV1Service: TossWhitelistV1ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossWhitelistV1Deployment tossWhitelistV1Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -36,13 +36,23 @@ namespace Toss.Contracts.TossWhitelistV1
         {
         }
 
+    }
+
+
+    public partial class TossWhitelistV1ServiceBase: ContractWeb3ServiceBase
+    {
+
+        public TossWhitelistV1ServiceBase(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
+        {
+        }
+
         public Task<byte[]> DefaultAdminRoleQueryAsync(DefaultAdminRoleFunction defaultAdminRoleFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DefaultAdminRoleFunction, byte[]>(defaultAdminRoleFunction, blockParameter);
         }
 
         
-        public Task<byte[]> DefaultAdminRoleQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<byte[]> DefaultAdminRoleQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DefaultAdminRoleFunction, byte[]>(null, blockParameter);
         }
@@ -53,7 +63,7 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<byte[]> UpgraderRoleQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<byte[]> UpgraderRoleQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<UpgraderRoleFunction, byte[]>(null, blockParameter);
         }
@@ -64,27 +74,27 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<string> UpgradeInterfaceVersionQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<string> UpgradeInterfaceVersionQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<UpgradeInterfaceVersionFunction, string>(null, blockParameter);
         }
 
-        public Task<string> Tosswhitelistv1InitRequestAsync(Tosswhitelistv1InitFunction tosswhitelistv1InitFunction)
+        public virtual Task<string> Tosswhitelistv1InitRequestAsync(Tosswhitelistv1InitFunction tosswhitelistv1InitFunction)
         {
              return ContractHandler.SendRequestAsync(tosswhitelistv1InitFunction);
         }
 
-        public Task<string> Tosswhitelistv1InitRequestAsync()
+        public virtual Task<string> Tosswhitelistv1InitRequestAsync()
         {
              return ContractHandler.SendRequestAsync<Tosswhitelistv1InitFunction>();
         }
 
-        public Task<TransactionReceipt> Tosswhitelistv1InitRequestAndWaitForReceiptAsync(Tosswhitelistv1InitFunction tosswhitelistv1InitFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> Tosswhitelistv1InitRequestAndWaitForReceiptAsync(Tosswhitelistv1InitFunction tosswhitelistv1InitFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(tosswhitelistv1InitFunction, cancellationToken);
         }
 
-        public Task<TransactionReceipt> Tosswhitelistv1InitRequestAndWaitForReceiptAsync(CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> Tosswhitelistv1InitRequestAndWaitForReceiptAsync(CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync<Tosswhitelistv1InitFunction>(null, cancellationToken);
         }
@@ -95,7 +105,7 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<string> GetImplementationQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<string> GetImplementationQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<GetImplementationFunction, string>(null, blockParameter);
         }
@@ -106,7 +116,7 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<byte[]> GetRoleAdminQueryAsync(byte[] role, BlockParameter blockParameter = null)
+        public virtual Task<byte[]> GetRoleAdminQueryAsync(byte[] role, BlockParameter blockParameter = null)
         {
             var getRoleAdminFunction = new GetRoleAdminFunction();
                 getRoleAdminFunction.Role = role;
@@ -114,17 +124,17 @@ namespace Toss.Contracts.TossWhitelistV1
             return ContractHandler.QueryAsync<GetRoleAdminFunction, byte[]>(getRoleAdminFunction, blockParameter);
         }
 
-        public Task<string> GrantRoleRequestAsync(GrantRoleFunction grantRoleFunction)
+        public virtual Task<string> GrantRoleRequestAsync(GrantRoleFunction grantRoleFunction)
         {
              return ContractHandler.SendRequestAsync(grantRoleFunction);
         }
 
-        public Task<TransactionReceipt> GrantRoleRequestAndWaitForReceiptAsync(GrantRoleFunction grantRoleFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> GrantRoleRequestAndWaitForReceiptAsync(GrantRoleFunction grantRoleFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(grantRoleFunction, cancellationToken);
         }
 
-        public Task<string> GrantRoleRequestAsync(byte[] role, string account)
+        public virtual Task<string> GrantRoleRequestAsync(byte[] role, string account)
         {
             var grantRoleFunction = new GrantRoleFunction();
                 grantRoleFunction.Role = role;
@@ -133,7 +143,7 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAsync(grantRoleFunction);
         }
 
-        public Task<TransactionReceipt> GrantRoleRequestAndWaitForReceiptAsync(byte[] role, string account, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> GrantRoleRequestAndWaitForReceiptAsync(byte[] role, string account, CancellationTokenSource cancellationToken = null)
         {
             var grantRoleFunction = new GrantRoleFunction();
                 grantRoleFunction.Role = role;
@@ -148,7 +158,7 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<bool> HasRoleQueryAsync(byte[] role, string account, BlockParameter blockParameter = null)
+        public virtual Task<bool> HasRoleQueryAsync(byte[] role, string account, BlockParameter blockParameter = null)
         {
             var hasRoleFunction = new HasRoleFunction();
                 hasRoleFunction.Role = role;
@@ -163,7 +173,7 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<bool> IsInWhitelistQueryAsync(string address, BlockParameter blockParameter = null)
+        public virtual Task<bool> IsInWhitelistQueryAsync(string address, BlockParameter blockParameter = null)
         {
             var isInWhitelistFunction = new IsInWhitelistFunction();
                 isInWhitelistFunction.Address = address;
@@ -177,22 +187,22 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<byte[]> ProxiableUUIDQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<byte[]> ProxiableUUIDQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<ProxiableUUIDFunction, byte[]>(null, blockParameter);
         }
 
-        public Task<string> RenounceRoleRequestAsync(RenounceRoleFunction renounceRoleFunction)
+        public virtual Task<string> RenounceRoleRequestAsync(RenounceRoleFunction renounceRoleFunction)
         {
              return ContractHandler.SendRequestAsync(renounceRoleFunction);
         }
 
-        public Task<TransactionReceipt> RenounceRoleRequestAndWaitForReceiptAsync(RenounceRoleFunction renounceRoleFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> RenounceRoleRequestAndWaitForReceiptAsync(RenounceRoleFunction renounceRoleFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(renounceRoleFunction, cancellationToken);
         }
 
-        public Task<string> RenounceRoleRequestAsync(byte[] role, string callerConfirmation)
+        public virtual Task<string> RenounceRoleRequestAsync(byte[] role, string callerConfirmation)
         {
             var renounceRoleFunction = new RenounceRoleFunction();
                 renounceRoleFunction.Role = role;
@@ -201,7 +211,7 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAsync(renounceRoleFunction);
         }
 
-        public Task<TransactionReceipt> RenounceRoleRequestAndWaitForReceiptAsync(byte[] role, string callerConfirmation, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> RenounceRoleRequestAndWaitForReceiptAsync(byte[] role, string callerConfirmation, CancellationTokenSource cancellationToken = null)
         {
             var renounceRoleFunction = new RenounceRoleFunction();
                 renounceRoleFunction.Role = role;
@@ -210,17 +220,17 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(renounceRoleFunction, cancellationToken);
         }
 
-        public Task<string> RevokeRoleRequestAsync(RevokeRoleFunction revokeRoleFunction)
+        public virtual Task<string> RevokeRoleRequestAsync(RevokeRoleFunction revokeRoleFunction)
         {
              return ContractHandler.SendRequestAsync(revokeRoleFunction);
         }
 
-        public Task<TransactionReceipt> RevokeRoleRequestAndWaitForReceiptAsync(RevokeRoleFunction revokeRoleFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> RevokeRoleRequestAndWaitForReceiptAsync(RevokeRoleFunction revokeRoleFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(revokeRoleFunction, cancellationToken);
         }
 
-        public Task<string> RevokeRoleRequestAsync(byte[] role, string account)
+        public virtual Task<string> RevokeRoleRequestAsync(byte[] role, string account)
         {
             var revokeRoleFunction = new RevokeRoleFunction();
                 revokeRoleFunction.Role = role;
@@ -229,7 +239,7 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAsync(revokeRoleFunction);
         }
 
-        public Task<TransactionReceipt> RevokeRoleRequestAndWaitForReceiptAsync(byte[] role, string account, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> RevokeRoleRequestAndWaitForReceiptAsync(byte[] role, string account, CancellationTokenSource cancellationToken = null)
         {
             var revokeRoleFunction = new RevokeRoleFunction();
                 revokeRoleFunction.Role = role;
@@ -238,17 +248,17 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAndWaitForReceiptAsync(revokeRoleFunction, cancellationToken);
         }
 
-        public Task<string> SetRequestAsync(SetFunction setFunction)
+        public virtual Task<string> SetRequestAsync(SetFunction setFunction)
         {
              return ContractHandler.SendRequestAsync(setFunction);
         }
 
-        public Task<TransactionReceipt> SetRequestAndWaitForReceiptAsync(SetFunction setFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> SetRequestAndWaitForReceiptAsync(SetFunction setFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(setFunction, cancellationToken);
         }
 
-        public Task<string> SetRequestAsync(string address, bool enabled)
+        public virtual Task<string> SetRequestAsync(string address, bool enabled)
         {
             var setFunction = new SetFunction();
                 setFunction.Address = address;
@@ -257,7 +267,7 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAsync(setFunction);
         }
 
-        public Task<TransactionReceipt> SetRequestAndWaitForReceiptAsync(string address, bool enabled, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> SetRequestAndWaitForReceiptAsync(string address, bool enabled, CancellationTokenSource cancellationToken = null)
         {
             var setFunction = new SetFunction();
                 setFunction.Address = address;
@@ -272,7 +282,7 @@ namespace Toss.Contracts.TossWhitelistV1
         }
 
         
-        public Task<bool> SupportsInterfaceQueryAsync(byte[] interfaceId, BlockParameter blockParameter = null)
+        public virtual Task<bool> SupportsInterfaceQueryAsync(byte[] interfaceId, BlockParameter blockParameter = null)
         {
             var supportsInterfaceFunction = new SupportsInterfaceFunction();
                 supportsInterfaceFunction.InterfaceId = interfaceId;
@@ -280,17 +290,17 @@ namespace Toss.Contracts.TossWhitelistV1
             return ContractHandler.QueryAsync<SupportsInterfaceFunction, bool>(supportsInterfaceFunction, blockParameter);
         }
 
-        public Task<string> UpgradeToAndCallRequestAsync(UpgradeToAndCallFunction upgradeToAndCallFunction)
+        public virtual Task<string> UpgradeToAndCallRequestAsync(UpgradeToAndCallFunction upgradeToAndCallFunction)
         {
              return ContractHandler.SendRequestAsync(upgradeToAndCallFunction);
         }
 
-        public Task<TransactionReceipt> UpgradeToAndCallRequestAndWaitForReceiptAsync(UpgradeToAndCallFunction upgradeToAndCallFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> UpgradeToAndCallRequestAndWaitForReceiptAsync(UpgradeToAndCallFunction upgradeToAndCallFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(upgradeToAndCallFunction, cancellationToken);
         }
 
-        public Task<string> UpgradeToAndCallRequestAsync(string newImplementation, byte[] data)
+        public virtual Task<string> UpgradeToAndCallRequestAsync(string newImplementation, byte[] data)
         {
             var upgradeToAndCallFunction = new UpgradeToAndCallFunction();
                 upgradeToAndCallFunction.NewImplementation = newImplementation;
@@ -299,7 +309,7 @@ namespace Toss.Contracts.TossWhitelistV1
              return ContractHandler.SendRequestAsync(upgradeToAndCallFunction);
         }
 
-        public Task<TransactionReceipt> UpgradeToAndCallRequestAndWaitForReceiptAsync(string newImplementation, byte[] data, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> UpgradeToAndCallRequestAndWaitForReceiptAsync(string newImplementation, byte[] data, CancellationTokenSource cancellationToken = null)
         {
             var upgradeToAndCallFunction = new UpgradeToAndCallFunction();
                 upgradeToAndCallFunction.NewImplementation = newImplementation;

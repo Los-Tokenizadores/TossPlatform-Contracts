@@ -31,13 +31,7 @@ contract TossExchangeTierV1 is TossExchangeBase {
         _disableInitializers();
     }
 
-    function __TossExchangeTierV1_init(
-        IERC20 externalErc20_,
-        uint128 depositMinAmount_,
-        TossErc20Base internalErc20_,
-        uint128 withdrawMinAmount_,
-        uint64 year
-    ) public initializer {
+    function __TossExchangeTierV1_init(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_, uint64 year) public initializer {
         __TossExchangeBase_init(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
 
         _grantRole(YEAR_ROLE, msg.sender);

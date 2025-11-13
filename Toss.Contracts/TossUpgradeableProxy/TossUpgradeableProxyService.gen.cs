@@ -14,7 +14,7 @@ using Toss.Contracts.TossUpgradeableProxy.ContractDefinition;
 
 namespace Toss.Contracts.TossUpgradeableProxy
 {
-    public partial class TossUpgradeableProxyService: ContractWeb3ServiceBase
+    public partial class TossUpgradeableProxyService: TossUpgradeableProxyServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, TossUpgradeableProxyDeployment tossUpgradeableProxyDeployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -33,6 +33,16 @@ namespace Toss.Contracts.TossUpgradeableProxy
         }
 
         public TossUpgradeableProxyService(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
+        {
+        }
+
+    }
+
+
+    public partial class TossUpgradeableProxyServiceBase: ContractWeb3ServiceBase
+    {
+
+        public TossUpgradeableProxyServiceBase(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
         {
         }
 

@@ -11,15 +11,7 @@ import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 import { ITossErc721Market } from "../Interfaces/ITossErc721Market.sol";
 import "../Interfaces/TossErrors.sol";
 
-abstract contract TossErc721MarketBase is
-    ITossErc721Market,
-    TossWhitelistClient,
-    ERC721Upgradeable,
-    ERC721PausableUpgradeable,
-    AccessControlUpgradeable,
-    ReentrancyGuardUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossErc721MarketBase is ITossErc721Market, TossWhitelistClient, ERC721Upgradeable, ERC721PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossErc721MarketBase
     struct TossErc721MarketBaseStorage {
         ITossMarket market;
@@ -71,11 +63,7 @@ abstract contract TossErc721MarketBase is
         _setWhitelist(newAddress);
     }
 
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) isInWhitelist(to) whenNotPaused returns (address) {
+    function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) isInWhitelist(to) whenNotPaused returns (address) {
         return super._update(to, tokenId, auth);
     }
 

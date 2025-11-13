@@ -1,11 +1,341 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.20 ^0.8.20;
 
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/Address.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)
+
+/**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev The ETH balance of the account is not enough to perform the operation.
+     */
+    error AddressInsufficientBalance(address account);
+
+    /**
+     * @dev There's no code at `target` (it is not a contract).
+     */
+    error AddressEmptyCode(address target);
+
+    /**
+     * @dev A call to an address target failed. The target may have reverted.
+     */
+    error FailedInnerCall();
+
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.8.20/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        if (address(this).balance < amount) {
+            revert AddressInsufficientBalance(address(this));
+        }
+
+        (bool success, ) = recipient.call{value: amount}("");
+        if (!success) {
+            revert FailedInnerCall();
+        }
+    }
+
+    /**
+     * @dev Performs a Solidity function call using a low level `call`. A
+     * plain `call` is an unsafe replacement for a function call: use this
+     * function instead.
+     *
+     * If `target` reverts with a revert reason or custom error, it is bubbled
+     * up by this function (like regular Solidity function calls). However, if
+     * the call reverted with no returned reason, this function reverts with a
+     * {FailedInnerCall} error.
+     *
+     * Returns the raw returned data. To convert to the expected return value,
+     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     *
+     * Requirements:
+     *
+     * - `target` must be a contract.
+     * - calling `target` with `data` must not revert.
+     */
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, 0);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but also transferring `value` wei to `target`.
+     *
+     * Requirements:
+     *
+     * - the calling contract must have an ETH balance of at least `value`.
+     * - the called Solidity function must be `payable`.
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+        if (address(this).balance < value) {
+            revert AddressInsufficientBalance(address(this));
+        }
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
+        return verifyCallResultFromTarget(target, success, returndata);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a static call.
+     */
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+        (bool success, bytes memory returndata) = target.staticcall(data);
+        return verifyCallResultFromTarget(target, success, returndata);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a delegate call.
+     */
+    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        (bool success, bytes memory returndata) = target.delegatecall(data);
+        return verifyCallResultFromTarget(target, success, returndata);
+    }
+
+    /**
+     * @dev Tool to verify that a low level call to smart-contract was successful, and reverts if the target
+     * was not a contract or bubbling up the revert reason (falling back to {FailedInnerCall}) in case of an
+     * unsuccessful call.
+     */
+    function verifyCallResultFromTarget(
+        address target,
+        bool success,
+        bytes memory returndata
+    ) internal view returns (bytes memory) {
+        if (!success) {
+            _revert(returndata);
+        } else {
+            // only check if target is a contract if the call was successful and the return data is empty
+            // otherwise we already know that it was a contract
+            if (returndata.length == 0 && target.code.length == 0) {
+                revert AddressEmptyCode(target);
+            }
+            return returndata;
+        }
+    }
+
+    /**
+     * @dev Tool to verify that a low level call was successful, and reverts if it wasn't, either by bubbling the
+     * revert reason or with a default {FailedInnerCall} error.
+     */
+    function verifyCallResult(bool success, bytes memory returndata) internal pure returns (bytes memory) {
+        if (!success) {
+            _revert(returndata);
+        } else {
+            return returndata;
+        }
+    }
+
+    /**
+     * @dev Reverts with returndata if present. Otherwise reverts with {FailedInnerCall}.
+     */
+    function _revert(bytes memory returndata) private pure {
+        // Look for revert reason and bubble it up if present
+        if (returndata.length > 0) {
+            // The easiest way to bubble the revert reason is using memory via assembly
+            /// @solidity memory-safe-assembly
+            assembly {
+                let returndata_size := mload(returndata)
+                revert(add(32, returndata), returndata_size)
+            }
+        } else {
+            revert FailedInnerCall();
+        }
+    }
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/access/IAccessControl.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (access/IAccessControl.sol)
+
+/**
+ * @dev External interface of AccessControl declared to support ERC165 detection.
+ */
+interface IAccessControl {
+    /**
+     * @dev The `account` is missing a role.
+     */
+    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);
+
+    /**
+     * @dev The caller of a function is not the expected one.
+     *
+     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.
+     */
+    error AccessControlBadConfirmation();
+
+    /**
+     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
+     *
+     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
+     * {RoleAdminChanged} not being emitted signaling this.
+     */
+    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
+
+    /**
+     * @dev Emitted when `account` is granted `role`.
+     *
+     * `sender` is the account that originated the contract call, an admin role
+     * bearer except when using {AccessControl-_setupRole}.
+     */
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /**
+     * @dev Emitted when `account` is revoked `role`.
+     *
+     * `sender` is the account that originated the contract call:
+     *   - if using `revokeRole`, it is the admin role bearer
+     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
+     */
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /**
+     * @dev Returns `true` if `account` has been granted `role`.
+     */
+    function hasRole(bytes32 role, address account) external view returns (bool);
+
+    /**
+     * @dev Returns the admin role that controls `role`. See {grantRole} and
+     * {revokeRole}.
+     *
+     * To change a role's admin, use {AccessControl-_setRoleAdmin}.
+     */
+    function getRoleAdmin(bytes32 role) external view returns (bytes32);
+
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     */
+    function grantRole(bytes32 role, address account) external;
+
+    /**
+     * @dev Revokes `role` from `account`.
+     *
+     * If `account` had been granted `role`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     */
+    function revokeRole(bytes32 role, address account) external;
+
+    /**
+     * @dev Revokes `role` from the calling account.
+     *
+     * Roles are often managed via {grantRole} and {revokeRole}: this function's
+     * purpose is to provide a mechanism for accounts to lose their privileges
+     * if they are compromised (such as when a trusted device is misplaced).
+     *
+     * If the calling account had been granted `role`, emits a {RoleRevoked}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must be `callerConfirmation`.
+     */
+    function renounceRole(bytes32 role, address callerConfirmation) external;
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (proxy/beacon/IBeacon.sol)
+
+/**
+ * @dev This is the interface that {BeaconProxy} expects of its beacon.
+ */
+interface IBeacon {
+    /**
+     * @dev Must return an address that can be used as a delegate call target.
+     *
+     * {UpgradeableBeacon} will check that this address is a contract.
+     */
+    function implementation() external view returns (address);
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/IERC165.sol)
+
+/**
+ * @dev Interface of the ERC165 standard, as defined in the
+ * https://eips.ethereum.org/EIPS/eip-165[EIP].
+ *
+ * Implementers can declare support of contract interfaces, which can then be
+ * queried by others ({ERC165Checker}).
+ *
+ * For an implementation, see {ERC165}.
+ */
+interface IERC165 {
+    /**
+     * @dev Returns true if this contract implements the interface defined by
+     * `interfaceId`. See the corresponding
+     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]
+     * to learn more about how these ids are created.
+     *
+     * This function call must use less than 30 000 gas.
+     */
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/IERC721Receiver.sol)
+
+/**
+ * @title ERC721 token receiver interface
+ * @dev Interface for any contract that wants to support safeTransfers
+ * from ERC721 asset contracts.
+ */
+interface IERC721Receiver {
+    /**
+     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
+     * by `operator` from `from`, this function is called.
+     *
+     * It must return its Solidity selector to confirm the token transfer.
+     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be
+     * reverted.
+     *
+     * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
+     */
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4);
+}
+
+// src/Interfaces/ITossWhitelist.sol
+
+interface ITossWhitelist {
+    function isInWhitelist(address user) external view returns (bool);
+}
+
 // lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/utils/Initializable.sol)
-
-
 
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
@@ -231,669 +561,9 @@ abstract contract Initializable {
     }
 }
 
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/access/IAccessControl.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (access/IAccessControl.sol)
-
-
-
-/**
- * @dev External interface of AccessControl declared to support ERC165 detection.
- */
-interface IAccessControl {
-    /**
-     * @dev The `account` is missing a role.
-     */
-    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);
-
-    /**
-     * @dev The caller of a function is not the expected one.
-     *
-     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.
-     */
-    error AccessControlBadConfirmation();
-
-    /**
-     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
-     *
-     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
-     * {RoleAdminChanged} not being emitted signaling this.
-     */
-    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
-
-    /**
-     * @dev Emitted when `account` is granted `role`.
-     *
-     * `sender` is the account that originated the contract call, an admin role
-     * bearer except when using {AccessControl-_setupRole}.
-     */
-    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
-
-    /**
-     * @dev Emitted when `account` is revoked `role`.
-     *
-     * `sender` is the account that originated the contract call:
-     *   - if using `revokeRole`, it is the admin role bearer
-     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
-     */
-    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
-
-    /**
-     * @dev Returns `true` if `account` has been granted `role`.
-     */
-    function hasRole(bytes32 role, address account) external view returns (bool);
-
-    /**
-     * @dev Returns the admin role that controls `role`. See {grantRole} and
-     * {revokeRole}.
-     *
-     * To change a role's admin, use {AccessControl-_setRoleAdmin}.
-     */
-    function getRoleAdmin(bytes32 role) external view returns (bytes32);
-
-    /**
-     * @dev Grants `role` to `account`.
-     *
-     * If `account` had not been already granted `role`, emits a {RoleGranted}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must have ``role``'s admin role.
-     */
-    function grantRole(bytes32 role, address account) external;
-
-    /**
-     * @dev Revokes `role` from `account`.
-     *
-     * If `account` had been granted `role`, emits a {RoleRevoked} event.
-     *
-     * Requirements:
-     *
-     * - the caller must have ``role``'s admin role.
-     */
-    function revokeRole(bytes32 role, address account) external;
-
-    /**
-     * @dev Revokes `role` from the calling account.
-     *
-     * Roles are often managed via {grantRole} and {revokeRole}: this function's
-     * purpose is to provide a mechanism for accounts to lose their privileges
-     * if they are compromised (such as when a trusted device is misplaced).
-     *
-     * If the calling account had been granted `role`, emits a {RoleRevoked}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must be `callerConfirmation`.
-     */
-    function renounceRole(bytes32 role, address callerConfirmation) external;
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC1822.sol)
-
-
-
-/**
- * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified
- * proxy whose upgrades are fully controlled by the current implementation.
- */
-interface IERC1822Proxiable {
-    /**
-     * @dev Returns the storage slot that the proxiable contract assumes is being used to store the implementation
-     * address.
-     *
-     * IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks
-     * bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this
-     * function revert if invoked through a proxy.
-     */
-    function proxiableUUID() external view returns (bytes32);
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC6093.sol)
-
-
-/**
- * @dev Standard ERC20 Errors
- * Interface of the https://eips.ethereum.org/EIPS/eip-6093[ERC-6093] custom errors for ERC20 tokens.
- */
-interface IERC20Errors {
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param balance Current balance for the interacting account.
-     * @param needed Minimum amount required to perform a transfer.
-     */
-    error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-
-    /**
-     * @dev Indicates a failure with the token `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     */
-    error ERC20InvalidSender(address sender);
-
-    /**
-     * @dev Indicates a failure with the token `receiver`. Used in transfers.
-     * @param receiver Address to which tokens are being transferred.
-     */
-    error ERC20InvalidReceiver(address receiver);
-
-    /**
-     * @dev Indicates a failure with the `spender`’s `allowance`. Used in transfers.
-     * @param spender Address that may be allowed to operate on tokens without being their owner.
-     * @param allowance Amount of tokens a `spender` is allowed to operate with.
-     * @param needed Minimum amount required to perform a transfer.
-     */
-    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-
-    /**
-     * @dev Indicates a failure with the `approver` of a token to be approved. Used in approvals.
-     * @param approver Address initiating an approval operation.
-     */
-    error ERC20InvalidApprover(address approver);
-
-    /**
-     * @dev Indicates a failure with the `spender` to be approved. Used in approvals.
-     * @param spender Address that may be allowed to operate on tokens without being their owner.
-     */
-    error ERC20InvalidSpender(address spender);
-}
-
-/**
- * @dev Standard ERC721 Errors
- * Interface of the https://eips.ethereum.org/EIPS/eip-6093[ERC-6093] custom errors for ERC721 tokens.
- */
-interface IERC721Errors {
-    /**
-     * @dev Indicates that an address can't be an owner. For example, `address(0)` is a forbidden owner in EIP-20.
-     * Used in balance queries.
-     * @param owner Address of the current owner of a token.
-     */
-    error ERC721InvalidOwner(address owner);
-
-    /**
-     * @dev Indicates a `tokenId` whose `owner` is the zero address.
-     * @param tokenId Identifier number of a token.
-     */
-    error ERC721NonexistentToken(uint256 tokenId);
-
-    /**
-     * @dev Indicates an error related to the ownership over a particular token. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param tokenId Identifier number of a token.
-     * @param owner Address of the current owner of a token.
-     */
-    error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
-
-    /**
-     * @dev Indicates a failure with the token `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     */
-    error ERC721InvalidSender(address sender);
-
-    /**
-     * @dev Indicates a failure with the token `receiver`. Used in transfers.
-     * @param receiver Address to which tokens are being transferred.
-     */
-    error ERC721InvalidReceiver(address receiver);
-
-    /**
-     * @dev Indicates a failure with the `operator`’s approval. Used in transfers.
-     * @param operator Address that may be allowed to operate on tokens without being their owner.
-     * @param tokenId Identifier number of a token.
-     */
-    error ERC721InsufficientApproval(address operator, uint256 tokenId);
-
-    /**
-     * @dev Indicates a failure with the `approver` of a token to be approved. Used in approvals.
-     * @param approver Address initiating an approval operation.
-     */
-    error ERC721InvalidApprover(address approver);
-
-    /**
-     * @dev Indicates a failure with the `operator` to be approved. Used in approvals.
-     * @param operator Address that may be allowed to operate on tokens without being their owner.
-     */
-    error ERC721InvalidOperator(address operator);
-}
-
-/**
- * @dev Standard ERC1155 Errors
- * Interface of the https://eips.ethereum.org/EIPS/eip-6093[ERC-6093] custom errors for ERC1155 tokens.
- */
-interface IERC1155Errors {
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param balance Current balance for the interacting account.
-     * @param needed Minimum amount required to perform a transfer.
-     * @param tokenId Identifier number of a token.
-     */
-    error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId);
-
-    /**
-     * @dev Indicates a failure with the token `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     */
-    error ERC1155InvalidSender(address sender);
-
-    /**
-     * @dev Indicates a failure with the token `receiver`. Used in transfers.
-     * @param receiver Address to which tokens are being transferred.
-     */
-    error ERC1155InvalidReceiver(address receiver);
-
-    /**
-     * @dev Indicates a failure with the `operator`’s approval. Used in transfers.
-     * @param operator Address that may be allowed to operate on tokens without being their owner.
-     * @param owner Address of the current owner of a token.
-     */
-    error ERC1155MissingApprovalForAll(address operator, address owner);
-
-    /**
-     * @dev Indicates a failure with the `approver` of a token to be approved. Used in approvals.
-     * @param approver Address initiating an approval operation.
-     */
-    error ERC1155InvalidApprover(address approver);
-
-    /**
-     * @dev Indicates a failure with the `operator` to be approved. Used in approvals.
-     * @param operator Address that may be allowed to operate on tokens without being their owner.
-     */
-    error ERC1155InvalidOperator(address operator);
-
-    /**
-     * @dev Indicates an array length mismatch between ids and values in a safeBatchTransferFrom operation.
-     * Used in batch transfers.
-     * @param idsLength Length of the array of token identifiers
-     * @param valuesLength Length of the array of token amounts
-     */
-    error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (proxy/beacon/IBeacon.sol)
-
-
-
-/**
- * @dev This is the interface that {BeaconProxy} expects of its beacon.
- */
-interface IBeacon {
-    /**
-     * @dev Must return an address that can be used as a delegate call target.
-     *
-     * {UpgradeableBeacon} will check that this address is a contract.
-     */
-    function implementation() external view returns (address);
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/IERC721Receiver.sol)
-
-
-
-/**
- * @title ERC721 token receiver interface
- * @dev Interface for any contract that wants to support safeTransfers
- * from ERC721 asset contracts.
- */
-interface IERC721Receiver {
-    /**
-     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
-     * by `operator` from `from`, this function is called.
-     *
-     * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be
-     * reverted.
-     *
-     * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4);
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/Address.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)
-
-
-
-/**
- * @dev Collection of functions related to the address type
- */
-library Address {
-    /**
-     * @dev The ETH balance of the account is not enough to perform the operation.
-     */
-    error AddressInsufficientBalance(address account);
-
-    /**
-     * @dev There's no code at `target` (it is not a contract).
-     */
-    error AddressEmptyCode(address target);
-
-    /**
-     * @dev A call to an address target failed. The target may have reverted.
-     */
-    error FailedInnerCall();
-
-    /**
-     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
-     * `recipient`, forwarding all available gas and reverting on errors.
-     *
-     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
-     * of certain opcodes, possibly making contracts go over the 2300 gas limit
-     * imposed by `transfer`, making them unable to receive funds via
-     * `transfer`. {sendValue} removes this limitation.
-     *
-     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].
-     *
-     * IMPORTANT: because control is transferred to `recipient`, care must be
-     * taken to not create reentrancy vulnerabilities. Consider using
-     * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.8.20/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
-     */
-    function sendValue(address payable recipient, uint256 amount) internal {
-        if (address(this).balance < amount) {
-            revert AddressInsufficientBalance(address(this));
-        }
-
-        (bool success, ) = recipient.call{value: amount}("");
-        if (!success) {
-            revert FailedInnerCall();
-        }
-    }
-
-    /**
-     * @dev Performs a Solidity function call using a low level `call`. A
-     * plain `call` is an unsafe replacement for a function call: use this
-     * function instead.
-     *
-     * If `target` reverts with a revert reason or custom error, it is bubbled
-     * up by this function (like regular Solidity function calls). However, if
-     * the call reverted with no returned reason, this function reverts with a
-     * {FailedInnerCall} error.
-     *
-     * Returns the raw returned data. To convert to the expected return value,
-     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
-     *
-     * Requirements:
-     *
-     * - `target` must be a contract.
-     * - calling `target` with `data` must not revert.
-     */
-    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, 0);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but also transferring `value` wei to `target`.
-     *
-     * Requirements:
-     *
-     * - the calling contract must have an ETH balance of at least `value`.
-     * - the called Solidity function must be `payable`.
-     */
-    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
-        if (address(this).balance < value) {
-            revert AddressInsufficientBalance(address(this));
-        }
-        (bool success, bytes memory returndata) = target.call{value: value}(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a static call.
-     */
-    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.staticcall(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a delegate call.
-     */
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.delegatecall(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    /**
-     * @dev Tool to verify that a low level call to smart-contract was successful, and reverts if the target
-     * was not a contract or bubbling up the revert reason (falling back to {FailedInnerCall}) in case of an
-     * unsuccessful call.
-     */
-    function verifyCallResultFromTarget(
-        address target,
-        bool success,
-        bytes memory returndata
-    ) internal view returns (bytes memory) {
-        if (!success) {
-            _revert(returndata);
-        } else {
-            // only check if target is a contract if the call was successful and the return data is empty
-            // otherwise we already know that it was a contract
-            if (returndata.length == 0 && target.code.length == 0) {
-                revert AddressEmptyCode(target);
-            }
-            return returndata;
-        }
-    }
-
-    /**
-     * @dev Tool to verify that a low level call was successful, and reverts if it wasn't, either by bubbling the
-     * revert reason or with a default {FailedInnerCall} error.
-     */
-    function verifyCallResult(bool success, bytes memory returndata) internal pure returns (bytes memory) {
-        if (!success) {
-            _revert(returndata);
-        } else {
-            return returndata;
-        }
-    }
-
-    /**
-     * @dev Reverts with returndata if present. Otherwise reverts with {FailedInnerCall}.
-     */
-    function _revert(bytes memory returndata) private pure {
-        // Look for revert reason and bubble it up if present
-        if (returndata.length > 0) {
-            // The easiest way to bubble the revert reason is using memory via assembly
-            /// @solidity memory-safe-assembly
-            assembly {
-                let returndata_size := mload(returndata)
-                revert(add(32, returndata), returndata_size)
-            }
-        } else {
-            revert FailedInnerCall();
-        }
-    }
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/StorageSlot.sol)
-// This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
-
-
-
-/**
- * @dev Library for reading and writing primitive types to specific storage slots.
- *
- * Storage slots are often used to avoid storage conflict when dealing with upgradeable contracts.
- * This library helps with reading and writing to such slots without the need for inline assembly.
- *
- * The functions in this library return Slot structs that contain a `value` member that can be used to read or write.
- *
- * Example usage to set ERC1967 implementation slot:
- * ```solidity
- * contract ERC1967 {
- *     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
- *
- *     function _getImplementation() internal view returns (address) {
- *         return StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
- *     }
- *
- *     function _setImplementation(address newImplementation) internal {
- *         require(newImplementation.code.length > 0);
- *         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
- *     }
- * }
- * ```
- */
-library StorageSlot {
-    struct AddressSlot {
-        address value;
-    }
-
-    struct BooleanSlot {
-        bool value;
-    }
-
-    struct Bytes32Slot {
-        bytes32 value;
-    }
-
-    struct Uint256Slot {
-        uint256 value;
-    }
-
-    struct StringSlot {
-        string value;
-    }
-
-    struct BytesSlot {
-        bytes value;
-    }
-
-    /**
-     * @dev Returns an `AddressSlot` with member `value` located at `slot`.
-     */
-    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
-     */
-    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
-     */
-    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
-     */
-    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `StringSlot` with member `value` located at `slot`.
-     */
-    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
-     */
-    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := store.slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BytesSlot` with member `value` located at `slot`.
-     */
-    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
-     */
-    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := store.slot
-        }
-    }
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/IERC165.sol)
-
-
-
-/**
- * @dev Interface of the ERC165 standard, as defined in the
- * https://eips.ethereum.org/EIPS/eip-165[EIP].
- *
- * Implementers can declare support of contract interfaces, which can then be
- * queried by others ({ERC165Checker}).
- *
- * For an implementation, see {ERC165}.
- */
-interface IERC165 {
-    /**
-     * @dev Returns true if this contract implements the interface defined by
-     * `interfaceId`. See the corresponding
-     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]
-     * to learn more about how these ids are created.
-     *
-     * This function call must use less than 30 000 gas.
-     */
-    function supportsInterface(bytes4 interfaceId) external view returns (bool);
-}
-
 // lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/Math.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/math/Math.sol)
-
-
 
 /**
  * @dev Standard math utilities missing in the Solidity language.
@@ -1310,8 +980,6 @@ library Math {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/math/SignedMath.sol)
 
-
-
 /**
  * @dev Standard signed math utilities missing in the Solidity language.
  */
@@ -1351,10 +1019,139 @@ library SignedMath {
     }
 }
 
-// src/Interfaces/ITossWhitelist.sol
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol
 
-interface ITossWhitelist {
-    function isInWhitelist(address user) external view returns (bool);
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/StorageSlot.sol)
+// This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
+
+/**
+ * @dev Library for reading and writing primitive types to specific storage slots.
+ *
+ * Storage slots are often used to avoid storage conflict when dealing with upgradeable contracts.
+ * This library helps with reading and writing to such slots without the need for inline assembly.
+ *
+ * The functions in this library return Slot structs that contain a `value` member that can be used to read or write.
+ *
+ * Example usage to set ERC1967 implementation slot:
+ * ```solidity
+ * contract ERC1967 {
+ *     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+ *
+ *     function _getImplementation() internal view returns (address) {
+ *         return StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
+ *     }
+ *
+ *     function _setImplementation(address newImplementation) internal {
+ *         require(newImplementation.code.length > 0);
+ *         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
+ *     }
+ * }
+ * ```
+ */
+library StorageSlot {
+    struct AddressSlot {
+        address value;
+    }
+
+    struct BooleanSlot {
+        bool value;
+    }
+
+    struct Bytes32Slot {
+        bytes32 value;
+    }
+
+    struct Uint256Slot {
+        uint256 value;
+    }
+
+    struct StringSlot {
+        string value;
+    }
+
+    struct BytesSlot {
+        bytes value;
+    }
+
+    /**
+     * @dev Returns an `AddressSlot` with member `value` located at `slot`.
+     */
+    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
+     */
+    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
+     */
+    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
+     */
+    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `StringSlot` with member `value` located at `slot`.
+     */
+    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
+     */
+    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := store.slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BytesSlot` with member `value` located at `slot`.
+     */
+    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
+     */
+    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := store.slot
+        }
+    }
 }
 
 // src/Interfaces/TossErrors.sol
@@ -1365,12 +1162,191 @@ error TossValueIsZero(string parameter);
 error TossValueIsLessThanOneEther(string parameter);
 error TossUnsupportedInterface(string name);
 
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC1822.sol)
+
+/**
+ * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified
+ * proxy whose upgrades are fully controlled by the current implementation.
+ */
+interface IERC1822Proxiable {
+    /**
+     * @dev Returns the storage slot that the proxiable contract assumes is being used to store the implementation
+     * address.
+     *
+     * IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks
+     * bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this
+     * function revert if invoked through a proxy.
+     */
+    function proxiableUUID() external view returns (bytes32);
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC6093.sol)
+
+/**
+ * @dev Standard ERC20 Errors
+ * Interface of the https://eips.ethereum.org/EIPS/eip-6093[ERC-6093] custom errors for ERC20 tokens.
+ */
+interface IERC20Errors {
+    /**
+     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     * @param balance Current balance for the interacting account.
+     * @param needed Minimum amount required to perform a transfer.
+     */
+    error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+
+    /**
+     * @dev Indicates a failure with the token `sender`. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     */
+    error ERC20InvalidSender(address sender);
+
+    /**
+     * @dev Indicates a failure with the token `receiver`. Used in transfers.
+     * @param receiver Address to which tokens are being transferred.
+     */
+    error ERC20InvalidReceiver(address receiver);
+
+    /**
+     * @dev Indicates a failure with the `spender`’s `allowance`. Used in transfers.
+     * @param spender Address that may be allowed to operate on tokens without being their owner.
+     * @param allowance Amount of tokens a `spender` is allowed to operate with.
+     * @param needed Minimum amount required to perform a transfer.
+     */
+    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+
+    /**
+     * @dev Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+     * @param approver Address initiating an approval operation.
+     */
+    error ERC20InvalidApprover(address approver);
+
+    /**
+     * @dev Indicates a failure with the `spender` to be approved. Used in approvals.
+     * @param spender Address that may be allowed to operate on tokens without being their owner.
+     */
+    error ERC20InvalidSpender(address spender);
+}
+
+/**
+ * @dev Standard ERC721 Errors
+ * Interface of the https://eips.ethereum.org/EIPS/eip-6093[ERC-6093] custom errors for ERC721 tokens.
+ */
+interface IERC721Errors {
+    /**
+     * @dev Indicates that an address can't be an owner. For example, `address(0)` is a forbidden owner in EIP-20.
+     * Used in balance queries.
+     * @param owner Address of the current owner of a token.
+     */
+    error ERC721InvalidOwner(address owner);
+
+    /**
+     * @dev Indicates a `tokenId` whose `owner` is the zero address.
+     * @param tokenId Identifier number of a token.
+     */
+    error ERC721NonexistentToken(uint256 tokenId);
+
+    /**
+     * @dev Indicates an error related to the ownership over a particular token. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     * @param tokenId Identifier number of a token.
+     * @param owner Address of the current owner of a token.
+     */
+    error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
+
+    /**
+     * @dev Indicates a failure with the token `sender`. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     */
+    error ERC721InvalidSender(address sender);
+
+    /**
+     * @dev Indicates a failure with the token `receiver`. Used in transfers.
+     * @param receiver Address to which tokens are being transferred.
+     */
+    error ERC721InvalidReceiver(address receiver);
+
+    /**
+     * @dev Indicates a failure with the `operator`’s approval. Used in transfers.
+     * @param operator Address that may be allowed to operate on tokens without being their owner.
+     * @param tokenId Identifier number of a token.
+     */
+    error ERC721InsufficientApproval(address operator, uint256 tokenId);
+
+    /**
+     * @dev Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+     * @param approver Address initiating an approval operation.
+     */
+    error ERC721InvalidApprover(address approver);
+
+    /**
+     * @dev Indicates a failure with the `operator` to be approved. Used in approvals.
+     * @param operator Address that may be allowed to operate on tokens without being their owner.
+     */
+    error ERC721InvalidOperator(address operator);
+}
+
+/**
+ * @dev Standard ERC1155 Errors
+ * Interface of the https://eips.ethereum.org/EIPS/eip-6093[ERC-6093] custom errors for ERC1155 tokens.
+ */
+interface IERC1155Errors {
+    /**
+     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     * @param balance Current balance for the interacting account.
+     * @param needed Minimum amount required to perform a transfer.
+     * @param tokenId Identifier number of a token.
+     */
+    error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId);
+
+    /**
+     * @dev Indicates a failure with the token `sender`. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     */
+    error ERC1155InvalidSender(address sender);
+
+    /**
+     * @dev Indicates a failure with the token `receiver`. Used in transfers.
+     * @param receiver Address to which tokens are being transferred.
+     */
+    error ERC1155InvalidReceiver(address receiver);
+
+    /**
+     * @dev Indicates a failure with the `operator`’s approval. Used in transfers.
+     * @param operator Address that may be allowed to operate on tokens without being their owner.
+     * @param owner Address of the current owner of a token.
+     */
+    error ERC1155MissingApprovalForAll(address operator, address owner);
+
+    /**
+     * @dev Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+     * @param approver Address initiating an approval operation.
+     */
+    error ERC1155InvalidApprover(address approver);
+
+    /**
+     * @dev Indicates a failure with the `operator` to be approved. Used in approvals.
+     * @param operator Address that may be allowed to operate on tokens without being their owner.
+     */
+    error ERC1155InvalidOperator(address operator);
+
+    /**
+     * @dev Indicates an array length mismatch between ids and values in a safeBatchTransferFrom operation.
+     * Used in batch transfers.
+     * @param idsLength Length of the array of token identifiers
+     * @param valuesLength Length of the array of token amounts
+     */
+    error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
+}
+
 // lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)
-
-
-
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -1401,120 +1377,9 @@ abstract contract ContextUpgradeable is Initializable {
     }
 }
 
-// lib/openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/ReentrancyGuard.sol)
-
-
-
-
-/**
- * @dev Contract module that helps prevent reentrant calls to a function.
- *
- * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
- * available, which can be applied to functions to make sure there are no nested
- * (reentrant) calls to them.
- *
- * Note that because there is a single `nonReentrant` guard, functions marked as
- * `nonReentrant` may not call one another. This can be worked around by making
- * those functions `private`, and then adding `external` `nonReentrant` entry
- * points to them.
- *
- * TIP: If you would like to learn more about reentrancy and alternative ways
- * to protect against it, check out our blog post
- * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
- */
-abstract contract ReentrancyGuardUpgradeable is Initializable {
-    // Booleans are more expensive than uint256 or any type that takes up a full
-    // word because each write operation emits an extra SLOAD to first read the
-    // slot's contents, replace the bits taken up by the boolean, and then write
-    // back. This is the compiler's defense against contract upgrades and
-    // pointer aliasing, and it cannot be disabled.
-
-    // The values being non-zero value makes deployment a bit more expensive,
-    // but in exchange the refund on every call to nonReentrant will be lower in
-    // amount. Since refunds are capped to a percentage of the total
-    // transaction's gas, it is best to keep them low in cases like this one, to
-    // increase the likelihood of the full refund coming into effect.
-    uint256 private constant NOT_ENTERED = 1;
-    uint256 private constant ENTERED = 2;
-
-    /// @custom:storage-location erc7201:openzeppelin.storage.ReentrancyGuard
-    struct ReentrancyGuardStorage {
-        uint256 _status;
-    }
-
-    // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.ReentrancyGuard")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant ReentrancyGuardStorageLocation = 0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00;
-
-    function _getReentrancyGuardStorage() private pure returns (ReentrancyGuardStorage storage $) {
-        assembly {
-            $.slot := ReentrancyGuardStorageLocation
-        }
-    }
-
-    /**
-     * @dev Unauthorized reentrant call.
-     */
-    error ReentrancyGuardReentrantCall();
-
-    function __ReentrancyGuard_init() internal onlyInitializing {
-        __ReentrancyGuard_init_unchained();
-    }
-
-    function __ReentrancyGuard_init_unchained() internal onlyInitializing {
-        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
-        $._status = NOT_ENTERED;
-    }
-
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * Calling a `nonReentrant` function from another `nonReentrant`
-     * function is not supported. It is possible to prevent this from happening
-     * by making the `nonReentrant` function external, and making it call a
-     * `private` function that does the actual work.
-     */
-    modifier nonReentrant() {
-        _nonReentrantBefore();
-        _;
-        _nonReentrantAfter();
-    }
-
-    function _nonReentrantBefore() private {
-        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
-        // On the first call to nonReentrant, _status will be NOT_ENTERED
-        if ($._status == ENTERED) {
-            revert ReentrancyGuardReentrantCall();
-        }
-
-        // Any calls to nonReentrant after this point will fail
-        $._status = ENTERED;
-    }
-
-    function _nonReentrantAfter() private {
-        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        $._status = NOT_ENTERED;
-    }
-
-    /**
-     * @dev Returns true if the reentrancy guard is currently set to "entered", which indicates there is a
-     * `nonReentrant` function in the call stack.
-     */
-    function _reentrancyGuardEntered() internal view returns (bool) {
-        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
-        return $._status == ENTERED;
-    }
-}
-
 // lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/IERC721.sol)
-
-
-
-
 
 /**
  * @dev Required interface of an ERC721 compliant contract.
@@ -1645,6 +1510,110 @@ interface IERC721 is IERC165 {
     function isApprovedForAll(address owner, address operator) external view returns (bool);
 }
 
+// lib/openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/ReentrancyGuard.sol)
+
+/**
+ * @dev Contract module that helps prevent reentrant calls to a function.
+ *
+ * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
+ * available, which can be applied to functions to make sure there are no nested
+ * (reentrant) calls to them.
+ *
+ * Note that because there is a single `nonReentrant` guard, functions marked as
+ * `nonReentrant` may not call one another. This can be worked around by making
+ * those functions `private`, and then adding `external` `nonReentrant` entry
+ * points to them.
+ *
+ * TIP: If you would like to learn more about reentrancy and alternative ways
+ * to protect against it, check out our blog post
+ * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
+ */
+abstract contract ReentrancyGuardUpgradeable is Initializable {
+    // Booleans are more expensive than uint256 or any type that takes up a full
+    // word because each write operation emits an extra SLOAD to first read the
+    // slot's contents, replace the bits taken up by the boolean, and then write
+    // back. This is the compiler's defense against contract upgrades and
+    // pointer aliasing, and it cannot be disabled.
+
+    // The values being non-zero value makes deployment a bit more expensive,
+    // but in exchange the refund on every call to nonReentrant will be lower in
+    // amount. Since refunds are capped to a percentage of the total
+    // transaction's gas, it is best to keep them low in cases like this one, to
+    // increase the likelihood of the full refund coming into effect.
+    uint256 private constant NOT_ENTERED = 1;
+    uint256 private constant ENTERED = 2;
+
+    /// @custom:storage-location erc7201:openzeppelin.storage.ReentrancyGuard
+    struct ReentrancyGuardStorage {
+        uint256 _status;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.ReentrancyGuard")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant ReentrancyGuardStorageLocation = 0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00;
+
+    function _getReentrancyGuardStorage() private pure returns (ReentrancyGuardStorage storage $) {
+        assembly {
+            $.slot := ReentrancyGuardStorageLocation
+        }
+    }
+
+    /**
+     * @dev Unauthorized reentrant call.
+     */
+    error ReentrancyGuardReentrantCall();
+
+    function __ReentrancyGuard_init() internal onlyInitializing {
+        __ReentrancyGuard_init_unchained();
+    }
+
+    function __ReentrancyGuard_init_unchained() internal onlyInitializing {
+        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
+        $._status = NOT_ENTERED;
+    }
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and making it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        _nonReentrantBefore();
+        _;
+        _nonReentrantAfter();
+    }
+
+    function _nonReentrantBefore() private {
+        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
+        // On the first call to nonReentrant, _status will be NOT_ENTERED
+        if ($._status == ENTERED) {
+            revert ReentrancyGuardReentrantCall();
+        }
+
+        // Any calls to nonReentrant after this point will fail
+        $._status = ENTERED;
+    }
+
+    function _nonReentrantAfter() private {
+        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        $._status = NOT_ENTERED;
+    }
+
+    /**
+     * @dev Returns true if the reentrancy guard is currently set to "entered", which indicates there is a
+     * `nonReentrant` function in the call stack.
+     */
+    function _reentrancyGuardEntered() internal view returns (bool) {
+        ReentrancyGuardStorage storage $ = _getReentrancyGuardStorage();
+        return $._status == ENTERED;
+    }
+}
+
 // src/Bases/TossWhitelistClient.sol
 
 abstract contract TossWhitelistClient {
@@ -1665,11 +1634,15 @@ abstract contract TossWhitelistClient {
     }
 
     modifier isInWhitelist(address user) {
+        _isInWhitelist(user);
+        _;
+    }
+
+    function _isInWhitelist(address user) private view {
         TossWhitelistClientStorage storage $ = _getTossWhitelistClientStorage();
         if (user != address(0) && $.whitelistAddress != address(0) && !ITossWhitelist($.whitelistAddress).isInWhitelist(user)) {
             revert TossWhitelistNotInWhitelist(user);
         }
-        _;
     }
 
     function getWhitelist() external view returns (address whitelistAddress) {
@@ -1683,14 +1656,70 @@ abstract contract TossWhitelistClient {
     }
 }
 
+// lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/ERC165.sol)
+
+/**
+ * @dev Implementation of the {IERC165} interface.
+ *
+ * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
+ * for the additional interface id that will be supported. For example:
+ *
+ * ```solidity
+ * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+ *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
+ * }
+ * ```
+ */
+abstract contract ERC165Upgradeable is Initializable, IERC165 {
+    function __ERC165_init() internal onlyInitializing {
+    }
+
+    function __ERC165_init_unchained() internal onlyInitializing {
+    }
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
+        return interfaceId == type(IERC165).interfaceId;
+    }
+}
+
+// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol
+
+// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/extensions/IERC721Metadata.sol)
+
+/**
+ * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+ * @dev See https://eips.ethereum.org/EIPS/eip-721
+ */
+interface IERC721Metadata is IERC721 {
+    /**
+     * @dev Returns the token collection name.
+     */
+    function name() external view returns (string memory);
+
+    /**
+     * @dev Returns the token collection symbol.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     */
+    function tokenURI(uint256 tokenId) external view returns (string memory);
+}
+
+// src/Interfaces/ITossMarket.sol
+
+interface ITossMarket is IERC721Receiver, IERC165 {
+    function createSellOffer(uint256 tokenId, uint128 price, address owner) external;
+}
+
 // lib/openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Pausable.sol)
-
-
-
-
-
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -1825,78 +1854,9 @@ abstract contract PausableUpgradeable is Initializable, ContextUpgradeable {
     }
 }
 
-// lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/ERC165.sol)
-
-
-
-
-
-
-/**
- * @dev Implementation of the {IERC165} interface.
- *
- * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
- * for the additional interface id that will be supported. For example:
- *
- * ```solidity
- * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
- *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
- * }
- * ```
- */
-abstract contract ERC165Upgradeable is Initializable, IERC165 {
-    function __ERC165_init() internal onlyInitializing {
-    }
-
-    function __ERC165_init_unchained() internal onlyInitializing {
-    }
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
-        return interfaceId == type(IERC165).interfaceId;
-    }
-}
-
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol
-
-// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/extensions/IERC721Metadata.sol)
-
-
-
-
-
-/**
- * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
- * @dev See https://eips.ethereum.org/EIPS/eip-721
- */
-interface IERC721Metadata is IERC721 {
-    /**
-     * @dev Returns the token collection name.
-     */
-    function name() external view returns (string memory);
-
-    /**
-     * @dev Returns the token collection symbol.
-     */
-    function symbol() external view returns (string memory);
-
-    /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
-     */
-    function tokenURI(uint256 tokenId) external view returns (string memory);
-}
-
 // lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/Strings.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Strings.sol)
-
-
-
-
-
 
 /**
  * @dev String operations.
@@ -1985,21 +1945,9 @@ library Strings {
     }
 }
 
-// src/Interfaces/ITossMarket.sol
-
-interface ITossMarket is IERC721Receiver, IERC165 {
-    function createSellOffer(uint256 tokenId, uint128 price, address owner) external;
-}
-
 // lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/ERC1967/ERC1967Utils.sol)
-
-
-
-
-
-
 
 /**
  * @dev This abstract contract provides getters and event emitting update functions for
@@ -2198,13 +2146,6 @@ interface ITossErc721Market {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (access/AccessControl.sol)
 
-
-
-
-
-
-
-
 /**
  * @dev Contract module that allows children to implement role-based access
  * control mechanisms. This is a lightweight version that doesn't allow enumerating role
@@ -2251,7 +2192,6 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
     }
 
     bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
-
 
     /// @custom:storage-location erc7201:openzeppelin.storage.AccessControl
     struct AccessControlStorage {
@@ -2433,12 +2373,6 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
 
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/utils/UUPSUpgradeable.sol)
 
-
-
-
-
-
-
 /**
  * @dev An upgradeability mechanism designed for UUPS proxies. The functions included here can perform an upgrade of an
  * {ERC1967Proxy}, when this contract is set as the implementation behind such a proxy.
@@ -2599,18 +2533,6 @@ abstract contract TossUUPSUpgradeable is UUPSUpgradeable {
 // lib/openzeppelin-contracts-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/ERC721.sol)
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
@@ -3114,12 +3036,6 @@ abstract contract ERC721Upgradeable is Initializable, ContextUpgradeable, ERC165
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/extensions/ERC721Pausable.sol)
 
-
-
-
-
-
-
 /**
  * @dev ERC721 token with pausable token transfers, minting and burning.
  *
@@ -3158,15 +3074,7 @@ abstract contract ERC721PausableUpgradeable is Initializable, ERC721Upgradeable,
 
 // src/Bases/TossErc721MarketBase.sol
 
-abstract contract TossErc721MarketBase is
-    ITossErc721Market,
-    TossWhitelistClient,
-    ERC721Upgradeable,
-    ERC721PausableUpgradeable,
-    AccessControlUpgradeable,
-    ReentrancyGuardUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossErc721MarketBase is ITossErc721Market, TossWhitelistClient, ERC721Upgradeable, ERC721PausableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, TossUUPSUpgradeable {
     /// @custom:storage-location erc7201:tossplatform.storage.TossErc721MarketBase
     struct TossErc721MarketBaseStorage {
         ITossMarket market;
@@ -3218,11 +3126,7 @@ abstract contract TossErc721MarketBase is
         _setWhitelist(newAddress);
     }
 
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) isInWhitelist(to) whenNotPaused returns (address) {
+    function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721Upgradeable, ERC721PausableUpgradeable) isInWhitelist(to) whenNotPaused returns (address) {
         return super._update(to, tokenId, auth);
     }
 

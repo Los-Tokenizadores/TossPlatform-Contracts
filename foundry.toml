@@ -9,13 +9,24 @@ optimizer_runs = 200
 extra_output = ["storageLayout"]
 
 [fmt]
-line_length = 180
+line_length = 220
 tab_width = 4
 bracket_spacing = true
 int_types = 'long'
 quote_style = 'double'
 number_underscore = 'thousands'
-multiline_func_header = 'params_first'
+multiline_func_header = 'params_first_multi'
+style = 'space'
+hex_underscore = 'remove'
+single_line_statement_blocks = 'preserve'
+override_spacing = false
+wrap_comments = false
+contract_new_lines = false
+sort_imports = false
+pow_no_space = false
+prefer_compact = 'all'
+docs_style = 'preserve'
+single_line_imports = false
 
 [fuzz]
 runs = 1024

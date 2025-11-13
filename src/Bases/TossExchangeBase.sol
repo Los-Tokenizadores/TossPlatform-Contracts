@@ -51,12 +51,7 @@ abstract contract TossExchangeBase is TossWhitelistClient, PausableUpgradeable, 
         __TossExchangeBase_init_unchained(externalErc20_, depositMinAmount_, internalErc20_, withdrawMinAmount_);
     }
 
-    function __TossExchangeBase_init_unchained(
-        IERC20 externalErc20_,
-        uint128 depositMinAmount_,
-        TossErc20Base internalErc20_,
-        uint128 withdrawMinAmount_
-    ) internal onlyInitializing {
+    function __TossExchangeBase_init_unchained(IERC20 externalErc20_, uint128 depositMinAmount_, TossErc20Base internalErc20_, uint128 withdrawMinAmount_) internal onlyInitializing {
         if (address(externalErc20_) == address(0)) {
             revert TossAddressIsZero("external");
         }

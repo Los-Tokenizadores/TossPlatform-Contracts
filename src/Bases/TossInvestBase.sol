@@ -91,12 +91,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
         __TossInvestBase_init_unchained(erc20_, erc721Implementation_, platformAddress_, erc721baseUri_);
     }
 
-    function __TossInvestBase_init_unchained(
-        IERC20 erc20_,
-        TossErc721MarketV1 erc721Implementation_,
-        address platformAddress_,
-        string memory erc721baseUri_
-    ) internal onlyInitializing {
+    function __TossInvestBase_init_unchained(IERC20 erc20_, TossErc721MarketV1 erc721Implementation_, address platformAddress_, string memory erc721baseUri_) internal onlyInitializing {
         if (address(erc20_) == address(0)) {
             revert TossAddressIsZero("erc20");
         }
@@ -257,23 +252,24 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
 
         TossInvestBaseStorage storage $ = _getTossInvestBaseStorage();
         uint256 projectId = $.projects.length;
-        $.projects.push(
-            ProjectInfo({
-                name: name,
-                symbol: symbol,
-                targetAmount: targetAmount,
-                maxAmount: maxAmount,
-                price: price,
-                startAt: startAt,
-                finishAt: finishAt,
-                mintedAt: 0,
-                erc721Address: address(0),
-                lastIndex: 0,
-                projectWallet: projectWallet,
-                confirmed: false,
-                platformCut: platformCut
-            })
-        );
+        $.projects
+            .push(
+                ProjectInfo({
+                    name: name,
+                    symbol: symbol,
+                    targetAmount: targetAmount,
+                    maxAmount: maxAmount,
+                    price: price,
+                    startAt: startAt,
+                    finishAt: finishAt,
+                    mintedAt: 0,
+                    erc721Address: address(0),
+                    lastIndex: 0,
+                    projectWallet: projectWallet,
+                    confirmed: false,
+                    platformCut: platformCut
+                })
+            );
 
         emit ProjectAdded(projectId);
     }
@@ -480,8 +476,7 @@ abstract contract TossInvestBase is TossWhitelistClient, PausableUpgradeable, Ac
             return TossErc721MarketV1(projectInfo.erc721Address);
         }
 
-        TossUpgradeableProxy proxy =
-            new TossUpgradeableProxy(address($.erc721Implementation), abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address($.erc721Implementation), abi.encodeCall(TossErc721MarketV1.__TossErc721MarketV1_init, (projectInfo.name, projectInfo.symbol)));
         projectInfo.erc721Address = address(proxy);
         projectInfo.mintedAt = uint64(block.timestamp);
         emit ProjectErc721Created(projectId, projectInfo.erc721Address, address($.erc721Implementation));

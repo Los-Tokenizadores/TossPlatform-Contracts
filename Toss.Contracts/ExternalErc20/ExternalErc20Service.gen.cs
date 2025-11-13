@@ -14,7 +14,7 @@ using Toss.Contracts.ExternalErc20.ContractDefinition;
 
 namespace Toss.Contracts.ExternalErc20
 {
-    public partial class ExternalErc20Service: ContractWeb3ServiceBase
+    public partial class ExternalErc20Service: ExternalErc20ServiceBase
     {
         public static Task<TransactionReceipt> DeployContractAndWaitForReceiptAsync(Nethereum.Web3.IWeb3 web3, ExternalErc20Deployment externalErc20Deployment, CancellationTokenSource cancellationTokenSource = null)
         {
@@ -36,13 +36,23 @@ namespace Toss.Contracts.ExternalErc20
         {
         }
 
+    }
+
+
+    public partial class ExternalErc20ServiceBase: ContractWeb3ServiceBase
+    {
+
+        public ExternalErc20ServiceBase(Nethereum.Web3.IWeb3 web3, string contractAddress) : base(web3, contractAddress)
+        {
+        }
+
         public Task<byte[]> DomainSeparatorQueryAsync(DomainSeparatorFunction domainSeparatorFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DomainSeparatorFunction, byte[]>(domainSeparatorFunction, blockParameter);
         }
 
         
-        public Task<byte[]> DomainSeparatorQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<byte[]> DomainSeparatorQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DomainSeparatorFunction, byte[]>(null, blockParameter);
         }
@@ -53,7 +63,7 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<BigInteger> AllowanceQueryAsync(string owner, string spender, BlockParameter blockParameter = null)
+        public virtual Task<BigInteger> AllowanceQueryAsync(string owner, string spender, BlockParameter blockParameter = null)
         {
             var allowanceFunction = new AllowanceFunction();
                 allowanceFunction.Owner = owner;
@@ -62,17 +72,17 @@ namespace Toss.Contracts.ExternalErc20
             return ContractHandler.QueryAsync<AllowanceFunction, BigInteger>(allowanceFunction, blockParameter);
         }
 
-        public Task<string> ApproveRequestAsync(ApproveFunction approveFunction)
+        public virtual Task<string> ApproveRequestAsync(ApproveFunction approveFunction)
         {
              return ContractHandler.SendRequestAsync(approveFunction);
         }
 
-        public Task<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(ApproveFunction approveFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(ApproveFunction approveFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(approveFunction, cancellationToken);
         }
 
-        public Task<string> ApproveRequestAsync(string spender, BigInteger value)
+        public virtual Task<string> ApproveRequestAsync(string spender, BigInteger value)
         {
             var approveFunction = new ApproveFunction();
                 approveFunction.Spender = spender;
@@ -81,7 +91,7 @@ namespace Toss.Contracts.ExternalErc20
              return ContractHandler.SendRequestAsync(approveFunction);
         }
 
-        public Task<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(string spender, BigInteger value, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> ApproveRequestAndWaitForReceiptAsync(string spender, BigInteger value, CancellationTokenSource cancellationToken = null)
         {
             var approveFunction = new ApproveFunction();
                 approveFunction.Spender = spender;
@@ -96,7 +106,7 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<BigInteger> BalanceOfQueryAsync(string account, BlockParameter blockParameter = null)
+        public virtual Task<BigInteger> BalanceOfQueryAsync(string account, BlockParameter blockParameter = null)
         {
             var balanceOfFunction = new BalanceOfFunction();
                 balanceOfFunction.Account = account;
@@ -110,17 +120,17 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<byte> DecimalsQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<byte> DecimalsQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<DecimalsFunction, byte>(null, blockParameter);
         }
 
-        public Task<Eip712DomainOutputDTO> Eip712DomainQueryAsync(Eip712DomainFunction eip712DomainFunction, BlockParameter blockParameter = null)
+        public virtual Task<Eip712DomainOutputDTO> Eip712DomainQueryAsync(Eip712DomainFunction eip712DomainFunction, BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryDeserializingToObjectAsync<Eip712DomainFunction, Eip712DomainOutputDTO>(eip712DomainFunction, blockParameter);
         }
 
-        public Task<Eip712DomainOutputDTO> Eip712DomainQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<Eip712DomainOutputDTO> Eip712DomainQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryDeserializingToObjectAsync<Eip712DomainFunction, Eip712DomainOutputDTO>(null, blockParameter);
         }
@@ -131,7 +141,7 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<string> NameQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<string> NameQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<NameFunction, string>(null, blockParameter);
         }
@@ -142,7 +152,7 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<BigInteger> NoncesQueryAsync(string owner, BlockParameter blockParameter = null)
+        public virtual Task<BigInteger> NoncesQueryAsync(string owner, BlockParameter blockParameter = null)
         {
             var noncesFunction = new NoncesFunction();
                 noncesFunction.Owner = owner;
@@ -150,17 +160,17 @@ namespace Toss.Contracts.ExternalErc20
             return ContractHandler.QueryAsync<NoncesFunction, BigInteger>(noncesFunction, blockParameter);
         }
 
-        public Task<string> PermitRequestAsync(PermitFunction permitFunction)
+        public virtual Task<string> PermitRequestAsync(PermitFunction permitFunction)
         {
              return ContractHandler.SendRequestAsync(permitFunction);
         }
 
-        public Task<TransactionReceipt> PermitRequestAndWaitForReceiptAsync(PermitFunction permitFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> PermitRequestAndWaitForReceiptAsync(PermitFunction permitFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(permitFunction, cancellationToken);
         }
 
-        public Task<string> PermitRequestAsync(string owner, string spender, BigInteger value, BigInteger deadline, byte v, byte[] r, byte[] s)
+        public virtual Task<string> PermitRequestAsync(string owner, string spender, BigInteger value, BigInteger deadline, byte v, byte[] r, byte[] s)
         {
             var permitFunction = new PermitFunction();
                 permitFunction.Owner = owner;
@@ -174,7 +184,7 @@ namespace Toss.Contracts.ExternalErc20
              return ContractHandler.SendRequestAsync(permitFunction);
         }
 
-        public Task<TransactionReceipt> PermitRequestAndWaitForReceiptAsync(string owner, string spender, BigInteger value, BigInteger deadline, byte v, byte[] r, byte[] s, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> PermitRequestAndWaitForReceiptAsync(string owner, string spender, BigInteger value, BigInteger deadline, byte v, byte[] r, byte[] s, CancellationTokenSource cancellationToken = null)
         {
             var permitFunction = new PermitFunction();
                 permitFunction.Owner = owner;
@@ -194,7 +204,7 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<string> SymbolQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<string> SymbolQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<SymbolFunction, string>(null, blockParameter);
         }
@@ -205,22 +215,22 @@ namespace Toss.Contracts.ExternalErc20
         }
 
         
-        public Task<BigInteger> TotalSupplyQueryAsync(BlockParameter blockParameter = null)
+        public virtual Task<BigInteger> TotalSupplyQueryAsync(BlockParameter blockParameter = null)
         {
             return ContractHandler.QueryAsync<TotalSupplyFunction, BigInteger>(null, blockParameter);
         }
 
-        public Task<string> TransferRequestAsync(TransferFunction transferFunction)
+        public virtual Task<string> TransferRequestAsync(TransferFunction transferFunction)
         {
              return ContractHandler.SendRequestAsync(transferFunction);
         }
 
-        public Task<TransactionReceipt> TransferRequestAndWaitForReceiptAsync(TransferFunction transferFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> TransferRequestAndWaitForReceiptAsync(TransferFunction transferFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(transferFunction, cancellationToken);
         }
 
-        public Task<string> TransferRequestAsync(string to, BigInteger value)
+        public virtual Task<string> TransferRequestAsync(string to, BigInteger value)
         {
             var transferFunction = new TransferFunction();
                 transferFunction.To = to;
@@ -229,7 +239,7 @@ namespace Toss.Contracts.ExternalErc20
              return ContractHandler.SendRequestAsync(transferFunction);
         }
 
-        public Task<TransactionReceipt> TransferRequestAndWaitForReceiptAsync(string to, BigInteger value, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> TransferRequestAndWaitForReceiptAsync(string to, BigInteger value, CancellationTokenSource cancellationToken = null)
         {
             var transferFunction = new TransferFunction();
                 transferFunction.To = to;
@@ -238,17 +248,17 @@ namespace Toss.Contracts.ExternalErc20
              return ContractHandler.SendRequestAndWaitForReceiptAsync(transferFunction, cancellationToken);
         }
 
-        public Task<string> TransferFromRequestAsync(TransferFromFunction transferFromFunction)
+        public virtual Task<string> TransferFromRequestAsync(TransferFromFunction transferFromFunction)
         {
              return ContractHandler.SendRequestAsync(transferFromFunction);
         }
 
-        public Task<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(TransferFromFunction transferFromFunction, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(TransferFromFunction transferFromFunction, CancellationTokenSource cancellationToken = null)
         {
              return ContractHandler.SendRequestAndWaitForReceiptAsync(transferFromFunction, cancellationToken);
         }
 
-        public Task<string> TransferFromRequestAsync(string from, string to, BigInteger value)
+        public virtual Task<string> TransferFromRequestAsync(string from, string to, BigInteger value)
         {
             var transferFromFunction = new TransferFromFunction();
                 transferFromFunction.From = from;
@@ -258,7 +268,7 @@ namespace Toss.Contracts.ExternalErc20
              return ContractHandler.SendRequestAsync(transferFromFunction);
         }
 
-        public Task<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(string from, string to, BigInteger value, CancellationTokenSource cancellationToken = null)
+        public virtual Task<TransactionReceipt> TransferFromRequestAndWaitForReceiptAsync(string from, string to, BigInteger value, CancellationTokenSource cancellationToken = null)
         {
             var transferFromFunction = new TransferFromFunction();
                 transferFromFunction.From = from;

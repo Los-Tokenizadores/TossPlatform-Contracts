@@ -40,15 +40,13 @@ library DeployWithProxyUtil {
     }
 
     function tossErc721GeneUniqueV1(string memory name, string memory symbol) internal returns (TossErc721GeneUniqueV1) {
-        TossUpgradeableProxy proxy =
-            new TossUpgradeableProxy(address(new TossErc721GeneUniqueV1()), abi.encodeCall(TossErc721GeneUniqueV1.__TossErc721GeneUniqueV1_init, (name, symbol)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc721GeneUniqueV1()), abi.encodeCall(TossErc721GeneUniqueV1.__TossErc721GeneUniqueV1_init, (name, symbol)));
 
         return TossErc721GeneUniqueV1(address(proxy));
     }
 
     function tossErc721GeneUniqueDevV1(string memory name, string memory symbol) internal returns (TossErc721GeneUniqueDevV1) {
-        TossUpgradeableProxy proxy =
-            new TossUpgradeableProxy(address(new TossErc721GeneUniqueDevV1()), abi.encodeCall(TossErc721GeneUniqueDevV1.__TossErc721GeneUniqueDevV1_init, (name, symbol)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossErc721GeneUniqueDevV1()), abi.encodeCall(TossErc721GeneUniqueDevV1.__TossErc721GeneUniqueDevV1_init, (name, symbol)));
 
         return TossErc721GeneUniqueDevV1(address(proxy));
     }
@@ -66,24 +64,14 @@ library DeployWithProxyUtil {
     }
 
     function tossExchangeV1(IERC20 externalErc20, uint128 depositMinAmount, TossErc20Base internalErc20, uint128 withdrawMinAmount) internal returns (TossExchangeV1) {
-        TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-            address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, depositMinAmount, internalErc20, withdrawMinAmount))
-        );
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossExchangeV1()), abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (externalErc20, depositMinAmount, internalErc20, withdrawMinAmount)));
 
         return TossExchangeV1(address(proxy));
     }
 
-    function tossExchangeTierV1(
-        IERC20 externalErc20,
-        uint128 externalMinAmount,
-        TossErc20Base internalErc20,
-        uint128 internalMinAmount,
-        uint64 year
-    ) internal returns (TossExchangeTierV1) {
-        TossUpgradeableProxy proxy = new TossUpgradeableProxy(
-            address(new TossExchangeTierV1()),
-            abi.encodeCall(TossExchangeTierV1.__TossExchangeTierV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, year))
-        );
+    function tossExchangeTierV1(IERC20 externalErc20, uint128 externalMinAmount, TossErc20Base internalErc20, uint128 internalMinAmount, uint64 year) internal returns (TossExchangeTierV1) {
+        TossUpgradeableProxy proxy =
+            new TossUpgradeableProxy(address(new TossExchangeTierV1()), abi.encodeCall(TossExchangeTierV1.__TossExchangeTierV1_init, (externalErc20, externalMinAmount, internalErc20, internalMinAmount, year)));
 
         return TossExchangeTierV1(address(proxy));
     }
@@ -95,8 +83,7 @@ library DeployWithProxyUtil {
     }
 
     function tossInvestV1(IERC20 erc20, TossErc721MarketV1 erc721Implementation, address platformAddress, string memory erc721baseUri) internal returns (TossInvestV1) {
-        TossUpgradeableProxy proxy =
-            new TossUpgradeableProxy(address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, erc721baseUri)));
+        TossUpgradeableProxy proxy = new TossUpgradeableProxy(address(new TossInvestV1()), abi.encodeCall(TossInvestV1.__TossInvestV1_init, (erc20, erc721Implementation, platformAddress, erc721baseUri)));
 
         return TossInvestV1(address(proxy));
     }

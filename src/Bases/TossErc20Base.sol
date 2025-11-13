@@ -9,15 +9,7 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { TossWhitelistClient } from "./TossWhitelistClient.sol";
 
-abstract contract TossErc20Base is
-    TossWhitelistClient,
-    ERC20Upgradeable,
-    ERC20BurnableUpgradeable,
-    ERC20PausableUpgradeable,
-    AccessControlUpgradeable,
-    ERC20PermitUpgradeable,
-    TossUUPSUpgradeable
-{
+abstract contract TossErc20Base is TossWhitelistClient, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable, ERC20PermitUpgradeable, TossUUPSUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");

@@ -21,11 +21,15 @@ abstract contract TossWhitelistClient {
     }
 
     modifier isInWhitelist(address user) {
+        _isInWhitelist(user);
+        _;
+    }
+
+    function _isInWhitelist(address user) private view {
         TossWhitelistClientStorage storage $ = _getTossWhitelistClientStorage();
         if (user != address(0) && $.whitelistAddress != address(0) && !ITossWhitelist($.whitelistAddress).isInWhitelist(user)) {
             revert TossWhitelistNotInWhitelist(user);
         }
-        _;
     }
 
     function getWhitelist() external view returns (address whitelistAddress) {

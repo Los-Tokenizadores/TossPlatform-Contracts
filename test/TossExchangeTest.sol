@@ -50,9 +50,7 @@ contract TossExchangeTest is BaseTest {
         new TossUpgradeableProxy(exchangeImp, abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (IERC20(address(0)), depositMinAmount, internalErc20, withdrawMinAmount)));
 
         vm.expectRevert(abi.encodeWithSelector(TossAddressIsZero.selector, "internal"));
-        new TossUpgradeableProxy(
-            exchangeImp, abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (IERC20(externalErc20), depositMinAmount, TossErc20Base(address(0)), withdrawMinAmount))
-        );
+        new TossUpgradeableProxy(exchangeImp, abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (IERC20(externalErc20), depositMinAmount, TossErc20Base(address(0)), withdrawMinAmount)));
 
         vm.expectRevert(TossExchangeBase.TossExchangeExternalAndInternalErc20AreEqual.selector);
         new TossUpgradeableProxy(exchangeImp, abi.encodeCall(TossExchangeV1.__TossExchangeV1_init, (IERC20(externalErc20), depositMinAmount, externalErc20, withdrawMinAmount)));
