@@ -5,7 +5,7 @@ import "forge-std/console2.sol";
 import { Test } from "forge-std/Test.sol";
 import { SigUtils } from "./utils/SigUtils.sol";
 import "./DeployWithProxyUtil.sol";
-import "../src/interfaces/TossErrors.sol";
+import "../src/Interfaces/TossErrors.sol";
 import { TossWhitelistClient } from "../src/Bases/TossWhitelistClient.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";

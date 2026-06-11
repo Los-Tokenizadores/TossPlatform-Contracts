@@ -14,7 +14,7 @@ import { ITossMarket } from "../src/Interfaces/ITossMarket.sol";
 import { TossSellerV1, TossSellerBase } from "../src/TossSellerV1.sol";
 import { TossWhitelistV1, TossWhitelistBase } from "../src/TossWhitelistV1.sol";
 import { TossUpgradeableProxy } from "../src/TossUpgradeableProxy.sol";
-import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 library DeployWithProxyUtil {
     using SafeERC20 for IERC20;

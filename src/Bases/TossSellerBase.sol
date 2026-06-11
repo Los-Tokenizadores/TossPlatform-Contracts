@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { SafeERC20, IERC20, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/Utils/SafeERC20.sol";
+import { SafeERC20, IERC20, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { TossUUPSUpgradeable } from "./TossUUPSUpgradeable.sol";
 import { ITossSellErc721 } from "../Interfaces/ITossSellErc721.sol";
