@@ -9,10 +9,10 @@ string[] dir = Directory.GetDirectories(bytecodePath, "*", SearchOption.TopDirec
 foreach (string dirName in dir) {
 	string name = dirName.Replace('\\', '/');
 	if (name.Contains($"{bytecodePath}/Toss")
-			&& !name.Contains("Test")
-			&& !name.Contains("UUPS")
-			&& !name.Contains("Base")
-			&& !name.Contains("Client")) {
+		&& !name.Contains("Test")
+		&& !name.Contains("UUPS")
+		&& !name.Contains("Base")
+		&& !name.Contains("Client")) {
 		continue;
 	}
 	Directory.Delete(dirName, true);
@@ -48,10 +48,16 @@ foreach (string fileName in dir) {
 }
 
 
-record Abi(ByteCode Bytecode, Metadata Metadata);
-record ByteCode(string Object);
-record Metadata(Compiler Compiler, Settings Settings);
-record Compiler(string Version);
-record Settings(string EvmVersion, Optimizer Optimizer);
-record Optimizer(bool Enabled, int Runs);
-record ByteCodeVersion(string EvmVersion, string CompilerVersion, bool Optimizer, int OptimizedRuns, string Bytecode);
+internal record Abi(ByteCode Bytecode, Metadata Metadata);
+
+internal record ByteCode(string Object);
+
+internal record Metadata(Compiler Compiler, Settings Settings);
+
+internal record Compiler(string Version);
+
+internal record Settings(string EvmVersion, Optimizer Optimizer);
+
+internal record Optimizer(bool Enabled, int Runs);
+
+internal record ByteCodeVersion(string EvmVersion, string CompilerVersion, bool Optimizer, int OptimizedRuns, string Bytecode);

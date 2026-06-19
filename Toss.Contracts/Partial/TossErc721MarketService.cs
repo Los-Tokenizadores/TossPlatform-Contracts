@@ -1,5 +1,5 @@
-﻿using Nethereum.RPC.Eth.DTOs;
-using System.Numerics;
+﻿using System.Numerics;
+using Nethereum.RPC.Eth.DTOs;
 using Toss.Contracts.Interfaces;
 
 namespace Toss.Contracts.TossErc721MarketV1;

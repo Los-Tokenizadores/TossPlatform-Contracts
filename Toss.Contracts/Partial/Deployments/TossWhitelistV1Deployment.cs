@@ -2,12 +2,13 @@
 using Toss.Contracts.Interfaces;
 
 namespace Toss.Contracts.TossWhitelistV1.ContractDefinition;
+
 public partial class TossWhitelistV1Deployment : IContractDefinition {
+	private static string sourceCode;
 	public static ContractTypes ContractType => ContractTypes.Whitelist;
 	public static bool IsProxy => false;
 	public static int Version => 1;
 	public static int ClientVersion => 1;
 	public static string ContractName => "TossWhitelistV1";
 	public static string SourceCode => sourceCode ??= IContractDefinition.LoadSourceCode(ContractName);
-	private static string sourceCode;
 }

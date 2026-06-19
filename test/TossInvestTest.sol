@@ -459,6 +459,75 @@ contract TossInvestTest is BaseTest {
         assertEq(invest.getProjectInvestor(0, 0), owner);
     }
 
+     function test_finishMintErc721Whitelist() public {
+        string memory name = "test name";
+        string memory symbol = "TN";
+        uint32 targetAmount = 10;
+        uint32 maxAmount = 15;
+        uint128 price = 1 ether;
+        uint64 startAt = 1 days;
+        uint64 finishAt = 2 days;
+        address projectWallet = address(1234);
+
+        erc20.setWhitelist(address(whitelist));
+        whitelist.set(address(invest), true);
+        whitelist.set(owner, true);
+        whitelist.set(alice, true);
+        whitelist.set(projectWallet, true);
+        whitelist.set(bank, true);
+        
+        erc20.transfer(alice, price * 2);
+
+        invest.addProject(name, symbol, targetAmount, maxAmount, price, startAt, finishAt, projectWallet, platformCut);
+        vm.startPrank(projectWallet);
+        invest.confirm(0);
+        vm.warp(startAt);
+
+        vm.startPrank(owner);
+        uint16 amount = 10;
+        erc20.approve(address(invest), amount * price);
+        invest.invest(0, amount);
+
+        vm.startPrank(alice);
+        SigUtils.Permit memory permit = SigUtils.signPermit(alice, alicePrivateKey, address(invest), 2 * price, block.timestamp + 1 days, erc20);
+        invest.investWithPermit(0, 2, permit.value, permit.deadline, permit.v, permit.r, permit.s);
+
+        (, uint256 invested, uint256 inversors) = invest.getProject(0);
+
+        assertEq(inversors, 2);
+        assertEq(invested, amount + 2);
+
+        vm.warp(uint256(finishAt) + 1);
+
+        invest.finish{ gas: 500_000 }(0);
+        invest.finish(0);
+
+        TossInvestBase.ProjectInfo memory projectInfo;
+        (projectInfo, invested, inversors) = invest.getProject(0);
+        (, projectInfo, invested, inversors) = invest.getProjectByErc721Address(projectInfo.erc721Address);
+        assertEq(projectInfo.mintedAt, block.timestamp);
+        assertNotEq(projectInfo.erc721Address, address(0));
+        TossErc721MarketV1 erc721 = TossErc721MarketV1(projectInfo.erc721Address);
+        assertEq(erc721.balanceOf(owner), amount);
+        assertEq(erc721.balanceOf(alice), 2);
+
+        uint256 totalAmount = (amount + 2) * price;
+        uint256 platformCutAmount = totalAmount * platformCut / invest.CUT_PRECISION();
+        assertEq(erc20.balanceOf(projectWallet), totalAmount - platformCutAmount);
+        assertEq(erc20.balanceOf(bank), platformCutAmount);
+
+        vm.expectRevert(TossInvestBase.TossInvestProcessFinished.selector);
+        invest.finish(0);
+
+        vm.expectRevert(abi.encodeWithSelector(TossAddressIsZero.selector, "erc721"));
+        invest.getProjectByErc721Address(address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(TossInvestBase.TossInvestProjectNotFoundByErc721.selector, address(1)));
+        invest.getProjectByErc721Address(address(1));
+
+        assertEq(invest.getProjectInvestor(0, 0), owner);
+    }
+
     function test_finishMintErc721WithBaseUri(string memory name, string memory symbol, uint32 targetAmount, uint32 maxAmount, uint128 price, uint64 startAt, uint64 finishAt, uint16 amount, uint16 cut) public {
         targetAmount = uint32(bound(targetAmount, 1, 1000));
         maxAmount = uint32(bound(maxAmount, targetAmount, targetAmount + 1000));
